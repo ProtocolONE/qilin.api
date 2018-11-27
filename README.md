@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/ProtocolONE/qilin.api)](https://goreportcard.com/report/github.com/ProtocolONE/qilin.api)
+
 # Qilin - DRM Platform
 
 Qilin is an open source tool facilitating creation, distribution and activation of licenses for game content. 
