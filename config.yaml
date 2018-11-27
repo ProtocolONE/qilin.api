@@ -1,0 +1,10 @@
+Server:
+  Port: 3001
+Database:
+  Host: ""
+  Database: ""
+  User: ""
+  Password: ""
+LogConfig:
+  Level: "debug"
+
