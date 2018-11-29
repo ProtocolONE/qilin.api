@@ -1,23 +1,17 @@
-package mongo_test
+package orm_test
 
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"gopkg.in/mgo.v2/bson"
-	"qilin-api/pkg"
 	"qilin-api/pkg/conf"
-	"qilin-api/pkg/mongo"
+	"qilin-api/pkg/model"
+	"qilin-api/pkg/orm"
 	"testing"
-)
-
-const (
-	mongoUrl = "localhost:27017"
-	dbName   = "test_db"
 )
 
 type GameServiceTestSuite struct {
 	suite.Suite
-	session *mongo.Session
+	db *orm.Database
 }
 
 func Test_GameService(t *testing.T) {
@@ -25,36 +19,47 @@ func Test_GameService(t *testing.T) {
 }
 
 func (suite *GameServiceTestSuite) SetupTest() {
-	mongoConfig := conf.Database{
-		Host:     mongoUrl,
-		Database: dbName}
-
-	session, err := mongo.NewSession(&mongoConfig)
-	if err != nil {
-		suite.Fail("Unable to connect to mongo: %s", err)
+	dbConfig := conf.Database{
+		Host:     "localhost",
+		Port:     "5432",
+		Database: "test_qilin",
+		User:     "postgres",
+		Password: "32330",
 	}
 
-	suite.session = session
+	db, err := orm.NewDatabase(&dbConfig)
+	if err != nil {
+		suite.Fail("Unable to connect to database: %s", err)
+	}
+
+	db.Init()
+
+	suite.db = db
 }
 
 func (suite *GameServiceTestSuite) TearDownTest() {
-	if err := suite.session.DropDatabase(); err != nil {
+	if err := suite.db.DB().DropTable(model.Game{}).Error; err != nil {
 		panic(err)
 	}
-	suite.session.Close()
+	if err := suite.db.Close(); err != nil {
+		panic(err)
+	}
 }
 
 func (suite *GameServiceTestSuite) TestCreateGameShouldInsertIntoMongo() {
-	gameService, err := mongo.NewGameService(suite.session)
+	gameService, err := orm.NewGameService(suite.db)
 
 	testUsername := "integration_test_user"
-	game := qilin.Game{
+	game := model.Game{
 		Name: testUsername,
+		Prices: model.Prices{
+			USD: 10,
+		},
 	}
 
 	err = gameService.CreateGame(&game)
 	assert.Nil(suite.T(), err, "Unable to create game")
-	assert.Truef(suite.T(), bson.IsObjectIdHex(game.ID), "Wrong ID for created game")
+	assert.NotEmpty(suite.T(), game.ID, "Wrong ID for created game")
 
 	gameFromDb, err := gameService.FindByID(game.ID)
 	assert.Nil(suite.T(), err, "Unable to get game: %v", err)

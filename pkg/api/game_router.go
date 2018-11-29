@@ -3,23 +3,24 @@ package api
 import (
 	"github.com/labstack/echo"
 	"net/http"
-	"qilin-api/pkg"
+	"qilin-api/pkg/model"
+	"strconv"
 )
 
 type GameRouter struct {
-	gameService qilin.GameService
+	gameService model.GameService
 }
 
-func InitGameRoutes(api *Server, service qilin.GameService) error {
+func InitGameRoutes(api *Server, service model.GameService) error {
 	gameRouter := GameRouter{
 		gameService: service,
 	}
 
-	api.Router.GET("/game", gameRouter.getAll)
-	api.Router.GET("/game/:id", gameRouter.get)
-	api.Router.GET("/game/findByName", gameRouter.findByName)
-	api.Router.POST("/game", gameRouter.create)
-	api.Router.PUT("/game/:id", gameRouter.update)
+	api.Router.GET("/games", gameRouter.getAll)
+	api.Router.GET("/games/:id", gameRouter.get)
+	api.Router.GET("/games/findByName", gameRouter.findByName)
+	api.Router.POST("/games", gameRouter.create)
+	api.Router.PUT("/games/:id", gameRouter.update)
 
 	return nil
 }
@@ -58,9 +59,14 @@ func (api *GameRouter) getAll(ctx echo.Context) error {
 // @Failure 500 {object} model.Error "Some unknown error"
 // @Router /api/v1/game/{id} [get]
 func (api *GameRouter) get(ctx echo.Context) error {
-	game, err := api.gameService.FindByID(ctx.Param("id"))
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+	}
 
-	if err != nil || game == nil {
+	game, err := api.gameService.FindByID(uint(id))
+
+	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
 	}
 
@@ -79,7 +85,7 @@ func (api *GameRouter) get(ctx echo.Context) error {
 // @Failure 500 {object} model.Error "Some unknown error"
 // @Router /api/v1/game [post]
 func (api *GameRouter) create(ctx echo.Context) error {
-	game := &qilin.Game{}
+	game := &model.Game{}
 
 	if err := ctx.Bind(game); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad request param: "+err.Error())
@@ -105,7 +111,7 @@ func (api *GameRouter) create(ctx echo.Context) error {
 // @Failure 500 {object} model.Error "Some unknown error"
 // @Router /api/v1/game/:id [put]
 func (api *GameRouter) update(ctx echo.Context) error {
-	game := &qilin.Game{}
+	game := &model.Game{}
 
 	if err := ctx.Bind(game); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad request param: "+err.Error())

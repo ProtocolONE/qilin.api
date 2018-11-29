@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"qilin-api/pkg/api"
-	"qilin-api/pkg/mongo"
+	"qilin-api/pkg/orm"
 
 	"github.com/spf13/cobra"
 )
@@ -19,16 +19,22 @@ func init() {
 }
 
 func runServer(cmd *cobra.Command, args []string) {
-	session, err := mongo.NewSession(&config.Database)
+	db, err := orm.NewDatabase(&config.Database)
 	if err != nil {
 		logger.Fatal("Failed to start mongo session: " + err.Error())
 	}
+
+	db.Init()
+
+	defer func() {
+		logger.Fatal(db.Close())
+	}()
 
 	serverConfig := api.ServerConfig{
 		Log:          logger,
 		Jwt:          &config.Jwt,
 		ServerConfig: &config.Server,
-		Session:      session,
+		Database:     db,
 	}
 
 	server, err := api.NewServer(&serverConfig)

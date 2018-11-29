@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/sirupsen/logrus"
 	"qilin-api/pkg/conf"
-	"qilin-api/pkg/mongo"
+	"qilin-api/pkg/orm"
 	"strconv"
 )
 
@@ -13,12 +13,12 @@ type ServerConfig struct {
 	ServerConfig *conf.ServerConfig
 	Log          *logrus.Entry
 	Jwt          *conf.Jwt
-	Session      *mongo.Session
+	Database     *orm.Database
 }
 
 type Server struct {
 	log          *logrus.Entry
-	session      *mongo.Session
+	db           *orm.Database
 	echo         *echo.Echo
 	serverConfig *conf.ServerConfig
 	Router       *echo.Group
@@ -29,7 +29,7 @@ func NewServer(config *ServerConfig) (*Server, error) {
 		log:          config.Log,
 		echo:         echo.New(),
 		serverConfig: config.ServerConfig,
-		session:      config.Session,
+		db:           config.Database,
 	}
 
 	server.echo.Logger = Logger{config.Log.Logger}
@@ -61,7 +61,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes() error {
-	gameService, err := mongo.NewGameService(s.session)
+	gameService, err := orm.NewGameService(s.db)
 	if err != nil {
 		return err
 	}

@@ -1,10 +1,11 @@
 Server:
   Port: 3001
 Database:
-  Host: ""
-  Database: ""
-  User: ""
-  Password: ""
+  Host: localhost
+  Port: 5432
+  Database: qilin
+  User: postres
+  Password: 32330
 LogConfig:
   Level: "debug"
 
