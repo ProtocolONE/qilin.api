@@ -4,8 +4,6 @@ import (
 	"crypto/rsa"
 	"strings"
 
-	//"github.com/benoitmasson/viper"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -15,6 +13,7 @@ type ServerConfig struct {
 
 type Database struct {
 	Host     string
+	Port     string
 	Database string
 	User     string
 	Password string
@@ -40,17 +39,12 @@ type Config struct {
 }
 
 // LoadConfig loads the config from a file if specified, otherwise from the environment
-func LoadConfig(cmd *cobra.Command) (*Config, error) {
-	err := viper.BindPFlags(cmd.Flags())
-	if err != nil {
-		return nil, err
-	}
-
+func LoadConfig(configFile string) (*Config, error) {
 	viper.SetEnvPrefix("QILIN")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	if configFile, _ := cmd.Flags().GetString("config"); configFile != "" {
+	if configFile != "" {
 		viper.SetConfigFile(configFile)
 	} else {
 		viper.SetConfigName("config")
