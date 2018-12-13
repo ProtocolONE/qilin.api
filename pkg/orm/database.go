@@ -14,8 +14,8 @@ type Database struct {
 
 func NewDatabase(config *conf.Database) (*Database, error) {
 	dsl := fmt.Sprintf(
-		"host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
-		config.Host, config.Port, config.Database, config.User, config.Password)
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		config.User, config.Password, config.Host, config.Port, config.Database )
 
 	db, err := gorm.Open("postgres", dsl)
 	if err != nil {
@@ -29,7 +29,10 @@ func NewDatabase(config *conf.Database) (*Database, error) {
 }
 
 func (db *Database) Init() {
-	db.database.AutoMigrate(&model.Game{}, &model.Prices{})
+	db.database.AutoMigrate(
+		&model.User{},
+		&model.Game{},
+		&model.Prices{})
 }
 
 func (db *Database) DB() *gorm.DB {

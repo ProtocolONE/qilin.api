@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	DefaultJwtSignAlgorithm = "RS256"
+)
+
 type ServerConfig struct {
 	Port int
 }
@@ -60,5 +64,10 @@ func LoadConfig(configFile string) (*Config, error) {
 	if err := viper.Unmarshal(config); err != nil {
 		return nil, err
 	}
+
+	if config.Jwt.Algorithm == "" {
+		config.Jwt.Algorithm = DefaultJwtSignAlgorithm
+	}
+
 	return config, nil
 }

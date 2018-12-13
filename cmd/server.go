@@ -21,7 +21,7 @@ func init() {
 func runServer(cmd *cobra.Command, args []string) {
 	db, err := orm.NewDatabase(&config.Database)
 	if err != nil {
-		logger.Fatal("Failed to start mongo session: " + err.Error())
+		logger.Fatal("Failed to make Postgres connection: " + err.Error())
 	}
 
 	db.Init()

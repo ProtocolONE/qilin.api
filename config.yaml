@@ -4,8 +4,16 @@ Database:
   Host: localhost
   Port: 5432
   Database: qilin
-  User: postres
-  Password: 32330
+  User: postgres
+  Password:
+Jwt:
+  SignatureSecret:
+  SignatureSecretBase64:
+  Algorithm: "RS256"
+GeoIP:
+  DBPath:
 LogConfig:
   Level: "debug"
+  ReportCaller: true
+
 

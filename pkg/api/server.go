@@ -70,5 +70,14 @@ func (s *Server) setupRoutes() error {
 		return err
 	}
 
+	userService, err := orm.NewUserService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if err := InitUserRoutes(s, userService); err != nil {
+		return err
+	}
+
 	return nil
 }
