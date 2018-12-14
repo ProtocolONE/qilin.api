@@ -1,0 +1,62 @@
+{{- $app := .Values.apps.p1payapi -}}
+{{- $deployment := $app.deployments.nginx -}}
+{{- $resourceName := printf "%s-%s" $app.name $deployment.name }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $resourceName }}
+  labels:
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    app: {{ $app.name }}
+    role: {{ $deployment.name }}
+  annotations: 
+    checksum/config: {{ include (printf "%s/%s-configmap-%s.yaml" $.Template.BasePath $app.name $deployment.name) . | sha256sum }}
+    released: {{ .Release.Time}}    
+spec:
+  selector:
+    matchLabels:
+      chart: {{ .Chart.Name }}
+      release: {{ .Release.Name }}
+      app: {{ $app.name }}
+      role: {{ $deployment.name }}
+  replicas: {{ $deployment.replicas }} 
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        chart: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+        app: {{ $app.name }}
+        role: {{ $deployment.name }}
+      annotations:
+        released: {{ .Release.Time}}
+    spec:
+      {{- if $deployment.configMap }}
+      volumes:
+      - name: {{ $resourceName }}
+        configMap:
+          name: {{ $resourceName }}
+      {{- end }}
+      containers:
+      - name: {{ $deployment.name }}
+        image: {{ $deployment.image }}
+        ports:
+        - containerPort: {{ $deployment.port }}
+        livenessProbe:
+          httpGet:
+            path: /_healthz
+            port: {{ $deployment.port }}
+          initialDelaySeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        {{- if $deployment.configMap }}
+        volumeMounts:
+        - name: {{ $resourceName }}
+          mountPath: {{ $deployment.configMap.mountPath }}
+          readOnly: true
+        {{- end }}

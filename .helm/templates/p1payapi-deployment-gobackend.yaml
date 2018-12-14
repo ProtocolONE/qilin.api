@@ -1,0 +1,86 @@
+{{- $app := .Values.apps.p1payapi -}}
+{{- $deployment := $app.deployments.gobackend -}}
+{{- $resourceName := printf "%s-%s" $app.name $deployment.name }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $resourceName }}
+  labels:
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    app: {{ $app.name }}
+    role: {{ $deployment.name }}
+  annotations: 
+    released: {{ .Release.Time}}
+spec:
+  selector:
+    matchLabels:
+      chart: {{ .Chart.Name }}
+      release: {{ .Release.Name }}
+      app: {{ $app.name }}
+      role: {{ $deployment.name }}
+  replicas: {{ $deployment.replicas }} 
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        chart: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+        app: {{ $app.name }}
+        role: {{ $deployment.name }}
+      annotations:
+        released: {{ .Release.Time}}
+    spec:
+      volumes:
+      - name: p1payapi-cardpay
+        secret:
+          secretName: p1payapi-cardpay
+      {{- if $deployment.configMap }}
+      - name: {{ $resourceName }}
+        configMap:
+          name: {{ $resourceName }}
+      {{- end }}
+      containers:
+      - name: {{ $resourceName }}
+        image: {{ $deployment.image }}
+        env:
+          - name: MONGO_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ $app.name }}-mongo-connection
+                key: MONGO_HOST
+          - name: MONGO_DB
+            valueFrom:
+              secretKeyRef:
+                name: {{ $app.name }}-mongo-connection
+                key: MONGO_DB
+          - name: MONGO_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ $app.name }}-mongo-connection
+                key: MONGO_USER
+          - name: MONGO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ $app.name }}-mongo-connection
+                key: MONGO_PASSWORD
+          - name: JWT_SIGNATURE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ $app.name }}-jwt-secret
+                key: {{ $app.name }}-jwt-secret
+        ports:
+        - containerPort: {{ $deployment.port }}
+        volumeMounts:
+        - name: p1payapi-cardpay
+          mountPath: /application/config/parameters
+          readOnly: true
+        {{- if $deployment.configMap }}
+        - name: {{ $resourceName }}
+          mountPath: {{ $deployment.configMap.mountPath }}
+          readOnly: true
+        {{- end }}

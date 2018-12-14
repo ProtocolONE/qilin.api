@@ -1,0 +1,22 @@
+{{- $app := .Values.apps.p1payapi -}}
+{{- $deployment := $app.deployments.nginx -}}
+{{- $resourceName := printf "%s-%s" $app.name $deployment.name }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $resourceName }}
+  labels:
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    app: {{ $app.name }}
+    role: {{ $deployment.name }}    
+spec:
+  type: {{ $deployment.service.type }}
+  ports:
+  - port: {{ $deployment.service.port }}
+    targetPort: {{ $deployment.port }}
+    protocol: {{ $deployment.service.protocol }}
+  selector:
+    chart: {{ .Chart.Name }}
+    app: {{ $app.name }}
+    role: {{ $deployment.name }}
