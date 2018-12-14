@@ -1,25 +1,25 @@
-{{- $app := .Values.apps.p1payapi -}}
-{{- $deployment := $app.deployments.nginx -}}
-{{- $resourceName := printf "%s-%s" $app.name $deployment.name }}
+{{- $deployment := .Values.frontend -}}
+{{- $deploymentName := printf "%s-%s" .Release.Name $deployment.name }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $resourceName }}
+  name: {{ $deploymentName }}
   labels:
-    chart: {{ .Chart.Name }}
+    app: {{ .Chart.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
-    app: {{ $app.name }}
-    role: {{ $deployment.name }}
+    heritage: {{ .Release.Service }}
+    role: {{ $deployment.role }}
   annotations: 
-    checksum/config: {{ include (printf "%s/%s-configmap-%s.yaml" $.Template.BasePath $app.name $deployment.name) . | sha256sum }}
     released: {{ .Release.Time}}    
 spec:
   selector:
     matchLabels:
-      chart: {{ .Chart.Name }}
+      app: {{ .Chart.Name }}
+      chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
       release: {{ .Release.Name }}
-      app: {{ $app.name }}
-      role: {{ $deployment.name }}
+      heritage: {{ .Release.Service }}
+      role: {{ $deployment.role }}
   replicas: {{ $deployment.replicas }} 
   strategy:
     type: RollingUpdate
@@ -29,22 +29,21 @@ spec:
   template:
     metadata:
       labels:
-        chart: {{ .Chart.Name }}
+        app: {{ .Chart.Name }}
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
         release: {{ .Release.Name }}
-        app: {{ $app.name }}
-        role: {{ $deployment.name }}
-      annotations:
-        released: {{ .Release.Time}}
+        heritage: {{ .Release.Service }}
+        role: {{ $deployment.role }}
     spec:
       {{- if $deployment.configMap }}
       volumes:
-      - name: {{ $resourceName }}
+      - name: {{ $deploymentName }}-configmap
         configMap:
-          name: {{ $resourceName }}
+          name: {{ $deploymentName }}
       {{- end }}
       containers:
       - name: {{ $deployment.name }}
-        image: {{ $deployment.image }}
+        image: {{ $deployment.image }}:{{ $deployment.imageTag }}
         ports:
         - containerPort: {{ $deployment.port }}
         livenessProbe:
@@ -56,7 +55,7 @@ spec:
           failureThreshold: 2
         {{- if $deployment.configMap }}
         volumeMounts:
-        - name: {{ $resourceName }}
+        - name: {{ $deploymentName }}-configmap
           mountPath: {{ $deployment.configMap.mountPath }}
           readOnly: true
         {{- end }}
