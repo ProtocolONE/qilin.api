@@ -14,5 +14,3 @@ GeoIP:
 LogConfig:
   Level: "debug"
   ReportCaller: true
-
-
