@@ -30,14 +30,14 @@ func runServer(cmd *cobra.Command, args []string) {
 		logger.Fatal(db.Close())
 	}()
 
-	serverConfig := api.ServerConfig{
+	serverOptions := api.ServerOptions{
 		Log:          logger,
 		Jwt:          &config.Jwt,
 		ServerConfig: &config.Server,
 		Database:     db,
 	}
 
-	server, err := api.NewServer(&serverConfig)
+	server, err := api.NewServer(&serverOptions)
 	if err != nil {
 		logger.Fatal("Failed to create server: " + err.Error())
 	}

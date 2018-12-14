@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"crypto/rsa"
+	"encoding/base64"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -24,7 +24,7 @@ type Database struct {
 }
 
 type Jwt struct {
-	SignatureSecret       *rsa.PublicKey
+	SignatureSecret       []byte
 	SignatureSecretBase64 string
 	Algorithm             string
 }
@@ -68,6 +68,13 @@ func LoadConfig(configFile string) (*Config, error) {
 	if config.Jwt.Algorithm == "" {
 		config.Jwt.Algorithm = DefaultJwtSignAlgorithm
 	}
+
+	pemKey, err := base64.StdEncoding.DecodeString(config.Jwt.SignatureSecretBase64)
+	if err != nil {
+		return nil, err
+	}
+
+	config.Jwt.SignatureSecret = pemKey
 
 	return config, nil
 }

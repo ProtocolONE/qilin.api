@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-type ServerConfig struct {
+type ServerOptions struct {
 	ServerConfig *conf.ServerConfig
 	Log          *logrus.Entry
 	Jwt          *conf.Jwt
@@ -17,22 +17,24 @@ type ServerConfig struct {
 }
 
 type Server struct {
-	log          *logrus.Entry
-	db           *orm.Database
-	echo         *echo.Echo
-	serverConfig *conf.ServerConfig
-	Router       *echo.Group
+	log          	*logrus.Entry
+	db           	*orm.Database
+	echo         	*echo.Echo
+	serverConfig 	*conf.ServerConfig
+
+	Router       	*echo.Group
+	AuthRouter   	*echo.Group
 }
 
-func NewServer(config *ServerConfig) (*Server, error) {
+func NewServer(opts *ServerOptions) (*Server, error) {
 	server := &Server{
-		log:          config.Log,
+		log:          opts.Log,
 		echo:         echo.New(),
-		serverConfig: config.ServerConfig,
-		db:           config.Database,
+		serverConfig: opts.ServerConfig,
+		db:           opts.Database,
 	}
 
-	server.echo.Logger = Logger{config.Log.Logger}
+	server.echo.Logger = Logger{opts.Log.Logger}
 	server.echo.Use(LoggerHandler)
 
 	server.echo.Use(middleware.Logger())
@@ -42,14 +44,13 @@ func NewServer(config *ServerConfig) (*Server, error) {
 	}))
 
 	server.Router = server.echo.Group("/api/v1")
-	/*
-		server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-			SigningKey:    config.Jwt.SignatureSecret,
-			SigningMethod: config.Jwt.Algorithm,
-		}))
-	*/
+	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey:    opts.Jwt.SignatureSecret,
+		SigningMethod: opts.Jwt.Algorithm,
+	}))
+	server.AuthRouter = server.echo.Group("/auth-api")
 
-	if err := server.setupRoutes(); err != nil {
+	if err := server.setupRoutes(opts.Jwt); err != nil {
 		server.log.Fatal(err)
 	}
 
@@ -60,7 +61,7 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes() error {
+func (s *Server) setupRoutes(jwtConf *conf.Jwt) error {
 	gameService, err := orm.NewGameService(s.db)
 	if err != nil {
 		return err
@@ -70,7 +71,7 @@ func (s *Server) setupRoutes() error {
 		return err
 	}
 
-	userService, err := orm.NewUserService(s.db)
+	userService, err := orm.NewUserService(s.db, jwtConf)
 	if err != nil {
 		return err
 	}
