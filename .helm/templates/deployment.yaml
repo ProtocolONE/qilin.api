@@ -35,12 +35,10 @@ spec:
         heritage: {{ .Release.Service }}
         role: {{ $deployment.role }}
     spec:
-      {{- if $deployment.configMap }}
       volumes:
-      - name: {{ $deploymentName }}-configmap
-        configMap:
-          name: {{ $deploymentName }}
-      {{- end }}
+      - name: {{ $deploymentName }}-config
+        secret:
+          secretName: {{ $deploymentName }}-config
       containers:
       - name: {{ $deployment.name }}
         image: {{ $deployment.image }}:{{ $deployment.imageTag }}
@@ -53,9 +51,7 @@ spec:
           initialDelaySeconds: 5
           timeoutSeconds: 3
           failureThreshold: 2
-        {{- if $deployment.configMap }}
         volumeMounts:
-        - name: {{ $deploymentName }}-configmap
-          mountPath: {{ $deployment.configMap.mountPath }}
+        - name: {{ $deploymentName }}-config
+          mountPath: /application/etc/
           readOnly: true
-        {{- end }}
