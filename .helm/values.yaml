@@ -1,42 +1,27 @@
-# Default values for p1-auth.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-enableRedis: false
-enableMongo: false
 enableCertIssuer: true
 
-apps:
-  p1payapi:
-    name: p1payapi
-    ingress:
-      hostname: p1payapi.tst.protocol.one
-      path: /
-    deployments:
-      nginx:
-        name: nginx
-        image: "nginx:1.15.4"
-        port: 80
-        replicas: 1
-        service: 
-          name: nginx
-          type: ClusterIP
-          port: 80
-          protocol: TCP
-        configMap: 
-          mountPath: /etc/nginx/conf.d/
-      gobackend:
-        name: gobackend
-        image: "p1hub/p1pay.api.protocol.one:latest"
-        port: 3001
-        replicas: 1
-        service:
-          name: gobackend
-          type: ClusterIP
-          port: 3001
-          protocol: TCP
-              
-    
+ingress:
+  hostname: qilinapi.tst.protocol.one
+  path: /
+
+certIssuer:
+  email: admin@protocol.one
+
+frontend:
+  name: qilinapi
+  role: frontend
+  image: "p1hub/qilin.api"
+  imageTag: latest
+  port: 80
+  replicas: 1
+  service: 
+    type: ClusterIP
+    port: 80
+    protocol: TCP
+  
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
