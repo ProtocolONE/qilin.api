@@ -15,4 +15,4 @@ COPY . ./
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -o $GOPATH/bin/qilin_api .
 
-ENTRYPOINT ["$GOPATH/bin/qilin_api","server"]
+ENTRYPOINT $GOPATH/bin/qilin_api server
