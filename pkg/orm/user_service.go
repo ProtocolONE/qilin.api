@@ -27,8 +27,8 @@ func (p *UserService) UpdateUser(u *model.User) error {
 	return p.db.Update(u).Error
 }
 
-func (p *UserService) FindByID(id uint) (user model.User, err error) {
-	err = p.db.First(&user, model.User{ID: id}).Error
+func (p *UserService) FindByID(id int) (user model.User, err error) {
+	err = p.db.First(&user, model.User{ID: uint(id)}).Error
 	return
 }
 

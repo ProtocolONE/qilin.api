@@ -45,8 +45,9 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		SigningKey:    opts.Jwt.SignatureSecret,
-		SigningMethod: opts.Jwt.Algorithm,
+		TokenLookup: 	"cookie:token",
+		SigningKey:    	opts.Jwt.SignatureSecret,
+		SigningMethod: 	opts.Jwt.Algorithm,
 	}))
 	server.AuthRouter = server.echo.Group("/auth-api")
 

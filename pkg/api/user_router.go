@@ -3,8 +3,11 @@ package api
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
+	"log"
 	"net/http"
 	"qilin-api/pkg/model"
+	"strconv"
+	"time"
 )
 
 type UserRouter struct {
@@ -15,8 +18,35 @@ func InitUserRoutes(api *Server, service model.UserService) error {
 	userRouter := UserRouter{service: service}
 
 	api.AuthRouter.POST("/login", userRouter.login)
+	api.Router.GET("/me", userRouter.getAppState)
 
 	return nil
+}
+
+func (api *UserRouter) getAppState(ctx echo.Context) error {
+
+	user := ctx.Get("user")
+	if user == nil {
+		return ctx.JSON(http.StatusUnauthorized, false)
+	}
+	log.Println(user)
+
+	userId, err := strconv.Atoi(user.(map[string]string)["user_id"])
+	if err != nil {
+		return err
+	}
+
+	userObj, err := api.service.FindByID(userId)
+	if err != nil {
+		return err
+	}
+
+	result := model.AppState{User: model.UserInfo{
+		Id: userObj.ID,
+		Nickname: userObj.Nickname,
+	}}
+
+	return ctx.JSON(http.StatusOK, result)
 }
 
 // @Summary Login user
@@ -43,5 +73,11 @@ func (api *UserRouter) login(ctx echo.Context) error {
 		}
 	}
 
+	cookie := new(http.Cookie)
+	cookie.Name = "token"
+	cookie.Value = result.AccessToken
+	cookie.Expires = time.Now().Add(24 * time.Hour)
+	cookie.Path = "/"
+	ctx.SetCookie(cookie)
 	return ctx.JSON(http.StatusOK, result)
 }
