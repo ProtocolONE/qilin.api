@@ -53,7 +53,8 @@ func LoadConfig(configFile string) (*Config, error) {
 	} else {
 		viper.SetConfigName("config")
 		viper.AddConfigPath("./")
-		viper.AddConfigPath("$HOME/.example")
+		viper.AddConfigPath("$HOME")
+		viper.AddConfigPath("./etc")
 	}
 
 	if err := viper.ReadInConfig(); err != nil {

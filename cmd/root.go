@@ -38,7 +38,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&cfgFile,
 		"config", "c", "",
-		"config file (default is $HOME/.qilin-config.yaml)")
+		"config file (default is $HOME/config.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.
