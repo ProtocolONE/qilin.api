@@ -1,12 +1,11 @@
 package api
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
-	"log"
 	"net/http"
 	"qilin-api/pkg/model"
-	"strconv"
 	"time"
 )
 
@@ -23,17 +22,18 @@ func InitUserRoutes(api *Server, service model.UserService) error {
 	return nil
 }
 
-func (api *UserRouter) getAppState(ctx echo.Context) error {
+func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 
-	user := ctx.Get("user")
-	if user == nil {
+	token := ctx.Get("user").(*jwt.Token)
+	if token == nil {
 		return ctx.JSON(http.StatusUnauthorized, false)
 	}
-	log.Println(user)
-
-	userId, err := strconv.Atoi(user.(map[string]string)["user_id"])
-	if err != nil {
-		return err
+	userId := 0
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		userId = int(claims["user_id"].(float64))
+	}
+	if userId == 0 {
+		return ctx.JSON(http.StatusNotFound, QilinError{"Invalid JWT Token"})
 	}
 
 	userObj, err := api.service.FindByID(userId)

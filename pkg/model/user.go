@@ -31,7 +31,7 @@ type LoginResult struct {
 }
 
 type AppState struct {
-	User UserInfo
+	User UserInfo			`json:"user"`
 	//...
 }
 

@@ -12,7 +12,9 @@ const (
 )
 
 type ServerConfig struct {
-	Port int
+	Port 				int
+	AllowOrigins 		[]string
+	AllowCredentials 	bool
 }
 
 type Database struct {

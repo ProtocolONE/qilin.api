@@ -9,6 +9,10 @@ import (
 	"strconv"
 )
 
+type QilinError struct {
+	Message string
+}
+
 type ServerOptions struct {
 	ServerConfig *conf.ServerConfig
 	Log          *logrus.Entry
@@ -41,6 +45,8 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowHeaders: []string{"authorization", "content-type"},
+		AllowOrigins: opts.ServerConfig.AllowOrigins,
+		AllowCredentials: opts.ServerConfig.AllowCredentials,
 	}))
 
 	server.Router = server.echo.Group("/api/v1")
