@@ -31,6 +31,7 @@ func NewDatabase(config *conf.Database) (*Database, error) {
 func (db *Database) Init() {
 	db.database.AutoMigrate(
 		&model.User{},
+		&model.Vendor{},
 		&model.Game{},
 		&model.Prices{})
 }

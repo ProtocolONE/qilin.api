@@ -1,8 +1,13 @@
 package model
 
-import "time"
+import (
+	"github.com/jinzhu/gorm"
+	"time"
+)
 
 type User struct {
+	gorm.Model
+
 	// unique user identifier
 	ID uint `json:"id" validate:"required"`
 
