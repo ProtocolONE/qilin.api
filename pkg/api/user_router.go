@@ -25,15 +25,12 @@ func InitUserRoutes(api *Server, service model.UserService) error {
 func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 
 	token := ctx.Get("user").(*jwt.Token)
-	if token == nil {
-		return ctx.JSON(http.StatusUnauthorized, false)
-	}
 	userId := 0
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		userId = int(claims["user_id"].(float64))
+		userId = int(claims["id"].(float64))
 	}
 	if userId == 0 {
-		return ctx.JSON(http.StatusNotFound, QilinError{"Invalid JWT Token"})
+		return ctx.JSON(http.StatusNotFound, "Invalid JWT Token")
 	}
 
 	userObj, err := api.service.FindByID(userId)
@@ -67,9 +64,9 @@ func (api *UserRouter) login(ctx echo.Context) error {
 	if err != nil {
 		switch err {
 		case gorm.ErrRecordNotFound:
-			return ctx.JSON(http.StatusNotFound, false)
+			return ctx.JSON(http.StatusNotFound, "User not found")
 		default:
-			return ctx.JSON(http.StatusInternalServerError, false)
+			return ctx.JSON(http.StatusInternalServerError, "Server error")
 		}
 	}
 

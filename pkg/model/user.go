@@ -1,27 +1,17 @@
 package model
 
-import (
-	"github.com/jinzhu/gorm"
-	"time"
-)
+import "time"
 
 type User struct {
-	gorm.Model
-
-	// unique user identifier
-	ID uint `json:"id" validate:"required"`
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `sql:"index"`
 
 	// User nickname for public display
 	Nickname string `bson:"name"`
-
 	Login string `bson:"login"`
 	Password string `bson:"password"`
-
-	// date of create user in system
-	CreatedAt time.Time `json:"created_at"`
-
-	// date of last update user in system
-	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type UserInfo struct {

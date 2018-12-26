@@ -10,34 +10,117 @@ info:
   version: "1.0.0a"
   title: Qilin API server
   contact:
-    email: nikolay.bondarenko@protocol.one  
+    email: makims.blinenkov@protocol.one
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 paths:
-  /videogames/{id}:
+  /api/v1/vendors/{id}:
     get:
-      tags:
-        - developers
-      summary: Get video game object
-      operationId: getGame
-      description: |
-        By passing in the appropriate options, you can grab all available 
-        information abouth the game in the system
+      summary: Get vendor by id
+      operationId: getVendorByID
+      description: Get vendor by it's ID or get error
       parameters:
         - name: id
           in: path
-          description: Game ID
+          description: Vendor ID
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            format: int
       responses:
         '200':
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VideoGame'
+                $ref: '#/components/schemas/Vendor'
         '404':
           description: not found
+  /api/v1/vendors:
+    get:
+      summary: Retrive list of vendors
+      operationId: getVendors
+      description: Get all vendors in Qilin ordered by ID
+      parameters:
+        - name: limit
+          in: query
+          description: Limit for query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Offset for query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vendor'[]
+        '404':
+          description: not found
+    post:
+      summary: Create new Vendor
+      operationId: addVendor
+      description: Create new Vendor from json body
+      parameters:
+        - name: body
+          in: body
+          description: Vendor object
+          schema:
+            $ref: '#/components/schemas/Vendor'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vendor'
+        '400':
+          description: Bad request
+    put:
+      summary: Save exists Vendor
+      operationId: updateVendor
+      description: Update exists Vendor - email, name, domain3
+      parameters:
+        - name: body
+          in: body
+          description: Vendor object
+          schema:
+            $ref: '#/components/schemas/Vendor'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vendor'
+        '400':
+          description: Bad request
+        '404':
+          description: not found
+components:
+  schemas:
+    Vendor:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        domain3:
+          type: string
+        email:
+          type: email
+          format: string
+        manager_id:
+          type: integer
+      required:
+        - id
+        - name
+        - domain3
+        - email

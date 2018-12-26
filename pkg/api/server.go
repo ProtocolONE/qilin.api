@@ -9,10 +9,6 @@ import (
 	"strconv"
 )
 
-type QilinError struct {
-	Message string
-}
-
 type ServerOptions struct {
 	ServerConfig *conf.ServerConfig
 	Log          *logrus.Entry
@@ -48,6 +44,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		AllowOrigins: opts.ServerConfig.AllowOrigins,
 		AllowCredentials: opts.ServerConfig.AllowCredentials,
 	}))
+	server.echo.Pre(middleware.RemoveTrailingSlash())
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
@@ -84,6 +81,15 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt) error {
 	}
 
 	if err := InitUserRoutes(s, userService); err != nil {
+		return err
+	}
+
+	vendorService, err := orm.NewVendorService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if err := InitVendorRoutes(s, vendorService); err != nil {
 		return err
 	}
 

@@ -47,7 +47,7 @@ func (p *UserService) Login(login, pass string) (result model.LoginResult, err e
 	}
 
 	token := jwt.NewWithClaims(p.jwt_signMethod, jwt.MapClaims{
-		"user_id": user.ID,
+		"id": user.ID,
 	})
 
 	result.AccessToken, err = token.SignedString(p.jwt_signSecret)
