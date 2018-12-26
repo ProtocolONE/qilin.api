@@ -1,12 +1,15 @@
 package model
 
-import "time"
+import (
+	"github.com/satori/go.uuid"
+	"time"
+)
 
 type User struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt *time.Time `sql:"index"`
+	ID			uuid.UUID 		`gorm:"type:uuid; primary_key"`
+	CreatedAt 	time.Time
+	UpdatedAt 	time.Time
+	DeletedAt 	*time.Time 		`sql:"index"`
 
 	// User nickname for public display
 	Nickname string `bson:"name"`
@@ -15,7 +18,7 @@ type User struct {
 }
 
 type UserInfo struct {
-	Id uint				`json:"id"`
+	Id uuid.UUID		`json:"id"`
 	Nickname string		`json:"nickname"`
 	Avatar string		`json:"avatar"`
 }
@@ -34,7 +37,7 @@ type AppState struct {
 type UserService interface {
 	CreateUser(g *User) error
 	UpdateUser(g *User) error
-	FindByID(id int) (User, error)
+	FindByID(id uuid.UUID) (User, error)
 	FindByLoginAndPass(login, pass string) (User, error)
 	Login(login, pass string) (LoginResult, error)
 }

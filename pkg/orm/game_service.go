@@ -2,6 +2,7 @@ package orm
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/satori/go.uuid"
 	"qilin-api/pkg/model"
 )
 
@@ -25,7 +26,7 @@ func (p *GameService) UpdateGame(u *model.Game) error {
 }
 
 // FindByID return Game object by given id
-func (p *GameService) FindByID(id uint) (game model.Game, err error) {
+func (p *GameService) FindByID(id uuid.UUID) (game model.Game, err error) {
 	err = p.db.First(&game, model.Game{ID: id}).Error
 	return
 }

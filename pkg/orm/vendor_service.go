@@ -3,6 +3,7 @@ package orm
 import (
 	"errors"
 	"github.com/jinzhu/gorm"
+	"github.com/satori/go.uuid"
 	"qilin-api/pkg/model"
 	"strings"
 )
@@ -30,7 +31,7 @@ func validate(item *model.Vendor) error {
 	if strings.Index("0123456789", string(item.Domain3[0])) > -1 {
 		return errors.New("Domain is invalid")
 	}
-	if item.ManagerId < 1 {
+	if item.ManagerId == nil || uuid.Equal(*item.ManagerId, uuid.Nil) {
 		return errors.New("ManagerId is invalid")
 	}
 	return nil
@@ -56,7 +57,7 @@ func (p *VendorService) UpdateVendor(item *model.Vendor) error {
 		Error
 }
 
-func (p *VendorService) FindByID(id uint) (vendor model.Vendor, err error) {
+func (p *VendorService) FindByID(id uuid.UUID) (vendor model.Vendor, err error) {
 	err = p.db.First(&vendor, model.Vendor{ID: id}).Error
 	return
 }

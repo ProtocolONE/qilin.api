@@ -4,6 +4,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
 	"time"
@@ -25,11 +26,11 @@ func InitUserRoutes(api *Server, service model.UserService) error {
 func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 
 	token := ctx.Get("user").(*jwt.Token)
-	userId := 0
+	userId := uuid.UUID{}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		userId = int(claims["id"].(float64))
+		userId, _ = uuid.FromBytes(claims["id"].([]byte))
 	}
-	if userId == 0 {
+	if userId == uuid.Nil {
 		return ctx.JSON(http.StatusNotFound, "Invalid JWT Token")
 	}
 

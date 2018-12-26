@@ -26,8 +26,8 @@ paths:
           description: Vendor ID
           required: true
           schema:
-            type: integer
-            format: int
+            type: uuid
+            format: string
       responses:
         '200':
           description: Successful operation
@@ -108,8 +108,8 @@ components:
       type: object
       properties:
         id:
-          type: integer
-          format: int64
+          type: uuid
+          format: string
         name:
           type: string
         domain3:

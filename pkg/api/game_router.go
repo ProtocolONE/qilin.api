@@ -2,9 +2,9 @@ package api
 
 import (
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
-	"strconv"
 )
 
 type GameRouter struct {
@@ -59,12 +59,12 @@ func (api *GameRouter) getAll(ctx echo.Context) error {
 // @Failure 500 {object} model.Error "Some unknown error"
 // @Router /api/v1/game/{id} [get]
 func (api *GameRouter) get(ctx echo.Context) error {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
 
-	game, err := api.gameService.FindByID(uint(id))
+	game, err := api.gameService.FindByID(id)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Game not found")

@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"qilin-api/pkg/conf"
@@ -50,10 +51,11 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 	vendorService, err := orm.NewVendorService(suite.db)
 
 	vendor := model.Vendor{
+		ID: uuid.NewV4(),
 		Name: "1C",
 		Domain3: "godzilla",
 		Email: "godzilla@proto.one",
-		ManagerId: 1,
+		ManagerId: &uuid.NamespaceDNS,
 	}
 
 	err = vendorService.CreateVendor(&vendor)
@@ -79,7 +81,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 		Name: "domino",
 		Domain3: "2domino",
 		Email: "domino@proto.com",
-		ManagerId: 1,
+		ManagerId: &uuid.NamespaceDNS,
 	}
 	err = vendorService.CreateVendor(&vendor2)
 	assert.NotNil(suite.T(), err, "Must be error cuz wrong domain name")
@@ -88,7 +90,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 		Name: "domino",
 		Domain3: "domino",
 		Email: "4456",
-		ManagerId: 1,
+		ManagerId: &uuid.NamespaceDNS,
 	}
 	err = vendorService.CreateVendor(&vendor3)
 	assert.NotNil(suite.T(), err, "Must be error cuz invalid email")

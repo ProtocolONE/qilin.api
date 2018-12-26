@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"time"
 )
 
@@ -8,7 +9,7 @@ import (
 // and all related processes and objects.
 type Game struct {
 	// unique merchant identifier in auth system
-	ID uint `json:"id" validate:"required" gorm:"primary_key"`
+	ID uuid.UUID `gorm:"type:uuid; primary_key"`
 
 	//ExternalID *map[string]string `json:"external_id"`
 
@@ -33,6 +34,6 @@ type GameService interface {
 	CreateGame(g *Game) error
 	UpdateGame(g *Game) error
 	GetAll() ([]*Game, error)
-	FindByID(id uint) (Game, error)
+	FindByID(id uuid.UUID) (Game, error)
 	FindByName(name string) ([]*Game, error)
 }

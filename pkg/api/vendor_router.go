@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
 	"strconv"
@@ -44,12 +45,11 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 }
 
 func (api *VendorRouter) get(ctx echo.Context) error {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
-
-	vendor, err := api.vendorService.FindByID(uint(id))
+	vendor, err := api.vendorService.FindByID(id)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Vendor not found")
@@ -66,7 +66,8 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 	// Assign to new vendor current user id as manager
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	vendor.ManagerId = int(claims["id"].(float64))
+	managerId, _ := uuid.FromBytes(claims["id"].([]byte))
+	vendor.ManagerId = &managerId
 
 	if err := api.vendorService.CreateVendor(vendor); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())

@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"qilin-api/pkg/conf"
@@ -51,6 +52,7 @@ func (suite *GameServiceTestSuite) TestCreateGameShouldInsertIntoMongo() {
 
 	testUsername := "integration_test_user"
 	game := model.Game{
+		ID: uuid.NewV4(),
 		Name: testUsername,
 		Prices: model.Prices{
 			USD: 10,

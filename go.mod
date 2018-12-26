@@ -13,6 +13,7 @@ require (
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/mitchellh/go-homedir v1.0.0 // indirect
 	github.com/sandalwing/echo-logrusmiddleware v0.0.0-20161226034227-1d7700fcf2d3 // indirect
+	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.2.0
 	github.com/skip2/go-qrcode v0.0.0-20171229120447-cf5f9fa2f0d8 // indirect
 	github.com/spf13/cobra v0.0.3
