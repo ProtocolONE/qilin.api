@@ -21,10 +21,10 @@ func Test_GameService(t *testing.T) {
 func (suite *GameServiceTestSuite) SetupTest() {
 	dbConfig := conf.Database{
 		Host:     "localhost",
-		Port:     "5432",
+		Port:     "5440",
 		Database: "test_qilin",
 		User:     "postgres",
-		Password: "32330",
+		Password: "",
 	}
 
 	db, err := orm.NewDatabase(&dbConfig)

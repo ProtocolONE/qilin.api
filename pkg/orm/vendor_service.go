@@ -27,6 +27,9 @@ func validate(item *model.Vendor) error {
 	if len(item.Domain3) < 2 {
 		return errors.New("Domain is too short")
 	}
+	if strings.Index("0123456789", string(item.Domain3[0])) > -1 {
+		return errors.New("Domain is invalid")
+	}
 	if item.ManagerId < 1 {
 		return errors.New("ManagerId is invalid")
 	}
@@ -45,11 +48,12 @@ func (p *VendorService) UpdateVendor(item *model.Vendor) error {
 	if err := validate(item); err != nil {
 		return err
 	}
-	return p.db.Model(item).Update(
-		"name", item.Name,
-		"domain3", item.Domain3,
-		"email", item.Email,
-		).Error
+	return p.db.Model(item).
+		Updates(map[string]interface{}{
+			"name": item.Name,
+			"domain3": item.Domain3,
+			"email": item.Email}).
+		Error
 }
 
 func (p *VendorService) FindByID(id uint) (vendor model.Vendor, err error) {
