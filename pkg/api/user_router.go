@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
@@ -28,7 +29,8 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 	token := ctx.Get("user").(*jwt.Token)
 	userId := uuid.UUID{}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		userId, _ = uuid.FromBytes(claims["id"].([]byte))
+		data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
+		userId, _ = uuid.FromBytes(data)
 	}
 	if userId == uuid.Nil {
 		return ctx.JSON(http.StatusNotFound, "Invalid JWT Token")
