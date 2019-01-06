@@ -8,6 +8,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/orm"
 	"time"
 )
 
@@ -19,6 +20,8 @@ func InitUserRoutes(api *Server, service model.UserService) error {
 	userRouter := UserRouter{service: service}
 
 	api.AuthRouter.POST("/login", userRouter.login)
+	api.AuthRouter.POST("/register", userRouter.register)
+	api.AuthRouter.POST("/reset", userRouter.reset)
 	api.Router.GET("/me", userRouter.getAppState)
 
 	return nil
@@ -80,4 +83,34 @@ func (api *UserRouter) login(ctx echo.Context) error {
 	cookie.Path = "/"
 	ctx.SetCookie(cookie)
 	return ctx.JSON(http.StatusOK, result)
+}
+
+
+func (api *UserRouter) register(ctx echo.Context) error {
+	vals, err := ctx.FormParams()
+	if err != nil {
+		return err
+	}
+	result, err := api.service.Register(vals.Get("login"), vals.Get("password"))
+	if err != nil {
+		switch err {
+		case orm.ErrLoginAlreadyTaken:
+			return ctx.JSON(http.StatusBadRequest, err.Error())
+		default:
+			return ctx.JSON(http.StatusInternalServerError, "Server error")
+		}
+	}
+	return ctx.JSON(http.StatusOK, result.String())
+}
+
+func (api *UserRouter) reset(ctx echo.Context) error {
+	vals, err := ctx.FormParams()
+	if err != nil {
+		return err
+	}
+	err = api.service.ResetPassw(vals.Get("email"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+	return ctx.JSON(http.StatusOK, true)
 }

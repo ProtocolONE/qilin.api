@@ -7,14 +7,14 @@ import (
 
 type User struct {
 	ID			uuid.UUID 		`gorm:"type:uuid; primary_key; default:gen_random_uuid()"`
-	CreatedAt 	time.Time
-	UpdatedAt 	time.Time
+	CreatedAt 	time.Time		`gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt 	time.Time		`gorm:"default:CURRENT_TIMESTAMP"`
 	DeletedAt 	*time.Time 		`sql:"index"`
 
 	// User nickname for public display
-	Nickname string `bson:"name"`
-	Login string `bson:"login"`
-	Password string `bson:"password"`
+	Nickname string
+	Login string
+	Password string
 }
 
 type UserInfo struct {
@@ -35,9 +35,10 @@ type AppState struct {
 
 // UserService is a helper service class to interact with User.
 type UserService interface {
-	CreateUser(g *User) error
 	UpdateUser(g *User) error
 	FindByID(id uuid.UUID) (User, error)
 	FindByLoginAndPass(login, pass string) (User, error)
 	Login(login, pass string) (LoginResult, error)
+	Register(login, pass string) (uuid.UUID, error)
+	ResetPassw(email string) (error)
 }

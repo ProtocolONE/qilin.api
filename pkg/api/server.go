@@ -14,6 +14,7 @@ type ServerOptions struct {
 	Log          *logrus.Entry
 	Jwt          *conf.Jwt
 	Database     *orm.Database
+	Mailer		 Mailer
 }
 
 type Server struct {
@@ -54,7 +55,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	}))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
-	if err := server.setupRoutes(opts.Jwt); err != nil {
+	if err := server.setupRoutes(opts.Jwt, opts.Mailer); err != nil {
 		server.log.Fatal(err)
 	}
 
@@ -65,7 +66,7 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes(jwtConf *conf.Jwt) error {
+func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer Mailer) error {
 	gameService, err := orm.NewGameService(s.db)
 	if err != nil {
 		return err
@@ -75,7 +76,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt) error {
 		return err
 	}
 
-	userService, err := orm.NewUserService(s.db, jwtConf)
+	userService, err := orm.NewUserService(s.db, jwtConf, mailer)
 	if err != nil {
 		return err
 	}

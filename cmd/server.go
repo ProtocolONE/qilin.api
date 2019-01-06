@@ -30,11 +30,14 @@ func runServer(cmd *cobra.Command, args []string) {
 		logger.Fatal(db.Close())
 	}()
 
+	mailer := api.NewMailer(config.Mailer)
+
 	serverOptions := api.ServerOptions{
 		Log:          logger,
 		Jwt:          &config.Jwt,
 		ServerConfig: &config.Server,
 		Database:     db,
+		Mailer:       mailer,
 	}
 
 	server, err := api.NewServer(&serverOptions)

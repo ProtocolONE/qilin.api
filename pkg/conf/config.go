@@ -35,6 +35,15 @@ type GeoIP struct {
 	DBPath string
 }
 
+type Mailer struct {
+	ReplyTo		string
+	From		string
+	Host 		string
+	Port 		int
+	Username 	string
+	Password 	string
+}
+
 // Config the application's configuration
 type Config struct {
 	Server    ServerConfig
@@ -42,6 +51,7 @@ type Config struct {
 	Jwt       Jwt
 	GeoIP     GeoIP
 	LogConfig LoggingConfig
+	Mailer    Mailer
 }
 
 // LoadConfig loads the config from a file if specified, otherwise from the environment

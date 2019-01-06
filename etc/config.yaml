@@ -16,3 +16,8 @@ GeoIP:
 LogConfig:
   Level: "debug"
   ReportCaller: true
+Email:
+  Host: "localhost"
+  Port: 25
+  Username: "no-reply@protocol.one"
+  Password: "123"
