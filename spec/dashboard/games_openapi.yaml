@@ -1,0 +1,330 @@
+openapi: 3.0.0
+info:
+  description: "Qilin api "
+  version: "1.0.0"
+  title: "Qilin games dashboard API"
+  contact:
+    email: "roman.golenok@protocol.one"
+tags: 
+- name: "game"
+  description: "About game info"
+paths:
+  /api/v1/dashboard/games:
+    post:
+      tags:
+        - "game"
+      summary: "Create game"
+      operationId: "createGame"
+      requestBody:
+        description: "Technical name of object"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                name: 
+                  type: "string"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                    id: 
+                      type: "integer"
+                      description: "Id of game"
+        400:
+          description: "Invalid inputs" 
+
+    get:
+      tags: 
+      - "game"
+      summary: "Get list of games"
+      operationId: "listGames"
+      parameters:
+      - name: "offset"
+        in: query
+        description: "Pagination from"
+        schema:
+          type: "integer"
+        required: false
+      - name: "limit"
+        in: query
+        description: "Pagination to"
+        schema:
+          type: "integer"
+        required: false
+      - name: "name"
+        in: query
+        description: "Game name query filter"
+        schema:
+          type: "string"
+        required: false
+      - name: "genre"
+        in: query
+        description: "Game genre query filter"
+        schema:
+          type: "integer"
+        required: false
+      #TODO: уточнить. не совсем понятна логика фильтрации игр по ценнику (как работать с разными валютами)
+      - name: "price"
+        in: query
+        description: "Game price query filter"
+        schema:
+          type: "integer"
+        required: false
+      - name: "releaseDate"
+        in: query
+        description: "Game release date query filter"
+        schema:
+          type: "integer"
+        required: false
+      - name: "sort"
+        in: query
+        description: "Game name query filter"
+        schema:
+          type: "array"
+          items: 
+            type: "string"
+            enum:
+            - -genre
+            - +genre
+            - -releaseDate
+            - +releaseDate
+            - -price
+            - +price
+            - -name
+            - +name
+        required: false
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                  type: "array"
+                  items:
+                    $ref: "#/components/schemas/ShortGameInfo"
+  
+  /api/v1/dashboard/games/{gameId}:
+    put:
+      tags: 
+      - "game"
+      summary: "Change game info" 
+      description: ""
+      operationId: "changeGame"
+      requestBody:
+        description: "Game object that needs to be saved in store"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Game"
+      parameters: 
+      - name: "gameId"
+        in: "path"
+        schema:
+          type: "integer"
+          format: "Int64"
+        required: true
+        description: "Id of game to change"
+      
+      responses:
+        200:
+          description: OK
+        400:
+          description: "Invalid input"
+        404: 
+          description: NotFound
+          
+components:
+  schemas:
+    LanguageSupport:
+      type: object
+      properties: 
+        voice: 
+          type: "boolean"
+          default: false
+        interface:
+          type: "boolean"
+          default: false
+        subtitles:
+          type: "boolean"
+          default: false
+
+    #TODO: уточнить, будем ли хардкодить все возможные языки или сделаем словарь  
+    Languages:
+      type: object
+      properties: 
+        english: 
+          $ref: "#/components/schemas/LanguageSupport"
+        french: 
+          $ref: "#/components/schemas/LanguageSupport"
+        russian:
+          $ref: "#/components/schemas/LanguageSupport"
+        spanish:
+          $ref: "#/components/schemas/LanguageSupport"
+
+    Tag:
+      type: object
+      properties: 
+        id: 
+          type: "string"
+
+    Genre:
+      type: object
+      properties: 
+        id: 
+          type: "string"
+        name:
+          type: "string"
+          readOnly: true
+
+    Features:
+      type: object
+      properties: 
+        singlePlayer:
+          type: "boolean"
+          default: false
+        multiPlayer:
+          type: "boolean"
+          default: false
+        onlineMultiplayerPlayer:
+          type: "boolean"
+          default: false
+        localMultiplayerPlayer:
+          type: "boolean"
+          default: false
+        splitScreen:
+          type: "boolean"
+          default: false
+        mmo:
+          type: "boolean"
+          default: false
+        cooperative:
+          type: "boolean"
+          default: false
+        onlineCooperative:
+          type: "boolean"
+          default: false
+        localCooperative:
+          type: "boolean"
+          default: false
+        crossPlatform:
+          type: "boolean"
+          default: false
+        achievements:
+          type: "boolean"
+          default: false
+        cloudSaves:
+          type: "boolean"
+          default: false
+        controllers:
+          type: "string"
+          enum: 
+          - "not_supported"
+          - "partially_supported"
+          - "full_supported"
+          default: "not_supported"
+    
+    SupportPlatform:
+      type: object
+      properties: 
+        windows: 
+          type: "boolean"
+          default: true
+        macOs:
+          type: "boolean"
+          default: false
+        linux:
+          type: "boolean"
+          default: false
+    
+    MachineRequirements:
+      type: object
+      properties: 
+        system: 
+          type: "string"
+        processor:
+          type: "string"
+        graphics:
+          type: "string"
+        sound:
+          type: "string"
+        ram: 
+          type: "integer"
+        storage:
+          type: "integer"
+        other:
+          type: "string"
+
+    ShortGameInfo:
+      type: object
+      properties: 
+        # id of game. Used only in GET
+        id: 
+          type: "integer"
+          readOnly: true
+        technicalName: 
+          type: "string"
+          readOnly: true
+        #TODO: уточнить. Отдаем только ссылку на картинку или для иконки отдадим сразу base64 ?
+        icon:
+          type: "string"
+          readOnly: true
+        genre:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Genre"
+          readOnly: true
+        releaseDate:
+          type: "integer"
+          readOnly: true
+        # TODO: уточнить насчет цен. Они могут быть разные и по разному форматироваться. Массив или просто строка?
+        prices: 
+          type: "string"
+
+    Game:
+      type: object
+      properties:
+        # technical name of game that user use when creating game. Used only in GET
+        technicalName: 
+          type: "string"
+          readOnly: true
+        # non-localized title of game for end user 
+        title: 
+          type: "string"
+        # comma separated list of developers
+        developers:
+          type: "string"
+        # comma separated list of publishers
+        publishers: 
+          type: "string"
+        genre:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Genre"
+        tags: 
+          type: "array"
+          items: 
+            $ref: "#/components/schemas/Tag"
+        releaseDate:
+          type: "integer"
+          format: "Int64"
+        displayRemainingTime:
+          type: "boolean"
+          default: false
+        features:
+          $ref: "#/components/schemas/Features"
+        platforms:
+          $ref: "#/components/schemas/SupportPlatform"
+        minimalRequirements:
+          $ref: "#/components/schemas/MachineRequirements"
+        recommendedRequirements:
+          $ref: "#/components/schemas/MachineRequirements"
+        languages:
+          $ref: "#/components/schemas/Languages"
+      
