@@ -1,8 +1,10 @@
 package api
 
 import (
+	"encoding/base64"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
@@ -38,9 +40,8 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 	}
 	vendors, err := api.vendorService.GetAll(limit, offset)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Request vendors failed")
+		return err
 	}
-
 	return ctx.JSON(http.StatusOK, vendors)
 }
 
@@ -50,27 +51,26 @@ func (api *VendorRouter) get(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
 	vendor, err := api.vendorService.FindByID(id)
-
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Vendor not found")
 	}
-
 	return ctx.JSON(http.StatusOK, vendor)
 }
 
 func (api *VendorRouter) create(ctx echo.Context) error {
 	vendor := &model.Vendor{}
 	if err := ctx.Bind(vendor); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request param: "+err.Error())
+		return errors.Wrap(err, "Bind vendor obj")
 	}
 	// Assign to new vendor current user id as manager
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	managerId, _ := uuid.FromBytes(claims["id"].([]byte))
+	data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
+	managerId, _ := uuid.FromBytes(data)
 	vendor.ManagerId = &managerId
 
 	if err := api.vendorService.CreateVendor(vendor); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 	return ctx.JSON(http.StatusCreated, vendor)
 }
@@ -79,12 +79,12 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 	vendor := &model.Vendor{}
 
 	if err := ctx.Bind(vendor); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request param: "+err.Error())
+		return errors.Wrap(err, "Bind vendor obj")
 	}
 
 	err := api.vendorService.UpdateVendor(vendor)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Vendor update failed")
+		return err
 	}
 
 	return ctx.JSON(http.StatusOK, vendor)

@@ -15,6 +15,7 @@ type ServerConfig struct {
 	Port 				int
 	AllowOrigins 		[]string
 	AllowCredentials 	bool
+	Debug	 			bool
 }
 
 type Database struct {
@@ -36,12 +37,13 @@ type GeoIP struct {
 }
 
 type Mailer struct {
-	ReplyTo		string
-	From		string
-	Host 		string
-	Port 		int
-	Username 	string
-	Password 	string
+	ReplyTo				string
+	From				string
+	Host 				string
+	Port 				int
+	Username 			string
+	Password 			string
+	InsecureSkipVerify 	bool
 }
 
 // Config the application's configuration
@@ -51,7 +53,7 @@ type Config struct {
 	Jwt       Jwt
 	GeoIP     GeoIP
 	LogConfig LoggingConfig
-	Mailer    Mailer
+	Mailer  Mailer
 }
 
 // LoadConfig loads the config from a file if specified, otherwise from the environment

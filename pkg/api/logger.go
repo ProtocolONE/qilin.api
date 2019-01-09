@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
@@ -97,6 +98,10 @@ func logrusMiddlewareHandler(c echo.Context, next echo.HandlerFunc) error {
 	res := c.Response()
 	start := time.Now()
 	if err := next(c); err != nil {
+		// log errors with stack
+		if stack, ok := err.(fmt.Formatter); ok {
+			c.Logger().Error(fmt.Sprintf("%+v", stack))
+		}
 		c.Error(err)
 	}
 	stop := time.Now()

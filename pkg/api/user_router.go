@@ -3,12 +3,11 @@ package api
 import (
 	"encoding/base64"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
-	"qilin-api/pkg/orm"
 	"time"
 )
 
@@ -36,7 +35,7 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 		userId, _ = uuid.FromBytes(data)
 	}
 	if userId == uuid.Nil {
-		return ctx.JSON(http.StatusNotFound, "Invalid JWT Token")
+		return echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Token")
 	}
 
 	userObj, err := api.service.FindByID(userId)
@@ -64,16 +63,11 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 func (api *UserRouter) login(ctx echo.Context) error {
 	vals, err := ctx.FormParams()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Parse form")
 	}
 	result, err := api.service.Login(vals.Get("login"), vals.Get("password"))
 	if err != nil {
-		switch err {
-		case gorm.ErrRecordNotFound:
-			return ctx.JSON(http.StatusNotFound, "User not found")
-		default:
-			return ctx.JSON(http.StatusInternalServerError, "Server error")
-		}
+		return err
 	}
 
 	cookie := new(http.Cookie)
@@ -89,16 +83,11 @@ func (api *UserRouter) login(ctx echo.Context) error {
 func (api *UserRouter) register(ctx echo.Context) error {
 	vals, err := ctx.FormParams()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "when parse form in register")
 	}
-	result, err := api.service.Register(vals.Get("login"), vals.Get("password"))
+	result, err := api.service.Register(vals.Get("login"), vals.Get("password"), ctx.Request().Header.Get("Accept-Language"))
 	if err != nil {
-		switch err {
-		case orm.ErrLoginAlreadyTaken:
-			return ctx.JSON(http.StatusBadRequest, err.Error())
-		default:
-			return ctx.JSON(http.StatusInternalServerError, "Server error")
-		}
+		return err
 	}
 	return ctx.JSON(http.StatusOK, result.String())
 }
@@ -110,7 +99,7 @@ func (api *UserRouter) reset(ctx echo.Context) error {
 	}
 	err = api.service.ResetPassw(vals.Get("email"))
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, err.Error())
+		return err
 	}
 	return ctx.JSON(http.StatusOK, true)
 }

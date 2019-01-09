@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/sys"
 	"strconv"
 )
 
@@ -14,7 +15,7 @@ type ServerOptions struct {
 	Log          *logrus.Entry
 	Jwt          *conf.Jwt
 	Database     *orm.Database
-	Mailer		 Mailer
+	Mailer       sys.Mailer
 }
 
 type Server struct {
@@ -35,10 +36,10 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		db:           opts.Database,
 	}
 
+	server.echo.Debug = opts.ServerConfig.Debug
 	server.echo.Logger = Logger{opts.Log.Logger}
-	server.echo.Use(LoggerHandler)
+	server.echo.Use(LoggerHandler) // logs all http requests
 
-	server.echo.Use(middleware.Logger())
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowHeaders: []string{"authorization", "content-type"},
@@ -66,7 +67,7 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer Mailer) error {
+func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	gameService, err := orm.NewGameService(s.db)
 	if err != nil {
 		return err

@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:v="urn:schemas-microsoft-com:vml"
+      xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <!--[if gte mso 9]><xml>
+        <o:OfficeDocumentSettings>
+            <o:AllowPNG/>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+    </xml><![endif]-->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>XHTML Email Boilerplate</title>
+    <style type="text/css">
+        body {
+            mso-line-height-rule: exactly;
+            -webkit-text-size-adjust: none;
+            -ms-text-size-adjust: none;
+        }
+        a {
+            mso-line-height-rule: exactly;
+        }
+        table {
+            border-collapse: collapse;
+            padding: 0px !important;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        div[class=mobile_only] {
+            display: none;
+            height: 0;
+            max-height: 0;
+            overflow: hidden;
+        }
+        @media only screen and (max-width:480px) {
+            div[class=desktop_only],
+            div[class="mobile_only screen_max_640"] {
+                display: none;
+                height: 0;
+                max-height: 0;
+                overflow: hidden;
+            }
+            div[class="mobile_only screen_max_480"] {
+                display: block !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            div[class="mobile_only screen_max_480"] table {
+                display: table !important;
+            }
+        }
+        @media only screen and (min-width:481px) and (max-width:640px) {
+            div[class=desktop_only],
+            div[class="mobile_only screen_max_480"] {
+                display: none;
+                height: 0;
+                max-height: 0;
+                overflow: hidden;
+            }
+            div[class="mobile_only screen_max_640"] {
+                display: block !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            div[class="mobile_only screen_max_640"] table {
+                display: table !important;
+            }
+        }
+    </style>
+</head>
+
+<body style="width: 100%; margin: 0; padding: 0; -webkit-text-size-adjust: none; -ms-text-size-adjust: none; -webkit-font-smoothing: antialiased;">
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+    <tr>
+        <td valign="top">
+            {{ t .User.Lang "hello" }}
+            <p>
+            {{ t .User.Lang "to-reset-passwd-go-to-link-below" }}
+            <a href="{{ .ResetURL }}">{{ .ResetURL }}</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

@@ -3,6 +3,8 @@ package cmd
 import (
 	"qilin-api/pkg/api"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/sys"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 )
@@ -27,10 +29,14 @@ func runServer(cmd *cobra.Command, args []string) {
 	db.Init()
 
 	defer func() {
+		if err := recover(); err != nil {
+			logger.Error(err)
+			logger.Error(string(debug.Stack()))
+		}
 		logger.Fatal(db.Close())
 	}()
 
-	mailer := api.NewMailer(config.Mailer)
+	mailer := sys.NewMailer(config.Mailer)
 
 	serverOptions := api.ServerOptions{
 		Log:          logger,

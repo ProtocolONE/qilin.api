@@ -27,4 +27,4 @@ spec:
       - path: {{ .Values.ingress.path }}
         backend:
           serviceName: {{ $endpointSvc }}
-          servicePort: {{ $endpoint.service.port }}
+          servicePort: {{ $endpoint.sys.port }}

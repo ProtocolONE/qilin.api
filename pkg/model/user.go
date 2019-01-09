@@ -15,12 +15,14 @@ type User struct {
 	Nickname string
 	Login string
 	Password string
+	Lang string					`gorm:"column:lang; default:ru"`
 }
 
 type UserInfo struct {
 	Id uuid.UUID		`json:"id"`
 	Nickname string		`json:"nickname"`
 	Avatar string		`json:"avatar"`
+	Lang string			`json:"lang"`
 }
 
 type LoginResult struct {
@@ -37,8 +39,7 @@ type AppState struct {
 type UserService interface {
 	UpdateUser(g *User) error
 	FindByID(id uuid.UUID) (User, error)
-	FindByLoginAndPass(login, pass string) (User, error)
 	Login(login, pass string) (LoginResult, error)
-	Register(login, pass string) (uuid.UUID, error)
+	Register(login, pass, lang string) (uuid.UUID, error)
 	ResetPassw(email string) (error)
 }

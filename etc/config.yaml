@@ -2,6 +2,7 @@ Server:
   Port: 3001
   AllowOrigins: ["http://localhost:8080"]
   AllowCredentials: true
+  Debug: true
 Database:
   Host: localhost
   Port: 5440
@@ -15,9 +16,12 @@ GeoIP:
   DBPath:
 LogConfig:
   Level: "debug"
-  ReportCaller: true
-Email:
+  ReportCaller: false
+Mailer:
   Host: "localhost"
   Port: 25
+  From:
   Username: "no-reply@protocol.one"
   Password: "123"
+  ReplyTo:
+  InsecureSkipVerify: true

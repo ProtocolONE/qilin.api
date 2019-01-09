@@ -1,34 +1,47 @@
 package orm
 
 import (
-	"errors"
+	"bytes"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
+	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
-	"log"
-	"qilin-api/pkg/api"
+	"html/template"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
-)
-
-var (
-	ErrLoginAlreadyTaken = errors.New("Login already taken")
-	ErrUserNotFound = errors.New("User not found")
-	ErrSystemError = errors.New("System error")
+	"qilin-api/pkg/sys"
 )
 
 type UserService struct {
-	db 				*gorm.DB
-	jwt_signMethod	jwt.SigningMethod
-	jwt_signSecret	[]byte
-	mailer			api.Mailer
+	db             *gorm.DB
+	jwt_signMethod jwt.SigningMethod
+	jwt_signSecret []byte
+	templates      *template.Template
+	mailer         sys.Mailer
+	langMap        sys.LangMap
 }
 
-func NewUserService(db *Database, jwtConf *conf.Jwt, mailer api.Mailer) (*UserService, error) {
+func NewUserService(db *Database, jwtConf *conf.Jwt, mailer sys.Mailer) (*UserService, error) {
+
+	langMap, err := sys.NewLangMap("locale/*.json")
+	if err != nil {
+		return nil, errors.Wrap(err, "loading lang files")
+	}
+
+	templates, err := template.New("").
+		Funcs(langMap.GetTemplFunc()).
+		ParseGlob("templates/*.gohtml")
+	if err != nil {
+		return nil, errors.Wrap(err, "loading templates")
+	}
+
 	return &UserService{db.database,
 		jwt.GetSigningMethod(jwtConf.Algorithm),
 		jwtConf.SignatureSecret,
-		mailer, }, nil
+		templates,
+		mailer,
+		langMap}, nil
 }
 
 func (p *UserService) UpdateUser(u *model.User) error {
@@ -37,16 +50,10 @@ func (p *UserService) UpdateUser(u *model.User) error {
 
 func (p *UserService) FindByID(id uuid.UUID) (user model.User, err error) {
 	err = p.db.First(&user, model.User{ID: id}).Error
-	return
-}
-
-func (p *UserService) FindByLoginAndPass(login, pass string) (user model.User, err error) {
-	err = p.db.First(&user, "login = ? and password = ?", login, pass).Error
 	if err == gorm.ErrRecordNotFound {
-		err = ErrUserNotFound
-	} else {
-		log.Println(err)
-		err = ErrSystemError
+		return user, echo.NewHTTPError(404, "User not found")
+	} else if err != nil {
+		return user, errors.Wrap(err, "search user by id")
 	}
 	return
 }
@@ -55,9 +62,11 @@ func (p *UserService) Login(login, pass string) (result model.LoginResult, err e
 
 	user := model.User{}
 
-	user, err = p.FindByLoginAndPass(login, pass)
-	if err != nil {
-		return result, err
+	err = p.db.First(&user, "login = ? and password = ?", login, pass).Error
+	if err == gorm.ErrRecordNotFound {
+		return result, echo.NewHTTPError(404, "User not found")
+	} else if err != nil {
+		return result, errors.Wrap(err, "when searching user by login and passwd")
 	}
 
 	token := jwt.NewWithClaims(p.jwt_signMethod, jwt.MapClaims{
@@ -66,49 +75,60 @@ func (p *UserService) Login(login, pass string) (result model.LoginResult, err e
 
 	result.AccessToken, err = token.SignedString(p.jwt_signSecret)
 	if err != nil {
-		log.Println(err)
-		return result, ErrSystemError
+		return result, errors.Wrap(err, "when signing token")
 	}
 
 	result.User.Id = user.ID
 	result.User.Nickname = user.Nickname
+	result.User.Lang = user.Lang
 	//result.User.Avatar = user.Avatar
 
 	return result, nil
 }
 
-func (p *UserService) Register(login, pass string) (userId uuid.UUID, err error) {
-
+func (p *UserService) Register(login, pass, lang string) (userId uuid.UUID, err error) {
 	user := model.User{}
 
 	err = p.db.First(&user, "login = ?", login).Error
 	if err == nil {
-		return uuid.Nil, ErrLoginAlreadyTaken
+		return uuid.Nil, echo.NewHTTPError(404, "User not found")
 	}
 
 	user.Login = login
 	user.Password = pass
 	user.Nickname = login
+	user.Lang = lang
 	user.ID = uuid.NewV4()
 
 	err = p.db.Create(&user).Error
 	if err != nil {
-		log.Println(err)
-		return uuid.Nil, ErrSystemError
+		return uuid.Nil, errors.Wrap(err, "by insert new user")
 	}
 
 	return user.ID, nil
+}
+
+type templ_ResetPasswd struct {
+	User		*model.User
+	ResetURL	string
 }
 
 func (p *UserService) ResetPassw(email string) (err error) {
 	user := model.User{}
 
 	err = p.db.First(&user, "login = ?", email).Error
-	if err == nil {
-		return ErrUserNotFound
+	if err != nil {
+		return echo.NewHTTPError(404, "User not found")
 	}
 
-	err = p.mailer.Send(user.Login, "subject", "body")
+	body := bytes.Buffer{}
+	err = p.templates.ExecuteTemplate(&body, "reset-passwd.gohtml", templ_ResetPasswd{&user, "http://localhost/"})
+	if err != nil {
+		return errors.Wrap(err, "when rendering template in reset password")
+	}
+	subject := p.langMap.Locale(user.Lang, "reset-password")
+
+	err = p.mailer.Send(user.Login, subject, body.String())
 
 	return nil
 }

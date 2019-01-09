@@ -16,6 +16,7 @@ type Vendor struct {
 	Domain3 string 				`gorm:"column:domain3; not null;unique"`
 	// Main email for notifications and bills
 	Email string 				`gorm:"column:email; not null;unique"`
+	HowManyProducts string		`gorm:"column:hawmanyproducts; not null;"`
 
 	Manager 	User 				`gorm:"foreignkey:ManagerId; association_foreignkey:Refer"`
 	ManagerId 	*uuid.UUID			`gorm:"column:manager_id; type:uuid"`
