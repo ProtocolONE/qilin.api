@@ -11,11 +11,11 @@ metadata:
     heritage: {{ .Release.Service }}
     role: {{ $deployment.role }}
 spec:
-  type: {{ $deployment.service.type }}
+  type: {{ $deployment.sys.type }}
   ports:
-  - port: {{ $deployment.service.port }}
+  - port: {{ $deployment.sys.port }}
     targetPort: {{ $deployment.port }}
-    protocol: {{ $deployment.service.protocol }}
+    protocol: {{ $deployment.sys.protocol }}
   selector:
     app: {{ .Chart.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
