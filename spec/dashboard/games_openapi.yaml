@@ -349,43 +349,24 @@ components:
 
     Features:
       type: object
-      properties: 
-        singlePlayer:
-          type: "boolean"
-          default: false
-        multiPlayer:
-          type: "boolean"
-          default: false
-        onlineMultiplayerPlayer:
-          type: "boolean"
-          default: false
-        localMultiplayerPlayer:
-          type: "boolean"
-          default: false
-        splitScreen:
-          type: "boolean"
-          default: false
-        mmo:
-          type: "boolean"
-          default: false
-        cooperative:
-          type: "boolean"
-          default: false
-        onlineCooperative:
-          type: "boolean"
-          default: false
-        localCooperative:
-          type: "boolean"
-          default: false
-        crossPlatform:
-          type: "boolean"
-          default: false
-        achievements:
-          type: "boolean"
-          default: false
-        cloudSaves:
-          type: "boolean"
-          default: false
+      properties:
+        common:
+          type: array
+          items: 
+            type: string
+            enum:
+            - singlePlayer
+            - multiPlayer
+            - onlineMultiplayerPlayer
+            - localMultiplayerPlayer
+            - splitScreen
+            - mmo
+            - cooperative
+            - onlineCooperative
+            - localCooperative
+            - crossPlatform
+            - achievements
+            - cloudSaves
         controllers:
           type: "string"
           enum: 
