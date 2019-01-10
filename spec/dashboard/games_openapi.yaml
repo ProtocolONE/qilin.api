@@ -171,6 +171,25 @@ paths:
                     $ref: "#/components/schemas/ShortGameInfo"
   
   /api/v1/dashboard/games/{gameId}:
+    delete:
+      tags: 
+      - "game"
+      summary: "Delete game" 
+      description: ""
+      operationId: "deleteGame"
+      parameters: 
+      - name: "gameId"
+        in: "path"
+        schema:
+          type: string
+        required: true
+        description: "Id of game to remove"
+      responses:
+        200: 
+          description: OK
+        404:
+          description: NotFound
+        
     put:
       tags: 
       - "game"
@@ -201,7 +220,25 @@ paths:
           description: NotFound
 
   /api/v1/dashboard/games/{gameId}/descriptions:
+    get:
+      tags:
+      - game
+      parameters:
+      - name: "gameId"
+        in: "path"
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Description"
     post:
+      tags:
+      - game
       parameters:
       - name: "gameId"
         in: "path"
