@@ -8,7 +8,68 @@ info:
 tags: 
 - name: "game"
   description: "About game info"
+
 paths:
+
+  /api/v1/dashboard/genres:
+    get:
+      parameters:
+        - name: name
+          in: query
+          description: "Filter genre name"
+          required: false
+          schema:
+            type: string
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Genre"
+
+  /api/v1/dashboard/tags:
+    get:
+      parameters:
+        - name: name
+          in: query
+          description: "Filter tag name"
+          required: false
+          schema:
+            type: string
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+
   /api/v1/dashboard/games:
     post:
       tags:
@@ -127,8 +188,7 @@ paths:
       - name: "gameId"
         in: "path"
         schema:
-          type: "integer"
-          format: "Int64"
+          type: string
         required: true
         description: "Id of game to change"
       
@@ -139,9 +199,76 @@ paths:
           description: "Invalid input"
         404: 
           description: NotFound
-          
+
+  /api/v1/dashboard/games/{gameId}/descriptions:
+    post:
+      parameters:
+      - name: "gameId"
+        in: "path"
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Description"
+      responses:
+        200:
+          description: OK
+    
 components:
   schemas:
+    Description:
+      type: object
+      properties:
+        tagline:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            en: "Short description"
+            ru: "Короткое описание"
+        description:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            en: "Full Description"
+            ru: "полное описание"
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+        additionalDescription:
+          type: string
+        gameSite:
+          type: string
+          format: url
+        socials:
+          type: object
+          items:
+            type: string
+          example:
+            facebook: "https://facebook.com/yougame"
+            twitter: "https://twitter.com/yougame"
+
+    Review:
+      type: object
+      properties:
+        pressName: 
+          type: string
+          example: "IGN"
+        link:
+          type: string
+        score:
+          type: string
+          example: "9 / 10"
+        #TODO: уточнить не должна ли быть цитата локализована?
+        quote:
+          type: string
+          example: "Buy Skyrim (c)"
+
     LanguageSupport:
       type: object
       properties: 
@@ -266,7 +393,7 @@ components:
       properties: 
         # id of game. Used only in GET
         id: 
-          type: "integer"
+          type: string
           readOnly: true
         technicalName: 
           type: "string"
