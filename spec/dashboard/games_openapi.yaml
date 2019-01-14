@@ -598,7 +598,133 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'      
+  
+  /api/v1/games/{id}/discounts:  
+    get:
+      tags:
+        - price
+      summary: "Gets discounts for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid      
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:  
+              schema:
+                type: object
+                properties:
+                  discounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Discount'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'     
+    
+    post:
+      tags:
+        - price
+      summary: "Create new discount for game"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid     
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discount'
+      responses:
+        201:
+          description: Created
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'              
 
+    put:
+      tags:
+        - price
+      summary: "Change discount for game"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid     
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discount'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'           
+          
+    delete:
+      tags:
+        - price
+      summary: "Remove discount for game"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid     
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'                  
+  
 components:
   securitySchemes:
     bearerAuth:            
@@ -708,6 +834,43 @@ components:
               price:
                 type: number
                 format: float
+        
+    Discount:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "028536a6-3e8e-4926-9669-1cd8f31d8f61"
+        title:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "WINTER SALE"
+            ru: "ЗИМНЯЯ РАСПРОДАЖА"
+        description:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "SPECIAL OFFER"
+            ru: "СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ"
+        date:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+              example: "2019-07-21T17:32:28Z"
+            end:
+              type: string
+              format: date-time
+              example: "2019-08-21T17:32:28Z"
+        rate:
+          type: number
+          format: float
+          example: 50
 
     Media:
       type: object
