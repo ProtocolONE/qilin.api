@@ -103,6 +103,7 @@ review:
         --namespace $CI_ENVIRONMENT_SLUG'
   only:
     - branches
+  when: manual
   except:
     - master
 
