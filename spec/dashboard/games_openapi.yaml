@@ -595,6 +595,104 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'      
 
+
+  /api/v1/games/{id}/achievment:
+    post:
+      tags:
+        - achievments
+      summary: "Create new achievment"
+      operationId: "createAchievment"
+      requestBody:
+        description: "New achievment object"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Achievement'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Achievement"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/games/{id}/achievments:
+    get:
+      tags:
+        - achievments
+      summary: "Gets all achievments for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Achievement'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - achievments
+      summary: "Change achievement for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Achievement'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
 components:
   securitySchemes:
     bearerAuth:            
@@ -1196,6 +1294,42 @@ components:
               type: "array"
               items: 
                 type: string
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        apiKey:
+          type: string
+        name:
+          type: string
+        descr:
+          type: string
+        score:
+          type: integer
+        scoreMin:
+          type: integer
+        scoreMax:
+          type: integer
+        iconLocked:
+          type: string
+          format: url
+        iconUnlocked:
+          type: string
+          format: url
+        hidden:
+          type: boolean
+          default: false
+        hasProgress:
+          type: boolean
+          default: true
+        releaseDate:
+          type: string
+          format: "date-time"
+          readOnly: true
 
 security:
   - bearerAuth: []
