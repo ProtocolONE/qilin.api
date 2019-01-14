@@ -10,27 +10,20 @@ tags:
   description: "About game info"
 
 paths:
-
-  /api/v1/dashboard/genres:
+  /api/v1/genre:
     get:
+      tags: 
+      - "common"
+      summary: "Get list of genre"
       parameters:
-        - name: name
+        - name: title
           in: query
-          description: "Filter genre name"
+          description: "Filter genre by title"
           required: false
           schema:
             type: string
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
       responses:
         200:
           description: OK
@@ -40,26 +33,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Genre"
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalError'
 
-  /api/v1/dashboard/tags:
+  /api/v1/tags:
     get:
+      tags: 
+      - "common"
+      summary: "Get list of tags"
       parameters:
-        - name: name
+        - name: title
           in: query
-          description: "Filter tag name"
+          description: "Filter tags by title"
           required: false
           schema:
             type: string
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
       responses:
         200:
           description: OK
@@ -69,22 +61,26 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Tag"
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalError'
 
-  /api/v1/dashboard/games:
+  /api/v1/games:
     post:
       tags:
         - "game"
       summary: "Create game"
       operationId: "createGame"
       requestBody:
-        description: "Technical name of object"
+        description: "Internal name of object"
         required: true
         content:
           application/json:
             schema:
               type: object
               properties: 
-                name: 
+                internalName: 
                   type: "string"
       responses:
         201:
@@ -98,7 +94,17 @@ paths:
                       type: "integer"
                       description: "Id of game"
         400:
-          description: "Invalid inputs" 
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
 
     get:
       tags: 
@@ -106,42 +112,35 @@ paths:
       summary: "Get list of games"
       operationId: "listGames"
       parameters:
-      - name: "offset"
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
+      - name: "technicalName"
         in: query
-        description: "Pagination from"
-        schema:
-          type: "integer"
-        required: false
-      - name: "limit"
-        in: query
-        description: "Pagination to"
-        schema:
-          type: "integer"
-        required: false
-      - name: "name"
-        in: query
-        description: "Game name query filter"
+        description: "Filter games by technicalName"
         schema:
           type: "string"
         required: false
       - name: "genre"
         in: query
-        description: "Game genre query filter"
+        description: "Filter games by genre"
         schema:
-          type: "integer"
+          type: "string"
         required: false
-      #TODO: уточнить. не совсем понятна логика фильтрации игр по ценнику (как работать с разными валютами)
       - name: "price"
         in: query
-        description: "Game price query filter"
+        description: "Filter games by price"
         schema:
-          type: "integer"
+          type: "number"
+          format: float
+        example: 59.99
         required: false
       - name: "releaseDate"
         in: query
-        description: "Game release date query filter"
+        description: "Filter games by release date"
         schema:
-          type: "integer"
+          type: "string"
+          format: "date-time"
+        example: "2017-07-21T17:32:28Z"
         required: false
       - name: "sort"
         in: query
@@ -169,8 +168,45 @@ paths:
                   type: "array"
                   items:
                     $ref: "#/components/schemas/ShortGameInfo"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        500:
+          $ref: '#/components/responses/InternalError'
   
-  /api/v1/dashboard/games/{gameId}:
+  /api/v1/games/{id}:
+    get:
+      tags: 
+        - "game"
+      summary: "Get game info" 
+      description: ""
+      parameters: 
+      - name: "id"
+        in: "path"
+        schema:
+          type: string
+        required: true
+        description: "Id of game"
+      responses:
+        200: 
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameInfo"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+          
+
     delete:
       tags: 
       - "game"
@@ -178,7 +214,7 @@ paths:
       description: ""
       operationId: "deleteGame"
       parameters: 
-      - name: "gameId"
+      - name: "id"
         in: "path"
         schema:
           type: string
@@ -187,8 +223,16 @@ paths:
       responses:
         200: 
           description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
         404:
-          description: NotFound
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
         
     put:
       tags: 
@@ -202,33 +246,58 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Game"
+              $ref: "#/components/schemas/ChangeGame"
       parameters: 
-      - name: "gameId"
+      - name: "id"
         in: "path"
         schema:
           type: string
+          format: uuid
         required: true
         description: "Id of game to change"
-      
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: true
       responses:
-        200:
+        200: 
           description: OK
         400:
-          description: "Invalid input"
-        404: 
-          description: NotFound
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
 
-  /api/v1/dashboard/games/{gameId}/descriptions:
+  /api/v1/games/{id}/descriptions:
     get:
       tags:
       - game
+      summary: "Gets additional descriptions of game"
       parameters:
-      - name: "gameId"
+      - name: "id"
         in: "path"
         required: true
         schema:
           type: string
+          format: uuid
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: true
+        example: "2019-01-11T17:32:28Z"      
       responses:
         200:
           description: OK
@@ -236,11 +305,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Description"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'          
+        500:
+          $ref: '#/components/responses/InternalError'
+
     post:
       tags:
       - game
+      summary: "Change descriptions"
       parameters:
-      - name: "gameId"
+      - name: "id"
         in: "path"
         required: true
         schema:
@@ -251,11 +334,98 @@ paths:
             schema:
               $ref: "#/components/schemas/Description"
       responses:
-        200:
+        200: 
           description: OK
-    
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
 components:
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 409
+            message: "Resource with same unique id already exists"
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 422
+            message: "Fields required: 'title, description'"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  parameters:
+    Offset:  
+      in: query
+      name: offset
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: The number of items to skip before starting to collect the result set.
+    Limit:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+      description: The numbers of items to return.
+
   schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
     Description:
       type: object
       properties:
@@ -319,32 +489,52 @@ components:
           type: "boolean"
           default: false
 
-    #TODO: уточнить, будем ли хардкодить все возможные языки или сделаем словарь  
     Languages:
       type: object
-      properties: 
-        english: 
-          $ref: "#/components/schemas/LanguageSupport"
-        french: 
-          $ref: "#/components/schemas/LanguageSupport"
-        russian:
-          $ref: "#/components/schemas/LanguageSupport"
-        spanish:
-          $ref: "#/components/schemas/LanguageSupport"
+      additionalProperties:
+        $ref: "#/components/schemas/LanguageSupport"
+      example:
+        en: 
+          voice: true
+          interface: true
+          subtitles: true
+        ru:
+          voice: false
+          interface: true
+          subtitles: true
+        fr:
+          voice: false
+          interface: false
+          subtitles: true
 
     Tag:
       type: object
       properties: 
         id: 
           type: "string"
+          readOnly: true
+        title:
+          type: object
+          additionalProperties:
+              type: string
+          readOnly: true
+          example:
+            en: multiplayer
+            ru: мультиплеер
 
     Genre:
       type: object
       properties: 
         id: 
           type: "string"
-        name:
-          type: "string"
+          readOnly: true
+        title:
+          type: object
+          additionalProperties:
+              type: string
+          example:
+            en: Action
+            ru: Экшен
           readOnly: true
 
     Features:
@@ -393,23 +583,36 @@ components:
       properties: 
         system: 
           type: "string"
+          example: "Windows"
         processor:
           type: "string"
+          example: "Intel i9"
         graphics:
           type: "string"
+          example: "NVIDIA GeForce RTX2080Ti or similar"
         sound:
           type: "string"
         ram: 
           type: "integer"
+          example: 4
+        ramDimension:
+          type: string
+          enum:
+            - MB
+            - GB
         storage:
           type: "integer"
+        storageDimension:
+          type: string
+          enum:
+            - MB
+            - GB
         other:
           type: "string"
 
     ShortGameInfo:
       type: object
       properties: 
-        # id of game. Used only in GET
         id: 
           type: string
           readOnly: true
@@ -426,13 +629,25 @@ components:
             $ref: "#/components/schemas/Genre"
           readOnly: true
         releaseDate:
-          type: "integer"
-          readOnly: true
-        # TODO: уточнить насчет цен. Они могут быть разные и по разному форматироваться. Массив или просто строка?
-        prices: 
           type: "string"
+          format: "date-time"
+          readOnly: true
+        prices: 
+          $ref: "#/components/schemas/Price"
 
-    Game:
+    Price:
+      type: object
+      properties:
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+      example:
+        price: 59.99
+        currency: USD
+
+    BaseGame:
       type: object
       properties:
         # technical name of game that user use when creating game. Used only in GET
@@ -448,17 +663,9 @@ components:
         # comma separated list of publishers
         publishers: 
           type: "string"
-        genre:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/Genre"
-        tags: 
-          type: "array"
-          items: 
-            $ref: "#/components/schemas/Tag"
         releaseDate:
-          type: "integer"
-          format: "Int64"
+          type: "string"
+          format: "date-time"
         displayRemainingTime:
           type: "boolean"
           default: false
@@ -466,10 +673,40 @@ components:
           $ref: "#/components/schemas/Features"
         platforms:
           $ref: "#/components/schemas/SupportPlatform"
-        minimalRequirements:
-          $ref: "#/components/schemas/MachineRequirements"
-        recommendedRequirements:
-          $ref: "#/components/schemas/MachineRequirements"
+        requirements:
+          type: object
+          properties:
+            minimal: 
+              $ref: "#/components/schemas/MachineRequirements"
+            recommended: 
+              $ref: "#/components/schemas/MachineRequirements"
         languages:
           $ref: "#/components/schemas/Languages"
-      
+
+    GameInfo:
+      allOf:
+        - $ref: '#/components/schemas/BaseGame'
+        - type: object
+          properties:
+            genre:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Genre"
+            tags: 
+              type: "array"
+              items: 
+                $ref: "#/components/schemas/Tag"
+
+    ChangeGame:
+      allOf:
+        - $ref: '#/components/schemas/BaseGame'
+        - type: object
+          properties:
+            genre:
+              type: "array"
+              items: 
+                type: string
+            tags: 
+              type: "array"
+              items: 
+                type: string
