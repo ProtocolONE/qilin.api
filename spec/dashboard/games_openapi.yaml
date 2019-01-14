@@ -1484,8 +1484,9 @@ components:
           type: string
           format: uuid
           readOnly: true
-        apiKey:
+        internalName:
           type: string
+          example: "saint_blood_cup"
         name:
           type: object
           additionalProperties:
