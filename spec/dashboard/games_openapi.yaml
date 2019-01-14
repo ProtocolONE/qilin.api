@@ -1433,6 +1433,10 @@ components:
                   $ref: "#/components/schemas/MachineRequirements"                  
         languages:
           $ref: "#/components/schemas/Languages"
+        achievementOnProd:
+          type: boolean
+          default: false
+          description: "Enables achievements on production"
 
     GameInfo:
       allOf:
@@ -1462,6 +1466,17 @@ components:
               items: 
                 type: string
 
+    Score:
+      type: object
+      format: json
+      properties:
+        current:
+          type: integer
+        min:
+          type: integer
+        max:
+          type: integer
+
     Achievement:
       type: object
       properties:
@@ -1472,15 +1487,21 @@ components:
         apiKey:
           type: string
         name:
-          type: string
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "New item"
+            ru: "Новый предмет"
         descr:
-          type: string
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "Description of new item"
+            ru: "Описание нового предмета"
         score:
-          type: integer
-        scoreMin:
-          type: integer
-        scoreMax:
-          type: integer
+          $ref: "#/components/schemas/Score"
         iconLocked:
           type: string
           format: url
