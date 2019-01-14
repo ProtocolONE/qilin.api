@@ -145,6 +145,7 @@ paths:
       - name: "sort"
         in: query
         description: "Game name query filter"
+        example: -genre,-releaseDate,+name
         schema:
           type: "array"
           items: 
@@ -260,7 +261,7 @@ paths:
         schema: 
           type: string
           format: date-time
-        required: true
+        required: false
       responses:
         200: 
           description: OK
@@ -313,8 +314,6 @@ paths:
           $ref: '#/components/responses/Forbidden'                
         404:
           $ref: '#/components/responses/NotFound'
-        409:
-          $ref: '#/components/responses/Conflict'          
         500:
           $ref: '#/components/responses/InternalError'
 
@@ -328,6 +327,12 @@ paths:
         required: true
         schema:
           type: string
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false      
       requestBody:
         content:
           application/json:
@@ -344,10 +349,252 @@ paths:
           $ref: '#/components/responses/Forbidden'                
         404:
           $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'          
         422:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'
+
+  /api/v1/games/{id}/ratings:
+    get:
+      tags:
+        - ratings
+      summary: Get list of ratings for game
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:  
+              schema:
+                type: object
+                properties:
+                  ESRB:
+                    $ref: '#/components/schemas/CommonRating'
+                  PEGI:
+                    $ref: '#/components/schemas/CommonRating'
+                  BBFC:
+                    $ref: '#/components/schemas/CommonRating'
+                  USK:
+                    $ref: '#/components/schemas/CommonRating'
+                  CERO:
+                    $ref: '#/components/schemas/CommonRating'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - ratings
+      summary: Post ratings for game
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false        
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ESRB:
+                  $ref: '#/components/schemas/ESRB'
+                PEGI:
+                  $ref: '#/components/schemas/PEGI'
+                BBFC:
+                  $ref: '#/components/schemas/BBFC'
+                USK:
+                  $ref: '#/components/schemas/USK'
+                CERO:
+                  $ref: '#/components/schemas/CERO'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+  
+  /api/v1/descriptors:
+    get:
+      tags:
+        - common
+      summary: Gets list of descriptors
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Descriptor'
+        401:
+          $ref: '#/components/responses/Unauthorized'           
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/games/{id}/media:
+    get:
+      tags:
+        - media
+      summary: "Gets media for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid      
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:  
+              schema:
+                $ref: '#/components/schemas/Media'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'            
+    post:
+      tags:
+        - media
+      summary: "Change media for game"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Media'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'                    
+  
+  /api/v1/games/{id}/prices:  
+    get:
+      tags:
+        - price
+      summary: "Gets prices for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid      
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:  
+              schema:
+                type: object
+                properties:
+                  prices:
+                    $ref: '#/components/schemas/Prices'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'     
+    
+    post:
+      tags:
+        - price
+      summary: "Change prices for game"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid     
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Prices'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'      
 
 components:
   responses:
@@ -416,6 +663,226 @@ components:
       description: The numbers of items to return.
 
   schemas:
+    Prices:
+      type: object
+      properties:
+        default:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum: 
+              - USD
+              - EUR
+              - RUR
+            price:
+              type: number
+              format: float
+        preOrder:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date-time
+            enabled:
+              type: boolean
+              default: false
+        prices:
+          type: array
+          items:
+            type: object
+            properties:
+              currency: 
+                type: string
+              vat: 
+                type: number
+              price:
+                type: number
+                format: float
+
+    Media:
+      type: object
+      properties:
+        coverImage:
+          type: object
+          additionalProperties:
+            type: string
+            format: uri
+          example:
+            en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+            ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+        coverVideo:
+          type: object
+          additionalProperties:
+            type: string
+            format: uri
+          example:
+            en: http://www.example.com/video/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+            ru: http://www.example.com/video/30083025-fe0c-4a22-b0a7-569ab6cee50b
+        trailers:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+              format: uri
+          example:
+            en:
+              - http://www.example.com/video/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+              - http://www.example.com/video/30083025-fe0c-4a22-b0a7-569ab6cee50b
+            ru: 
+              - http://www.example.com/video/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+              - http://www.example.com/video/30083025-fe0c-4a22-b0a7-569ab6cee50b
+        store:
+          type: object
+          properties:
+            special:
+              type: object
+              additionalProperties:
+                type: string
+                format: uri
+              example:
+                en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+                ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+            friends:
+              type: object
+              additionalProperties:
+                type: string
+                format: uri
+              example:
+                en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+                ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+        capsule:
+          type: object
+          properties:
+            generic:
+              additionalProperties:
+                type: string
+                format: uri
+              example:
+                en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+                ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+
+    Descriptor:
+      type: object
+      properties:
+        id: 
+          type: integer
+        title:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            en: Blood
+            ru: Кровь
+
+    CommonRating:
+      type: object
+      properties:
+        displayOnlineNotice: 
+          type: boolean
+          default: false
+        showAgeRestrict:
+          type: boolean
+          default: false
+        ageRestrict:
+          type: integer
+          
+    
+    PostRating: 
+      allOf:
+      - $ref: '#/components/schemas/CommonRating'
+      - type: object
+        properties:
+          descriptiors:
+            type: array
+            items:
+              type: integer
+    
+    ESRB:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - EC
+              - E
+              - E10+
+              - T
+              - M
+              - AO
+              - RP
+    
+    PEGI:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - 3
+              - 7
+              - 12
+              - 16
+              - 18
+
+    BBFC:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - U
+              - PG
+              - 12
+              - 15
+              - 18
+              - R18
+
+    USK:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - USK
+              - 0
+              - 6
+              - 12
+              - 16
+              - 18
+
+    CERO:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - A
+              - B
+              - C
+              - D
+              - Z
+
+    Rating:
+      allOf:
+      - $ref: '#/components/schemas/CommonRating'
+      - type: object
+        properties:
+          descriptiors:
+            type: array
+            items:
+              $ref: '#/components/schemas/Descriptor'
+
     Error:
       type: object
       properties:
