@@ -84,18 +84,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GameInfo'
+              type: object
+              properties:
+                internalName:
+                  type: string
+                  example: "MEGA PUBG CLONE"
       responses:
         201:
           description: Created
           content:
             application/json:
               schema:
-                  type: object
-                  properties:
-                    id: 
-                      type: "integer"
-                      description: "Id of game"
+                $ref: '#/components/schemas/GameInfo'
         400:
           $ref: '#/components/responses/BadRequest'
         401:
