@@ -9,6 +9,10 @@ tags:
 - name: "game"
   description: "About game info"
 
+servers:
+  - url: https://qilinapi.tst.protocol.one
+    description: Master test server
+
 paths:
   /api/v1/genre:
     get:
