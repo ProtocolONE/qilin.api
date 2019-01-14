@@ -61,6 +61,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Tag"
+        400:
+          $ref: '#/components/responses/BadRequest'                  
         401:
           $ref: '#/components/responses/Unauthorized'
         500:
@@ -73,15 +75,12 @@ paths:
       summary: "Create game"
       operationId: "createGame"
       requestBody:
-        description: "Internal name of object"
+        description: "Internal name of game"
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties: 
-                internalName: 
-                  type: "string"
+              $ref: '#/components/schemas/GameInfo'
       responses:
         201:
           description: Created
@@ -597,6 +596,12 @@ paths:
           $ref: '#/components/responses/InternalError'      
 
 components:
+  securitySchemes:
+    bearerAuth:            
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   responses:
     BadRequest:
       description: Bad Request
@@ -938,7 +943,6 @@ components:
         score:
           type: string
           example: "9 / 10"
-        #TODO: уточнить не должна ли быть цитата локализована?
         quote:
           type: string
           example: "Buy Skyrim (c)"
@@ -1086,7 +1090,6 @@ components:
         technicalName: 
           type: "string"
           readOnly: true
-        #TODO: уточнить. Отдаем только ссылку на картинку или для иконки отдадим сразу base64 ?
         icon:
           type: "string"
           readOnly: true
@@ -1117,8 +1120,7 @@ components:
     BaseGame:
       type: object
       properties:
-        # technical name of game that user use when creating game. Used only in GET
-        technicalName: 
+        internalName: 
           type: "string"
           readOnly: true
         # non-localized title of game for end user 
@@ -1143,10 +1145,27 @@ components:
         requirements:
           type: object
           properties:
-            minimal: 
-              $ref: "#/components/schemas/MachineRequirements"
-            recommended: 
-              $ref: "#/components/schemas/MachineRequirements"
+            macOs:
+              type: object
+              properties:
+                minimal: 
+                  $ref: "#/components/schemas/MachineRequirements"
+                recommended: 
+                  $ref: "#/components/schemas/MachineRequirements"
+            linux:
+              type: object
+              properties:
+                minimal: 
+                  $ref: "#/components/schemas/MachineRequirements"
+                recommended: 
+                  $ref: "#/components/schemas/MachineRequirements"
+            windows:
+              type: object
+              properties:
+                minimal: 
+                  $ref: "#/components/schemas/MachineRequirements"
+                recommended: 
+                  $ref: "#/components/schemas/MachineRequirements"                  
         languages:
           $ref: "#/components/schemas/Languages"
 
@@ -1177,3 +1196,6 @@ components:
               type: "array"
               items: 
                 type: string
+
+security:
+  - bearerAuth: []
