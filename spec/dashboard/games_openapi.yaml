@@ -1,0 +1,1524 @@
+openapi: 3.0.0
+info:
+  description: "Qilin api "
+  version: "1.0.0"
+  title: "Qilin games dashboard API"
+  contact:
+    email: "roman.golenok@protocol.one"
+tags: 
+- name: "game"
+  description: "About game info"
+
+servers:
+  - url: https://qilinapi.tst.protocol.one
+    description: Master test server
+
+paths:
+  /api/v1/genre:
+    get:
+      tags: 
+      - "common"
+      summary: "Get list of genre"
+      parameters:
+        - name: title
+          in: query
+          description: "Filter genre by title"
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Genre"
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/tags:
+    get:
+      tags: 
+      - "common"
+      summary: "Get list of tags"
+      parameters:
+        - name: title
+          in: query
+          description: "Filter tags by title"
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+        400:
+          $ref: '#/components/responses/BadRequest'                  
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/games:
+    post:
+      tags:
+        - "game"
+      summary: "Create game"
+      operationId: "createGame"
+      requestBody:
+        description: "Internal name of game"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                internalName:
+                  type: string
+                  example: "MEGA PUBG CLONE"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameInfo'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      tags: 
+      - "game"
+      summary: "Get list of games"
+      operationId: "listGames"
+      parameters:
+      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/Limit'
+      - name: "technicalName"
+        in: query
+        description: "Filter games by technicalName"
+        schema:
+          type: "string"
+        required: false
+      - name: "genre"
+        in: query
+        description: "Filter games by genre"
+        schema:
+          type: "string"
+        required: false
+      - name: "price"
+        in: query
+        description: "Filter games by price"
+        schema:
+          type: "number"
+          format: float
+        example: 59.99
+        required: false
+      - name: "releaseDate"
+        in: query
+        description: "Filter games by release date"
+        schema:
+          type: "string"
+          format: "date-time"
+        example: "2017-07-21T17:32:28Z"
+        required: false
+      - name: "sort"
+        in: query
+        description: "Game name query filter"
+        example: -genre,-releaseDate,+name
+        schema:
+          type: "array"
+          items: 
+            type: "string"
+            enum:
+            - -genre
+            - +genre
+            - -releaseDate
+            - +releaseDate
+            - -price
+            - +price
+            - -name
+            - +name
+        required: false
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                  type: "array"
+                  items:
+                    $ref: "#/components/schemas/ShortGameInfo"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        500:
+          $ref: '#/components/responses/InternalError'
+  
+  /api/v1/games/{id}:
+    get:
+      tags: 
+        - "game"
+      summary: "Get game info" 
+      description: ""
+      parameters: 
+      - name: "id"
+        in: "path"
+        schema:
+          type: string
+        required: true
+        description: "Id of game"
+      responses:
+        200: 
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameInfo"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+          
+
+    delete:
+      tags: 
+      - "game"
+      summary: "Delete game" 
+      description: ""
+      operationId: "deleteGame"
+      parameters: 
+      - name: "id"
+        in: "path"
+        schema:
+          type: string
+        required: true
+        description: "Id of game to remove"
+      responses:
+        200: 
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+        
+    put:
+      tags: 
+      - "game"
+      summary: "Change game info" 
+      description: ""
+      operationId: "changeGame"
+      requestBody:
+        description: "Game object that needs to be saved in store"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeGame"
+      parameters: 
+      - name: "id"
+        in: "path"
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: "Id of game to change"
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false
+      responses:
+        200: 
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/games/{id}/descriptions:
+    get:
+      tags:
+      - game
+      summary: "Gets additional descriptions of game"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: true
+        example: "2019-01-11T17:32:28Z"      
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Description"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+      - game
+      summary: "Change descriptions"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: string
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Description"
+      responses:
+        200: 
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'          
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/games/{id}/ratings:
+    get:
+      tags:
+        - ratings
+      summary: Get list of ratings for game
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:  
+              schema:
+                type: object
+                properties:
+                  ESRB:
+                    $ref: '#/components/schemas/CommonRating'
+                  PEGI:
+                    $ref: '#/components/schemas/CommonRating'
+                  BBFC:
+                    $ref: '#/components/schemas/CommonRating'
+                  USK:
+                    $ref: '#/components/schemas/CommonRating'
+                  CERO:
+                    $ref: '#/components/schemas/CommonRating'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - ratings
+      summary: Change ratings for game
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false        
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ESRB:
+                  $ref: '#/components/schemas/ESRB'
+                PEGI:
+                  $ref: '#/components/schemas/PEGI'
+                BBFC:
+                  $ref: '#/components/schemas/BBFC'
+                USK:
+                  $ref: '#/components/schemas/USK'
+                CERO:
+                  $ref: '#/components/schemas/CERO'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+  
+  /api/v1/descriptors:
+    get:
+      tags:
+        - common
+      summary: Gets list of descriptors
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Descriptor'
+        401:
+          $ref: '#/components/responses/Unauthorized'           
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/games/{id}/media:
+    get:
+      tags:
+        - media
+      summary: "Gets media for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid      
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:  
+              schema:
+                $ref: '#/components/schemas/Media'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'            
+    put:
+      tags:
+        - media
+      summary: "Change media for game"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Media'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'                    
+  
+  /api/v1/games/{id}/prices:  
+    get:
+      tags:
+        - price
+      summary: "Gets prices for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid      
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:  
+              schema:
+                type: object
+                properties:
+                  prices:
+                    $ref: '#/components/schemas/Prices'
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'     
+    
+    put:
+      tags:
+        - price
+      summary: "Change prices for game"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid     
+      - name: If-Unmodified-Since
+        in: header
+        schema: 
+          type: string
+          format: date-time
+        required: false      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Prices'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'      
+
+  /api/v1/games/{id}/discounts:
+    get:
+      tags:
+        - price
+      summary: "Gets discounts for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  discounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Discount'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - price
+      summary: "Create new discount for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discount'
+      responses:
+        201:
+          description: Created
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - price
+      summary: "Change discount for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: false
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discount'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - price
+      summary: "Remove discount for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+
+  /api/v1/games/{id}/achievment:
+    post:
+      tags:
+        - achievments
+      summary: "Create new achievment"
+      operationId: "createAchievment"
+      requestBody:
+        description: "New achievment object"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Achievement'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Achievement"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/games/{id}/achievments:
+    get:
+      tags:
+        - achievments
+      summary: "Gets all achievments for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Achievement'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - achievments
+      summary: "Change achievement for game"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Achievement'
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:            
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 409
+            message: "Resource with same unique id already exists"
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 422
+            message: "Fields required: 'title, description'"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  parameters:
+    Offset:  
+      in: query
+      name: offset
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: The number of items to skip before starting to collect the result set.
+    Limit:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+      description: The numbers of items to return.
+
+  schemas:
+    Prices:
+      type: object
+      properties:
+        default:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum: 
+              - USD
+              - EUR
+              - RUR
+            price:
+              type: number
+              format: float
+        preOrder:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date-time
+            enabled:
+              type: boolean
+              default: false
+        prices:
+          type: array
+          items:
+            type: object
+            properties:
+              currency: 
+                type: string
+              vat: 
+                type: number
+              price:
+                type: number
+                format: float
+        
+    Discount:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "028536a6-3e8e-4926-9669-1cd8f31d8f61"
+        title:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "WINTER SALE"
+            ru: "ЗИМНЯЯ РАСПРОДАЖА"
+        description:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "SPECIAL OFFER"
+            ru: "СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ"
+        date:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+              example: "2019-07-21T17:32:28Z"
+            end:
+              type: string
+              format: date-time
+              example: "2019-08-21T17:32:28Z"
+        rate:
+          type: number
+          format: float
+          example: 50
+
+    Media:
+      type: object
+      properties:
+        coverImage:
+          type: object
+          additionalProperties:
+            type: string
+            format: uri
+          example:
+            en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+            ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+        coverVideo:
+          type: object
+          additionalProperties:
+            type: string
+            format: uri
+          example:
+            en: http://www.example.com/video/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+            ru: http://www.example.com/video/30083025-fe0c-4a22-b0a7-569ab6cee50b
+        trailers:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+              format: uri
+          example:
+            en:
+              - http://www.example.com/video/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+              - http://www.example.com/video/30083025-fe0c-4a22-b0a7-569ab6cee50b
+            ru: 
+              - http://www.example.com/video/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+              - http://www.example.com/video/30083025-fe0c-4a22-b0a7-569ab6cee50b
+        store:
+          type: object
+          properties:
+            special:
+              type: object
+              additionalProperties:
+                type: string
+                format: uri
+              example:
+                en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+                ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+            friends:
+              type: object
+              additionalProperties:
+                type: string
+                format: uri
+              example:
+                en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+                ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+        capsule:
+          type: object
+          properties:
+            generic:
+              additionalProperties:
+                type: string
+                format: uri
+              example:
+                en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+                ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+
+    Descriptor:
+      type: object
+      properties:
+        id: 
+          type: integer
+        title:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            en: Blood
+            ru: Кровь
+
+    CommonRating:
+      type: object
+      properties:
+        displayOnlineNotice: 
+          type: boolean
+          default: false
+        showAgeRestrict:
+          type: boolean
+          default: false
+        ageRestrict:
+          type: integer
+          
+    
+    PostRating: 
+      allOf:
+      - $ref: '#/components/schemas/CommonRating'
+      - type: object
+        properties:
+          descriptiors:
+            type: array
+            items:
+              type: integer
+    
+    ESRB:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - EC
+              - E
+              - E10+
+              - T
+              - M
+              - AO
+              - RP
+    
+    PEGI:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - 3
+              - 7
+              - 12
+              - 16
+              - 18
+
+    BBFC:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - U
+              - PG
+              - 12
+              - 15
+              - 18
+              - R18
+
+    USK:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - USK
+              - 0
+              - 6
+              - 12
+              - 16
+              - 18
+
+    CERO:
+      allOf:
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - A
+              - B
+              - C
+              - D
+              - Z
+
+    Rating:
+      allOf:
+      - $ref: '#/components/schemas/CommonRating'
+      - type: object
+        properties:
+          descriptiors:
+            type: array
+            items:
+              $ref: '#/components/schemas/Descriptor'
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    Description:
+      type: object
+      properties:
+        tagline:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            en: "Short description"
+            ru: "Короткое описание"
+        description:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            en: "Full Description"
+            ru: "полное описание"
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+        additionalDescription:
+          type: string
+        gameSite:
+          type: string
+          format: url
+        socials:
+          type: object
+          items:
+            type: string
+          example:
+            facebook: "https://facebook.com/yougame"
+            twitter: "https://twitter.com/yougame"
+
+    Review:
+      type: object
+      properties:
+        pressName: 
+          type: string
+          example: "IGN"
+        link:
+          type: string
+        score:
+          type: string
+          example: "9 / 10"
+        quote:
+          type: string
+          example: "Buy Skyrim (c)"
+
+    LanguageSupport:
+      type: object
+      properties: 
+        voice: 
+          type: "boolean"
+          default: false
+        interface:
+          type: "boolean"
+          default: false
+        subtitles:
+          type: "boolean"
+          default: false
+
+    Languages:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/LanguageSupport"
+      example:
+        en: 
+          voice: true
+          interface: true
+          subtitles: true
+        ru:
+          voice: false
+          interface: true
+          subtitles: true
+        fr:
+          voice: false
+          interface: false
+          subtitles: true
+
+    Tag:
+      type: object
+      properties: 
+        id: 
+          type: "string"
+          readOnly: true
+        title:
+          type: object
+          additionalProperties:
+              type: string
+          readOnly: true
+          example:
+            en: multiplayer
+            ru: мультиплеер
+
+    Genre:
+      type: object
+      properties: 
+        id: 
+          type: "string"
+          readOnly: true
+        title:
+          type: object
+          additionalProperties:
+              type: string
+          example:
+            en: Action
+            ru: Экшен
+          readOnly: true
+
+    Features:
+      type: object
+      properties:
+        common:
+          type: array
+          items: 
+            type: string
+            enum:
+            - singlePlayer
+            - multiPlayer
+            - onlineMultiplayerPlayer
+            - localMultiplayerPlayer
+            - splitScreen
+            - mmo
+            - cooperative
+            - onlineCooperative
+            - localCooperative
+            - crossPlatform
+            - achievements
+            - cloudSaves
+        controllers:
+          type: "string"
+          enum: 
+          - "not_supported"
+          - "partially_supported"
+          - "full_supported"
+          default: "not_supported"
+    
+    SupportPlatform:
+      type: object
+      properties: 
+        windows: 
+          type: "boolean"
+          default: true
+        macOs:
+          type: "boolean"
+          default: false
+        linux:
+          type: "boolean"
+          default: false
+    
+    MachineRequirements:
+      type: object
+      properties: 
+        system: 
+          type: "string"
+          example: "Windows"
+        processor:
+          type: "string"
+          example: "Intel i9"
+        graphics:
+          type: "string"
+          example: "NVIDIA GeForce RTX2080Ti or similar"
+        sound:
+          type: "string"
+        ram: 
+          type: "integer"
+          example: 4
+        ramDimension:
+          type: string
+          enum:
+            - MB
+            - GB
+        storage:
+          type: "integer"
+        storageDimension:
+          type: string
+          enum:
+            - MB
+            - GB
+        other:
+          type: "string"
+
+    ShortGameInfo:
+      type: object
+      properties: 
+        id: 
+          type: string
+          readOnly: true
+        technicalName: 
+          type: "string"
+          readOnly: true
+        icon:
+          type: "string"
+          readOnly: true
+        genre:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Genre"
+          readOnly: true
+        releaseDate:
+          type: "string"
+          format: "date-time"
+          readOnly: true
+        prices: 
+          $ref: "#/components/schemas/Price"
+
+    Price:
+      type: object
+      properties:
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+      example:
+        price: 59.99
+        currency: USD
+
+    BaseGame:
+      type: object
+      properties:
+        internalName: 
+          type: "string"
+          readOnly: true
+        # non-localized title of game for end user 
+        title: 
+          type: "string"
+        # comma separated list of developers
+        developers:
+          type: "string"
+        # comma separated list of publishers
+        publishers: 
+          type: "string"
+        releaseDate:
+          type: "string"
+          format: "date-time"
+        displayRemainingTime:
+          type: "boolean"
+          default: false
+        features:
+          $ref: "#/components/schemas/Features"
+        platforms:
+          $ref: "#/components/schemas/SupportPlatform"
+        requirements:
+          type: object
+          properties:
+            macOs:
+              type: object
+              properties:
+                minimal: 
+                  $ref: "#/components/schemas/MachineRequirements"
+                recommended: 
+                  $ref: "#/components/schemas/MachineRequirements"
+            linux:
+              type: object
+              properties:
+                minimal: 
+                  $ref: "#/components/schemas/MachineRequirements"
+                recommended: 
+                  $ref: "#/components/schemas/MachineRequirements"
+            windows:
+              type: object
+              properties:
+                minimal: 
+                  $ref: "#/components/schemas/MachineRequirements"
+                recommended: 
+                  $ref: "#/components/schemas/MachineRequirements"                  
+        languages:
+          $ref: "#/components/schemas/Languages"
+        achievementOnProd:
+          type: boolean
+          default: false
+          description: "Enables achievements on production"
+
+    GameInfo:
+      allOf:
+        - $ref: '#/components/schemas/BaseGame'
+        - type: object
+          properties:
+            genre:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Genre"
+            tags: 
+              type: "array"
+              items: 
+                $ref: "#/components/schemas/Tag"
+
+    ChangeGame:
+      allOf:
+        - $ref: '#/components/schemas/BaseGame'
+        - type: object
+          properties:
+            genre:
+              type: "array"
+              items: 
+                type: string
+            tags: 
+              type: "array"
+              items: 
+                type: string
+
+    Score:
+      type: object
+      format: json
+      properties:
+        current:
+          type: integer
+        min:
+          type: integer
+        max:
+          type: integer
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        internalName:
+          type: string
+          example: "saint_blood_cup"
+        name:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "New item"
+            ru: "Новый предмет"
+        descr:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "Description of new item"
+            ru: "Описание нового предмета"
+        score:
+          $ref: "#/components/schemas/Score"
+        iconLocked:
+          type: string
+          format: url
+        iconUnlocked:
+          type: string
+          format: url
+        hidden:
+          type: boolean
+          default: false
+        hasProgress:
+          type: boolean
+          default: true
+        createDate:
+          type: string
+          format: "date-time"
+          readOnly: true
+
+security:
+  - bearerAuth: []
