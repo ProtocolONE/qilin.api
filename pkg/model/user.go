@@ -15,7 +15,7 @@ type User struct {
 	Nickname string
 	Login string
 	Password string
-	Lang string					`gorm:"column:lang; default:ru"`
+	Lang string					`gorm:"column:lang; default:'ru'"`
 }
 
 type UserInfo struct {
