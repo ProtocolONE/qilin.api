@@ -1,13 +1,14 @@
 package api
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	"github.com/sirupsen/logrus"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
 	"strconv"
+
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/sirupsen/logrus"
 )
 
 type ServerOptions struct {
@@ -19,13 +20,13 @@ type ServerOptions struct {
 }
 
 type Server struct {
-	log          	*logrus.Entry
-	db           	*orm.Database
-	echo         	*echo.Echo
-	serverConfig 	*conf.ServerConfig
+	log          *logrus.Entry
+	db           *orm.Database
+	echo         *echo.Echo
+	serverConfig *conf.ServerConfig
 
-	Router       	*echo.Group
-	AuthRouter   	*echo.Group
+	Router     *echo.Group
+	AuthRouter *echo.Group
 }
 
 func NewServer(opts *ServerOptions) (*Server, error) {
@@ -42,17 +43,18 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowHeaders: []string{"authorization", "content-type"},
-		AllowOrigins: opts.ServerConfig.AllowOrigins,
+		AllowHeaders:     []string{"authorization", "content-type"},
+		AllowOrigins:     opts.ServerConfig.AllowOrigins,
 		AllowCredentials: opts.ServerConfig.AllowCredentials,
 	}))
 	server.echo.Pre(middleware.RemoveTrailingSlash())
+	server.echo.HTTPErrorHandler = server.echo.DefaultHTTPErrorHandler
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		TokenLookup: 	"cookie:token",
-		SigningKey:    	opts.Jwt.SignatureSecret,
-		SigningMethod: 	opts.Jwt.Algorithm,
+		TokenLookup:   "cookie:token",
+		SigningKey:    opts.Jwt.SignatureSecret,
+		SigningMethod: opts.Jwt.Algorithm,
 	}))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
@@ -92,6 +94,15 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	}
 
 	if err := InitVendorRoutes(s, vendorService); err != nil {
+		return err
+	}
+
+	mediaService, err := orm.NewMediaService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if err := InitMediaRouter(s, mediaService); err != nil {
 		return err
 	}
 
