@@ -40,6 +40,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.Debug = opts.ServerConfig.Debug
 	server.echo.Logger = Logger{opts.Log.Logger}
 	server.echo.Use(LoggerHandler) // logs all http requests
+	server.echo.HTTPErrorHandler = server.QilinErrorHandler
 
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
