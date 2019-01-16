@@ -18,6 +18,7 @@ func (s *Server) QilinErrorHandler(err error, c echo.Context) {
 	} else
 	if se, ok := err.(*orm.ServiceError); ok {
 		msg = echo.Map{"message": se.Message, "code": se.Code}
+		code = se.Code
 	} else if s.echo.Debug {
 		msg = err.Error()
 	} else {
