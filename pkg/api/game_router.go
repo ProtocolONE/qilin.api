@@ -5,6 +5,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
+	"time"
 )
 
 type GameRouter struct {
@@ -16,11 +17,13 @@ func InitGameRoutes(api *Server, service model.GameService) error {
 		gameService: service,
 	}
 
-	api.Router.GET("/games", gameRouter.getAll)
-	api.Router.GET("/games/:id", gameRouter.get)
-	api.Router.GET("/games/findByName", gameRouter.findByName)
+	//api.Router.GET("/games", gameRouter.getAll)
+	//api.Router.GET("/games/:id", gameRouter.get)
+	//api.Router.GET("/games/findByName", gameRouter.findByName)
+	//api.Router.POST("/games", gameRouter.create)
+	//api.Router.PUT("/games/:id", gameRouter.update)
+
 	api.Router.POST("/games", gameRouter.create)
-	api.Router.PUT("/games/:id", gameRouter.update)
 
 	return nil
 }
@@ -73,26 +76,35 @@ func (api *GameRouter) get(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, game)
 }
 
-// @Summary Create game
-// @Description Create new game
-// @Tags Game
-// @Accept json
-// @Produce json
-// @Param data body model.Game true "Creating game data"
-// @Success 201 {object} model.Game "OK"
-// @Failure 400 {object} model.Error "Invalid request data"
-// @Failure 401 {object} model.Error "Unauthorized"
-// @Failure 500 {object} model.Error "Some unknown error"
-// @Router /api/v1/game [post]
 func (api *GameRouter) create(ctx echo.Context) error {
-	game := &model.Game{}
+	internalName := ctx.FormValue("internalName")
 
-	if err := ctx.Bind(game); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request param: "+err.Error())
+	game, err := api.gameService.CreateGame(internalName)
+	if err != nil {
+		return err
 	}
 
-	if err := api.gameService.CreateGame(game); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Game create failed")
+	type GamePlatformDTO struct {
+		Windows bool    `json:"windows"`
+		MacOs bool      `json:"macOs"`
+		Linux bool      `json:"linux"`
+	}
+
+	type CreateGameDTO struct {
+		ID                      uuid.UUID       `json:"id"`
+		InternalName            string          `json:"InternalName"`
+		Title                   string          `json:"title"`
+		Developers              string          `json:"developers"`
+		Publishers              string          `json:"publishers"`
+		ReleaseDate             time.Time       `json:"releaseDate"`
+		DisplayRemainingTime    bool            `json:"displayRemainingTime"`
+		AchievementOnProd       bool            `json:"achievementOnProd"`
+		Features                []string        `json:"features"`
+		Platforms               []string        `json:"platforms"`
+		Requirements            []string        `json:"requirements"`
+		Languages               []string        `json:"languages"`
+		Genre                   []string        `json:"genre"`
+		Tags                    []string        `json:"tags"`
 	}
 
 	return ctx.JSON(http.StatusCreated, game)

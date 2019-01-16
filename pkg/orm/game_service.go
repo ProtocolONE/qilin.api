@@ -2,6 +2,8 @@ package orm
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"qilin-api/pkg/model"
 )
@@ -17,8 +19,22 @@ func NewGameService(db *Database) (*GameService, error) {
 }
 
 // CreateGame creates new Game object in database
-func (p *GameService) CreateGame(u *model.Game) error {
-	return p.db.Create(u).Error
+func (p *GameService) CreateGame(internalName string) (game *model.Game, err error) {
+
+	game = &model.Game{}
+	errE := p.db.First(game, "internalName = ?", internalName).Error
+	if errE == nil {
+		return nil, echo.NewHTTPError(400, "Name already in use")
+	}
+
+	game.ID = uuid.NewV4()
+	game.InternalName = internalName
+	err = p.db.Create(&game).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "While create new game")
+	}
+
+	return
 }
 
 func (p *GameService) UpdateGame(u *model.Game) error {

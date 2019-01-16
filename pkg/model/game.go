@@ -5,33 +5,26 @@ import (
 	"time"
 )
 
-// Game is the Central object in the open gde ecosystem, which describes information about the game
-// and all related processes and objects.
 type Game struct {
-	// unique merchant identifier in auth system
-	ID uuid.UUID `gorm:"type:uuid; primary_key"`
-
-	//ExternalID *map[string]string `json:"external_id"`
-
-	// game name
-	Name string `json:"name"`
-
-	// game description
-	Description *LocalizedString `json:"description"`
-
-	// game price
-	Prices Prices `json:"prices" gorm:"auto_preload"`
-
-	// date of create merchant in system
-	CreatedAt time.Time `json:"created_at"`
-
-	// date of last update merchant in system
-	UpdatedAt time.Time `json:"updated_at"`
+	ID                      uuid.UUID       `gorm:"type:uuid; primary_key"`
+	InternalName            string          `gorm:"column:internalName; type:text"`
+	Title                   string          `gorm:"column:title; type:text"`
+	Developers              string          `gorm:"column:developers; type:text"`
+	Publishers              string          `gorm:"column:publishers; type:text"`
+	ReleaseDate             time.Time       `gorm:"column:releaseDate; type:timestamp"`
+	DisplayRemainingTime    bool            `gorm:"column:displayRemainingTime; type:boolean"`
+	AchievementOnProd       bool            `gorm:"column:achievementOnProd; type:boolean"`
+	Features                []string        `gorm:"column:features; type:text[]"`
+	Platforms               []string        `gorm:"column:platforms; type:text[]"`
+	Requirements            []string        `gorm:"column:requirements; type:text[]"`
+	Languages               []string        `gorm:"column:languages; type:text[]"`
+	Genre                   []string        `gorm:"column:genre; type:text[]"`
+	Tags                    []string        `gorm:"column:tags; type:text[]"`
 }
 
 // GameService is a helper service class to interact with Game object.
 type GameService interface {
-	CreateGame(g *Game) error
+	CreateGame(string) (*Game, error)
 	UpdateGame(g *Game) error
 	GetAll() ([]*Game, error)
 	FindByID(id uuid.UUID) (Game, error)
