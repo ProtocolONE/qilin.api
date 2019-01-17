@@ -4,7 +4,6 @@ import (
 	"qilin-api/pkg/model"
 	"github.com/satori/go.uuid"
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 )
 
@@ -21,10 +20,10 @@ func NewMediaService(db *Database) (*MediaService, error) {
 func (p *MediaService) Get(id uuid.UUID) (*model.Media, error) {
 
 	result := &model.Media{}
-	err := p.db.Where("ID = ?", id).First(&result).Error
+	err := p.db.First(&result, model.Media{ID: id}).Error
 
 	if err == gorm.ErrRecordNotFound {
-		return result, echo.NewHTTPError(404, "Game not found")
+		return result, NewServiceError(404, "Game not found")
 	} else if err != nil {
 		return result, errors.Wrap(err, "search game by id")
 	}
@@ -34,21 +33,27 @@ func (p *MediaService) Get(id uuid.UUID) (*model.Media, error) {
 
 func (p *MediaService) Update(id uuid.UUID, media *model.Media) error {
 
-	m := &model.Media{}
-	err := p.db.First(m, id).Error
+	m := model.Media{}
+	err := p.db.First(&m, model.Media{ID: id}).Error
 
 	if err == gorm.ErrRecordNotFound {
-		return echo.NewHTTPError(404, "Game not found")
+		return NewServiceError(404, "Game not found")
 	} else if err != nil {
 		return errors.Wrap(err, "search game by id")
 	}
 
-	m.CoverImage = media.CoverImage
+	if media.UpdatedAt.Before(m.UpdatedAt) {
+		// return NewServiceError(409, "Game has new changes")
+	}
 
-	err = p.db.Save(&m).Error
+	media.UpdatedAt = m.UpdatedAt
+	media.CreatedAt = m.CreatedAt
+	media.ID = m.ID
+
+	err = p.db.Save(&media).Error
 
 	if err != nil {
-		return echo.NewHTTPError(422, "update game by id")
+		return errors.Wrap(err, "search game by id")
 	}
 
 	return err

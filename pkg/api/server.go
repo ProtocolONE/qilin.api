@@ -49,7 +49,6 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		AllowCredentials: opts.ServerConfig.AllowCredentials,
 	}))
 	server.echo.Pre(middleware.RemoveTrailingSlash())
-	server.echo.HTTPErrorHandler = server.echo.DefaultHTTPErrorHandler
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{

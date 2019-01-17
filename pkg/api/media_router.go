@@ -1,11 +1,12 @@
 package api
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"net/http"
 	"qilin-api/pkg/model"
 	"github.com/satori/go.uuid"
-	"github.com/fatih/structs"
 	"github.com/labstack/echo"
+	 maper "gopkg.in/jeevatkm/go-model.v1"
 )
 
 //MediaRouter is router struct
@@ -29,6 +30,7 @@ type Media struct {
 
 	Capsule *Capsule `json:"capsule"`
 }
+
 
 type Capsule struct {
 	Generic *model.LocalizedString `json:"generic"`
@@ -66,11 +68,19 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	media := new(model.Media)
-	media.ID = id
-	media.CoverImage = structs.Map(mediaDto.CoverImage)
+	media := model.Media{}
+	input, err := maper.Map(mediaDto)
+	
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
 
-	if err := api.mediaService.Update(id, media); err != nil {
+ 	err = mapstructure.Decode(input, &media)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := api.mediaService.Update(id, &media); err != nil {
 		return err
 	}
 
@@ -90,5 +100,17 @@ func (api *MediaRouter) get(ctx echo.Context) error {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, media)
+	result := Media {}
+	input, err := maper.Map(media)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	err = mapstructure.Decode(input, &result)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	
+	return ctx.JSON(http.StatusOK, result)
 }

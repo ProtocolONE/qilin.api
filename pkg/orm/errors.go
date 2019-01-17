@@ -22,4 +22,3 @@ func NewServiceError(code int, message ...interface{}) *ServiceError {
 	}
 	return he
 }
-

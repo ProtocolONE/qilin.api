@@ -1,9 +1,10 @@
 package api
 
 import (
-	"github.com/labstack/echo"
 	"net/http"
 	"qilin-api/pkg/orm"
+
+	"github.com/labstack/echo"
 )
 
 func (s *Server) QilinErrorHandler(err error, c echo.Context) {
@@ -15,8 +16,7 @@ func (s *Server) QilinErrorHandler(err error, c echo.Context) {
 	if _, ok := err.(*echo.HTTPError); ok {
 		s.echo.DefaultHTTPErrorHandler(err, c)
 		return
-	} else
-	if se, ok := err.(*orm.ServiceError); ok {
+	} else if se, ok := err.(*orm.ServiceError); ok {
 		msg = echo.Map{"message": se.Message, "code": se.Code}
 		code = se.Code
 	} else if s.echo.Debug {
