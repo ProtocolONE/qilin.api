@@ -2,10 +2,10 @@ package orm
 
 import (
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/game"
 )
 
 // GameService is service to interact with database and Game object.
@@ -19,17 +19,24 @@ func NewGameService(db *Database) (*GameService, error) {
 }
 
 // CreateGame creates new Game object in database
-func (p *GameService) CreateGame(internalName string) (game *model.Game, err error) {
+func (p *GameService) CreateGame(internalName string) (item *model.Game, err error) {
 
-	game = &model.Game{}
-	errE := p.db.First(game, "internalName = ?", internalName).Error
+	item = &model.Game{}
+	errE := p.db.First(item, `"internalName" = ?`, internalName).Error
 	if errE == nil {
-		return nil, echo.NewHTTPError(400, "Name already in use")
+		return nil, NewServiceError(400, "Name already in use")
 	}
 
-	game.ID = uuid.NewV4()
-	game.InternalName = internalName
-	err = p.db.Create(&game).Error
+	item.ID = uuid.NewV4()
+	item.InternalName = internalName
+	item.Features = game.Features{Controllers: "", Common: []string{}}
+	item.Platforms = game.Platforms{}
+	item.Requirements = game.GameRequirements{}
+	item.Languages = make(game.GameLangs)
+	item.Genre = game.GameTags{game.Tag{Id: "hello", Title: game.LocalizedString{"ru": "Привет", "en":"Hello!"}}}
+	item.Tags = game.GameTags{}
+
+	err = p.db.Create(item).Error
 	if err != nil {
 		return nil, errors.Wrap(err, "While create new game")
 	}

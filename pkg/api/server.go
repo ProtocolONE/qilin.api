@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/sirupsen/logrus"
+	"qilin-api/pkg/api/game"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
@@ -51,7 +52,8 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		TokenLookup: 	"cookie:token",
+		AuthScheme:     "Bearer",
+		TokenLookup: 	"header:Authorization",
 		SigningKey:    	opts.Jwt.SignatureSecret,
 		SigningMethod: 	opts.Jwt.Algorithm,
 	}))
@@ -74,7 +76,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	if err := InitGameRoutes(s, gameService); err != nil {
+	if err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
 
