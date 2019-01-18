@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"html/template"
+	"net/http"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/sys"
@@ -50,7 +51,7 @@ func (p *UserService) UpdateUser(u *model.User) error {
 func (p *UserService) FindByID(id uuid.UUID) (user model.User, err error) {
 	err = p.db.First(&user, model.User{ID: id}).Error
 	if err == gorm.ErrRecordNotFound {
-		return user, NewServiceError(404, "User not found")
+		return user, NewServiceError(http.StatusNotFound, "User not found")
 	} else if err != nil {
 		return user, errors.Wrap(err, "search user by id")
 	}
@@ -63,7 +64,7 @@ func (p *UserService) Login(login, pass string) (result model.LoginResult, err e
 
 	err = p.db.First(&user, "login = ? and password = ?", login, pass).Error
 	if err == gorm.ErrRecordNotFound {
-		return result, NewServiceError(404, "User not found")
+		return result, NewServiceError(http.StatusNotFound, "User not found")
 	} else if err != nil {
 		return result, errors.Wrap(err, "when searching user by login and passwd")
 	}
@@ -90,7 +91,7 @@ func (p *UserService) Register(login, pass, lang string) (userId uuid.UUID, err 
 
 	err = p.db.First(&user, "login = ?", login).Error
 	if err == nil {
-		return uuid.Nil, NewServiceError(404, "User not found")
+		return uuid.Nil, NewServiceError(http.StatusBadRequest, "User already registered")
 	}
 
 	user.Login = login
@@ -117,7 +118,7 @@ func (p *UserService) ResetPassw(email string) (err error) {
 
 	err = p.db.First(&user, "login = ?", email).Error
 	if err != nil {
-		return NewServiceError(404, "User not found")
+		return NewServiceError(http.StatusNotFound, "User not found")
 	}
 
 	body := bytes.Buffer{}

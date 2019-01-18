@@ -15,6 +15,7 @@ func InitRoutes(router *echo.Group, service model.GameService) error {
 	}
 
 	router.POST("/games", Router.create)
+	router.GET("/games", Router.getList)
 
 	return nil
 }

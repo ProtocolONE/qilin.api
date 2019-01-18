@@ -6,22 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p Features) Value() (driver.Value, error) {
-	j, err := json.Marshal(p)
-	return j, err
-}
-
-func (p *Features) Scan(src interface{}) error {
-	source, ok := src.([]byte)
-	if !ok {
-		return errors.New("Type assertion .([]byte) failed.")
-	}
-	if err := json.Unmarshal(source, &p); err != nil {
-		return err
-	}
-	return nil
-}
-
 
 
 func (p Platforms) Value() (driver.Value, error) {
@@ -67,25 +51,6 @@ func (p GameLangs) Value() (driver.Value, error) {
 }
 
 func (p *GameLangs) Scan(src interface{}) error {
-	source, ok := src.([]byte)
-	if !ok {
-		return errors.New("Type assertion .([]byte) failed.")
-	}
-	if err := json.Unmarshal(source, &p); err != nil {
-		return err
-	}
-	return nil
-}
-
-
-
-
-func (p GameTags) Value() (driver.Value, error) {
-	j, err := json.Marshal(p)
-	return j, err
-}
-
-func (p *GameTags) Scan(src interface{}) error {
 	source, ok := src.([]byte)
 	if !ok {
 		return errors.New("Type assertion .([]byte) failed.")

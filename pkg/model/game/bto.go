@@ -36,20 +36,9 @@ type (
 		Subtitles bool      `json:"subtitles"`
 	}
 
-	GameLangs map[string]Langs
-
-	LocalizedString map[string]string
-
-	Tag struct {
-		Id      string              `json:"id"`
-		Title   LocalizedString     `json:"title"`
-	}
-
-	GameTags []Tag
-
-	Features struct {
-		Common          []string    `json:"common"`
-		Controllers     string      `json:"controllers"`
+	GameLangs struct {
+		EN  Langs   `json:"en"`
+		RU  Langs   `json:"ru"`
 	}
 
 )

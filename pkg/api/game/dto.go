@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/satori/go.uuid"
+	"qilin-api/pkg/model/utils"
 	"time"
 )
 
@@ -44,8 +45,8 @@ type (
 	GameLangsDTO map[string]LangsDTO
 
 	GameTagDTO struct {
-		Id string                   `json:"id"`
-		Title map[string]string     `json:"title"`
+		Id          string                    `json:"id"`
+		Title       utils.LocalizedString     `json:"title"`
 	}
 
 	GameTagsDTO     []GameTagDTO
@@ -55,7 +56,7 @@ type (
 		Controllers     string      `json:"controllers"`
 	}
 
-	CreateGameDTO struct {
+	GameDTO struct {
 		ID                   uuid.UUID           `json:"id"`
 		InternalName         string              `json:"InternalName"`
 		Title                string              `json:"title"`

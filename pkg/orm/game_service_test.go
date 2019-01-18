@@ -1,7 +1,6 @@
 package orm_test
 
 import (
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"qilin-api/pkg/conf"
@@ -48,23 +47,11 @@ func (suite *GameServiceTestSuite) TearDownTest() {
 }
 
 func (suite *GameServiceTestSuite) TestCreateGameShouldInsertIntoMongo() {
-	gameService, err := orm.NewGameService(suite.db)
+	gameService, _ := orm.NewGameService(suite.db)
 
-	testUsername := "integration_test_user"
-	game := model.Game{
-		ID: uuid.NewV4(),
-		Name: testUsername,
-		Prices: model.Prices{
-			USD: 10,
-		},
-	}
-
-	err = gameService.CreateGame(&game)
+	gameName := "game1"
+	game, err := gameService.CreateGame(gameName)
 	assert.Nil(suite.T(), err, "Unable to create game")
 	assert.NotEmpty(suite.T(), game.ID, "Wrong ID for created game")
-
-	gameFromDb, err := gameService.FindByID(game.ID)
-	assert.Nil(suite.T(), err, "Unable to get game: %v", err)
-	assert.Equal(suite.T(), game.ID, gameFromDb.ID, "Incorrect Game ID from DB")
-	assert.Equal(suite.T(), game.Name, gameFromDb.Name, "Incorrect Game Name from DB")
+	assert.Equal(suite.T(), game.InternalName, gameName, "Incorrect Game Name from DB")
 }

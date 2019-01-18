@@ -6,6 +6,7 @@ import (
 	"github.com/satori/go.uuid"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/game"
+	"strings"
 )
 
 // GameService is service to interact with database and Game object.
@@ -16,6 +17,17 @@ type GameService struct {
 // NewGameService initialize this service.
 func NewGameService(db *Database) (*GameService, error) {
 	return &GameService{db.database}, nil
+}
+
+func (p *GameService) GetTags(tag_ids []string) (tags []model.GameTag, err error) {
+	tags = []model.GameTag{}
+	if len(tag_ids) > 0 {
+		err = p.db.Where("ID in (?)", tag_ids).Find(&tags).Error
+		if err != nil {
+			return nil, errors.Wrap(err, "While fetch tags")
+		}
+	}
+	return
 }
 
 // CreateGame creates new Game object in database
@@ -29,12 +41,14 @@ func (p *GameService) CreateGame(internalName string) (item *model.Game, err err
 
 	item.ID = uuid.NewV4()
 	item.InternalName = internalName
-	item.Features = game.Features{Controllers: "", Common: []string{}}
+	item.FeaturesCtrl = ""
+	item.FeaturesCommon = []string{}
 	item.Platforms = game.Platforms{}
 	item.Requirements = game.GameRequirements{}
-	item.Languages = make(game.GameLangs)
-	item.Genre = game.GameTags{game.Tag{Id: "hello", Title: game.LocalizedString{"ru": "Привет", "en":"Hello!"}}}
-	item.Tags = game.GameTags{}
+	item.Languages = game.GameLangs{}
+	item.FeaturesCommon = []string{}
+	//item.Genre = []model.GameTag{}
+	item.Tags = []string{}
 
 	err = p.db.Create(item).Error
 	if err != nil {
@@ -44,26 +58,23 @@ func (p *GameService) CreateGame(internalName string) (item *model.Game, err err
 	return
 }
 
-func (p *GameService) UpdateGame(u *model.Game) error {
-	return p.db.Update(u).Error
-}
+func (p *GameService) GetList(offset, limit int, technicalName, genre, price, releaseDate, sort string) (list []*model.Game, err error) {
 
-// FindByID return Game object by given id
-func (p *GameService) FindByID(id uuid.UUID) (game model.Game, err error) {
-	err = p.db.First(&game, model.Game{ID: id}).Error
+	conds := []string{}
+	vals := []interface{}{}
+	if technicalName != "" {
+		conds = append(conds, "technicalName like ?")
+		vals = append(vals, technicalName)
+	}
+	if genre != "" {
+		conds = append(conds, "genre->Title->ru like ?")
+		vals = append(vals, genre)
+	}
+
+	err = p.db.Limit(limit).Offset(offset).Where(strings.Join(conds, " and "), vals...).Find(&list).Error
+	if err != nil {
+		return nil, err
+	}
+
 	return
-}
-
-func (p *GameService) GetAll() ([]*model.Game, error) {
-	var games []*model.Game
-	err := p.db.Find(&games).Error
-
-	return games, err
-}
-
-func (p *GameService) FindByName(name string) ([]*model.Game, error) {
-	var games []*model.Game
-	err := p.db.Where("name LIKE ?", name).Find(&games).Error
-
-	return games, err
 }
