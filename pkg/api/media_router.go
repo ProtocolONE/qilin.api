@@ -45,17 +45,26 @@ type Store struct {
 }
 
 //InitMediaRouter is initializing router method
-func InitMediaRouter(api *Server, service model.MediaService) error {
+func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRouter, error) {
 	mediaRouter := MediaRouter{
 		mediaService: service,
 	}
-	router := api.Router.Group("/games/:id")
+	router := group.Group("/games/:id")
 	router.GET("/media", mediaRouter.get)
 	router.PUT("/media", mediaRouter.put)
 
-	return nil
+	return &mediaRouter, nil
 }
 
+// @Summary Change media for game
+// @Description Change media data about game
+// @Success 200 {object} "OK"
+// @Failure 401 {object} "Unauthorized"
+// @Failure 403 {object} "Forbidden"
+// @Failure 404 {object} "Not found"
+// @Failure 422 {object} "Unprocessable object"
+// @Failure 500 {object} "Internal server error"
+// @Router /api/v1/games/:id/media [put]
 func (api *MediaRouter) put(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
@@ -87,6 +96,14 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 	return ctx.String(http.StatusOK, "")
 }
 
+// @Summary Get media for game
+// @Description Get media data about game
+// @Success 200 {object} Media "OK"
+// @Failure 401 {object} "Unauthorized"
+// @Failure 403 {object} "Forbidden"
+// @Failure 404 {object} "Not found"
+// @Failure 500 {object} "Internal server error"
+// @Router /api/v1/games/:id/media [get]
 func (api *MediaRouter) get(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 

@@ -102,7 +102,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	if err := InitMediaRouter(s, mediaService); err != nil {
+	if _, err := InitMediaRouter(s.Router, mediaService); err != nil {
 		return err
 	}
 

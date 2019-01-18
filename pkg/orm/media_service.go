@@ -20,7 +20,7 @@ func NewMediaService(db *Database) (*MediaService, error) {
 func (p *MediaService) Get(id uuid.UUID) (*model.Media, error) {
 
 	result := &model.Media{}
-	err := p.db.First(&result, model.Media{ID: id}).Error
+	err := p.db.Where("ID = ?", id) .First(&result).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return result, NewServiceError(404, "Game not found")
