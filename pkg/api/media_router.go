@@ -1,6 +1,7 @@
 package api
 
 import (
+	"qilin-api/pkg/orm"
 	"github.com/mitchellh/mapstructure"
 	"net/http"
 	"qilin-api/pkg/model"
@@ -9,40 +10,44 @@ import (
 	 maper "gopkg.in/jeevatkm/go-model.v1"
 )
 
-//MediaRouter is router struct
-type MediaRouter struct {
-	mediaService model.MediaService
-}
+type (
+	//MediaRouter is router struct
+	MediaRouter struct {
+		mediaService model.MediaService
+	}
 
-type Media struct {
-	
-	// localized cover image of game
-	CoverImage *model.LocalizedString `json:"coverImage"`
+	//Media is DTO object with full information about media for game
+	Media struct {
+		
+		// localized cover image of game
+		CoverImage *model.LocalizedString `json:"coverImage" validate:"required"`
 
-	// localized cover video of game
-	CoverVideo *model.LocalizedString `json:"coverVideo"`
+		// localized cover video of game
+		CoverVideo *model.LocalizedString `json:"coverVideo" validate:"required"`
 
-	// localized cover video of game
-	Trailers *model.LocalizedString `json:"trailers"`
+		// localized cover video of game
+		Trailers *model.LocalizedString `json:"trailers" validate:"required"`
 
-	// localized cover video of game
-	Store *Store `json:"store"`
+		// localized cover video of game
+		Store *Store `json:"store" validate:"required,dive"`
 
-	Capsule *Capsule `json:"capsule"`
-}
+		Capsule *Capsule `json:"capsule" validate:"required,dive"`
+	}
 
+	//Capsule is DTO object with information about capsule media for game
+	Capsule struct {
+		Generic *model.LocalizedString `json:"generic" validate:"required"`
 
-type Capsule struct {
-	Generic *model.LocalizedString `json:"generic"`
+		Small *model.LocalizedString `json:"small" validate:"required"`
+	}
 
-	Small *model.LocalizedString `json:"small"`
-}
+	//Store is DTO object with information about store media for game
+	Store struct {
+		Special *model.LocalizedString `json:"special" validate:"required"`
 
-type Store struct {
-	Special *model.LocalizedString `json:"special"`
-
-	Friends *model.LocalizedString `json:"friends"`
-}
+		Friends *model.LocalizedString `json:"friends" validate:"required"`
+	}
+)
 
 //InitMediaRouter is initializing router method
 func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRouter, error) {
@@ -73,8 +78,13 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 	}
 
 	mediaDto := new(Media)
+
 	if err := ctx.Bind(mediaDto); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	
+	if errs := ctx.Validate(mediaDto); errs != nil {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
 	media := model.Media{}

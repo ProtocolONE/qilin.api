@@ -11,7 +11,7 @@ import (
 	"strings"
 	"net/http"
 	"net/http/httptest"
-
+	"gopkg.in/go-playground/validator.v9"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -55,6 +55,8 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 	echo := echo.New()
 	service, err := orm.NewMediaService(db)
 	router, err := InitMediaRouter(echo.Group("/api/v1"), service)
+
+	echo.Validator = &QilinValidator{validator: validator.New()}
 
 	suite.db = db
 	suite.service = service

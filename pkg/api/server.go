@@ -5,7 +5,7 @@ import (
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
 	"strconv"
-
+	"gopkg.in/go-playground/validator.v9"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/sirupsen/logrus"
@@ -29,6 +29,14 @@ type Server struct {
 	AuthRouter *echo.Group
 }
 
+type QilinValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *QilinValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
+}
+
 func NewServer(opts *ServerOptions) (*Server, error) {
 	server := &Server{
 		log:          opts.Log,
@@ -41,6 +49,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.Logger = Logger{opts.Log.Logger}
 	server.echo.Use(LoggerHandler) // logs all http requests
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
+	server.echo.Validator = &QilinValidator{validator: validator.New()}
 
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
