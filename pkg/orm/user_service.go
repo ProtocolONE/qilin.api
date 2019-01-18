@@ -88,18 +88,22 @@ func (p *UserService) Login(login, pass string) (result model.LoginResult, err e
 }
 
 func (p *UserService) Register(login, pass, lang string) (userId uuid.UUID, err error) {
-	user := model.User{}
-
-	err = p.db.First(&user, "login = ?", login).Error
-	if err == nil {
-		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "User already registered")
+	foundUsr := 0
+	err = p.db.Model(&model.User{}).Where("login = ?", login).Count(&foundUsr).Error
+	if err != nil {
+		return uuid.Nil, errors.Wrap(err, "while check user login")
+	}
+	if foundUsr > 0 {
+		return uuid.Nil, echo.NewHTTPError(http.StatusConflict, "User already registered")
 	}
 
-	user.Login = login
-	user.Password = pass
-	user.Nickname = login
-	user.Lang = lang
-	user.ID = uuid.NewV4()
+	user := model.User{
+		ID: uuid.NewV4(),
+		Login: login,
+		Password: pass,
+		Nickname: login,
+		Lang: lang,
+	}
 
 	err = p.db.Create(&user).Error
 	if err != nil {
