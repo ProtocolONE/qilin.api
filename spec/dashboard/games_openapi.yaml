@@ -1032,6 +1032,13 @@ components:
               example:
                 en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
                 ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
+            small:
+              additionalProperties:
+                type: string
+                format: uri
+              example:
+                en: http://www.example.com/images/ce05bce1-48bf-4c01-ae14-046af4d1ca94
+                ru: http://www.example.com/images/30083025-fe0c-4a22-b0a7-569ab6cee50b
 
     Descriptor:
       type: object
