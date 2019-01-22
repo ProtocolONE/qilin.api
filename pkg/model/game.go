@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/satori/go.uuid"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 // Game is the Central object in the open gde ecosystem, which describes information about the game

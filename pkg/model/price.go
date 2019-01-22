@@ -1,13 +1,22 @@
 package model
 
-import "github.com/jinzhu/gorm"
+import (
+	"time"
 
-// Price is a base object to represent Game SKU prices for different
-// currency in regions. It`s fixed object because game in the system should
-// have prices in all local currency after release.
+	uuid "github.com/satori/go.uuid"
+)
+
 type Price struct {
-	gorm.Model
-	USD float32 `json:"usd"`
-	RUR float32 `json:"rur"`
-	EUR float32 `json:"eur"`
+	ID uuid.UUID `gorm:"type:uuid; primary_key"`
+
+	UpdatedAt *time.Time
+
+	Normal   JSONB      `gorm:"type:JSONB"`
+	PreOrder JSONB      `gorm:"type:JSONB"`
+	Prices   JSONBArray `gorm:"type:JSONB[]"`
+}
+
+//TableName is HACK method for merging this model with "games" table
+func (Price) TableName() string {
+	return "games"
 }

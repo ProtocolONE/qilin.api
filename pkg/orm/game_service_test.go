@@ -54,9 +54,6 @@ func (suite *GameServiceTestSuite) TestCreateGameShouldInsertIntoMongo() {
 	game := model.Game{
 		ID: uuid.NewV4(),
 		Name: testUsername,
-		Prices: model.Prices{
-			USD: 10,
-		},
 	}
 
 	err = gameService.CreateGame(&game)
