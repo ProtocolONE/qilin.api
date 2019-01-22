@@ -1,36 +1,64 @@
 package api
 
 import (
+	"qilin-api/pkg/orm"
+
 	"github.com/labstack/echo"
-	"qilin-api/pkg/model"
+	"net/http"
+	"qilin-api/pkg/mapper"
+	"github.com/satori/go.uuid"
 )
 
-type PriceRouter struct {
-	gameService model.GameService
-}
+type (
+	PriceRouter struct {
+		gameService *orm.PriceService
+	}
 
-func InitPriceRoutes(api *Server, service model.GameService) error {
-	packageRouter := PriceRouter{
+	Price struct {
+
+	}
+)
+
+//InitPriceRouter is initialization method for router
+func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *echo.Group, err error) {
+	priceRouter := PriceRouter{
 		gameService: service,
 	}
 
-	router := api.Router.Group("/games/:id")
+	router = group.Group("/games/:id")
 
-	router.GET("/prices/:packageId", packageRouter.get)
-	router.POST("/prices", packageRouter.createPrice)
-	router.PUT("/prices", packageRouter.updatePrice)
+	router.GET("/prices", priceRouter.get)
 
-	return nil
+	return router, nil
 }
 
-func (api *PriceRouter) get(ctx echo.Context) error {
+func (router *PriceRouter) get(ctx echo.Context) error {
+	id, err := uuid.FromString(ctx.Param("id"))
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+	}
+	
+	price, err := router.gameService.Get(id)
+
+	if err != nil {
+		return err
+	}
+
+	result := Price{}
+	err = mapper.Map(price, &result)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Can't decode price from domain to DTO. Error: " + err.Error())
+	}
+
+	return ctx.JSON(http.StatusOK, result)
+}
+
+func (router *PriceRouter) createPrice(ctx echo.Context) error {
 	panic("")
 }
 
-func (api *PriceRouter) createPrice(ctx echo.Context) error {
-	panic("")
-}
-
-func (api *PriceRouter) updatePrice(ctx echo.Context) error {
+func (router *PriceRouter) updatePrice(ctx echo.Context) error {
 	panic("")
 }

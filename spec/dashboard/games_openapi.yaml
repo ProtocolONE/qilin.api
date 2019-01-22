@@ -548,10 +548,8 @@ paths:
           content:
             application/json:  
               schema:
-                type: object
-                properties:
-                  prices:
-                    $ref: '#/components/schemas/Prices'
+                $ref: '#/components/schemas/Prices'
+                    
         401:
           $ref: '#/components/responses/Unauthorized'                
         403:
@@ -731,6 +729,13 @@ paths:
       tags:
         - achievments
       summary: "Create new achievment"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       operationId: "createAchievment"
       requestBody:
         description: "New achievment object"
