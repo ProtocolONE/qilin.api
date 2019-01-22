@@ -48,8 +48,8 @@ func (p *UserService) UpdateUser(u *model.User) error {
 	return p.db.Update(u).Error
 }
 
-func (p *UserService) FindByID(id uuid.UUID) (user model.User, err error) {
-	err = p.db.First(&user, model.User{ID: id}).Error
+func (p *UserService) FindByID(id *uuid.UUID) (user model.User, err error) {
+	err = p.db.First(&user, model.User{ID: *id}).Error
 	if err == gorm.ErrRecordNotFound {
 		return user, NewServiceError(http.StatusNotFound, "User not found")
 	} else if err != nil {

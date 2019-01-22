@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/sirupsen/logrus"
+	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/game"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
@@ -52,6 +53,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		ContextKey:     context.TokenKey,
 		AuthScheme:     "Bearer",
 		TokenLookup: 	"header:Authorization",
 		SigningKey:    	opts.Jwt.SignatureSecret,

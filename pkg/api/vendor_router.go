@@ -1,12 +1,11 @@
 package api
 
 import (
-	"encoding/base64"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/model"
 	"strconv"
 )
@@ -50,6 +49,7 @@ func (api *VendorRouter) get(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
+
 	vendor, err := api.vendorService.FindByID(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Vendor not found")
@@ -57,19 +57,18 @@ func (api *VendorRouter) get(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, vendor)
 }
 
-func (api *VendorRouter) create(ctx echo.Context) error {
+func (api *VendorRouter) create(ctx echo.Context) (err error) {
 	vendor := &model.Vendor{}
-	if err := ctx.Bind(vendor); err != nil {
+	if err = ctx.Bind(vendor); err != nil {
 		return errors.Wrap(err, "Bind vendor obj")
 	}
-	// Assign to new vendor current user id as manager
-	user := ctx.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
-	managerId, _ := uuid.FromBytes(data)
-	vendor.ManagerId = &managerId
 
-	if err := api.vendorService.CreateVendor(vendor); err != nil {
+	// Assign to new vendor current user id as manager
+	if vendor.ManagerId, err = context.GetAuthUUID(ctx); err != nil {
+		return err
+	}
+
+	if err = api.vendorService.CreateVendor(vendor); err != nil {
 		return err
 	}
 	return ctx.JSON(http.StatusCreated, vendor)

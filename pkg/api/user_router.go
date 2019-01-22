@@ -1,12 +1,10 @@
 package api
 
 import (
-	"encoding/base64"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/model"
 	"time"
 )
@@ -28,14 +26,9 @@ func InitUserRoutes(api *Server, service model.UserService) error {
 
 func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 
-	token := ctx.Get("user").(*jwt.Token)
-	userId := uuid.UUID{}
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
-		userId, _ = uuid.FromBytes(data)
-	}
-	if userId == uuid.Nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Token")
+	userId, err := context.GetAuthUUID(ctx)
+	if err != nil {
+		return err
 	}
 
 	userObj, err := api.service.FindByID(userId)
@@ -78,7 +71,6 @@ func (api *UserRouter) login(ctx echo.Context) error {
 	ctx.SetCookie(cookie)
 	return ctx.JSON(http.StatusOK, result)
 }
-
 
 func (api *UserRouter) register(ctx echo.Context) error {
 	vals, err := ctx.FormParams()

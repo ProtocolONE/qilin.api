@@ -10,7 +10,7 @@ import (
 
 func (p Platforms) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
-	return j, err
+	return string(j), err
 }
 
 func (p *Platforms) Scan(src interface{}) error {
@@ -29,7 +29,7 @@ func (p *Platforms) Scan(src interface{}) error {
 
 func (p GameRequirements) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
-	return j, err
+	return string(j), err
 }
 
 func (p *GameRequirements) Scan(src interface{}) error {
@@ -47,7 +47,7 @@ func (p *GameRequirements) Scan(src interface{}) error {
 
 func (p GameLangs) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
-	return j, err
+	return string(j), err
 }
 
 func (p *GameLangs) Scan(src interface{}) error {

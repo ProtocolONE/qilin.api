@@ -12,10 +12,11 @@ type User struct {
 	DeletedAt 	*time.Time 		`sql:"index"`
 
 	// User nickname for public display
-	Nickname string
-	Login string
-	Password string
-	Lang string					`gorm:"column:lang; default:'ru'"`
+	Nickname        string
+	Login           string
+	Password        string
+	Lang            string		`gorm:"default:'ru'"`
+	Currency        string		`gorm:"default:'usd'"`
 }
 
 type UserInfo struct {
@@ -23,6 +24,7 @@ type UserInfo struct {
 	Nickname string		`json:"nickname"`
 	Avatar string		`json:"avatar"`
 	Lang string			`json:"lang"`
+	Currency string		`json:"currency"`
 }
 
 type LoginResult struct {
@@ -38,7 +40,7 @@ type AppState struct {
 // UserService is a helper service class to interact with User.
 type UserService interface {
 	UpdateUser(g *User) error
-	FindByID(id uuid.UUID) (User, error)
+	FindByID(id *uuid.UUID) (User, error)
 	Login(login, pass string) (LoginResult, error)
 	Register(login, pass, lang string) (uuid.UUID, error)
 	ResetPassw(email string) (error)
