@@ -18,13 +18,13 @@ type Vendor struct {
 	Email string 				`gorm:"column:email; not null;unique"`
 	HowManyProducts string		`gorm:"column:hawmanyproducts; not null;"`
 
-	Manager 	User 				`gorm:"foreignkey:ManagerId; association_foreignkey:Refer"`
-	ManagerId 	*uuid.UUID			`gorm:"column:manager_id; type:uuid"`
+	Manager 	User 			`gorm:"foreignkey:ManagerId; association_foreignkey:Refer"`
+	ManagerId 	*uuid.UUID		`gorm:"column:manager_id; type:uuid"`
 }
 
 type VendorService interface {
-	CreateVendor(g *Vendor) error
-	UpdateVendor(g *Vendor) error
+	CreateVendor(g *Vendor) (*Vendor, error)
+	UpdateVendor(g *Vendor) (*Vendor, error)
 	GetAll(int, int) ([]*Vendor, error)
-	FindByID(id uuid.UUID) (Vendor, error)
+	FindByID(id uuid.UUID) (*Vendor, error)
 }

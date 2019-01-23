@@ -8,12 +8,23 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/orm"
 	"strconv"
 )
 
-type VendorRouter struct {
-	vendorService model.VendorService
-}
+type (
+	VendorRouter struct {
+		vendorService model.VendorService
+	}
+
+	VendorDTO struct {
+		Id          uuid.UUID       `json:"id"`
+		Name        string          `json:"name" validate:"required,min=2"`
+		Domain3     string          `json:"domain3" validate:"required,min=2"`
+		Email       string          `json:"email" validate:"required,email"`
+		ManagerId   uuid.UUID       `json:"manager_id"`
+	}
+)
 
 func InitVendorRoutes(api *Server, service model.VendorService) error {
 	vendorRouter := VendorRouter{
@@ -42,50 +53,103 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, vendors)
+
+	dto := []VendorDTO{}
+	for _, v := range vendors {
+		dto = append(dto, VendorDTO{
+			Id: v.ID,
+			Name: v.Name,
+			Domain3: v.Domain3,
+			Email: v.Email,
+			ManagerId: *v.ManagerId,
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, dto)
 }
 
 func (api *VendorRouter) get(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 	vendor, err := api.vendorService.FindByID(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Vendor not found")
+		return orm.NewServiceError(http.StatusNotFound, "Vendor not found")
 	}
-	return ctx.JSON(http.StatusOK, vendor)
+	return ctx.JSON(http.StatusOK, VendorDTO{
+		Id: vendor.ID,
+		Name: vendor.Name,
+		Domain3: vendor.Domain3,
+		Email: vendor.Email,
+		ManagerId: *vendor.ManagerId,
+	})
 }
 
 func (api *VendorRouter) create(ctx echo.Context) error {
-	vendor := &model.Vendor{}
-	if err := ctx.Bind(vendor); err != nil {
+	dto := &VendorDTO{}
+	if err := ctx.Bind(dto); err != nil {
 		return errors.Wrap(err, "Bind vendor obj")
 	}
+
+	if errs := ctx.Validate(dto); errs != nil {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
+	}
+
 	// Assign to new vendor current user id as manager
 	user := ctx.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
 	managerId, _ := uuid.FromBytes(data)
-	vendor.ManagerId = &managerId
 
-	if err := api.vendorService.CreateVendor(vendor); err != nil {
-		return err
-	}
-	return ctx.JSON(http.StatusCreated, vendor)
-}
-
-func (api *VendorRouter) update(ctx echo.Context) error {
-	vendor := &model.Vendor{}
-
-	if err := ctx.Bind(vendor); err != nil {
-		return errors.Wrap(err, "Bind vendor obj")
-	}
-
-	err := api.vendorService.UpdateVendor(vendor)
+	bto, err := api.vendorService.CreateVendor(&model.Vendor{
+		Name: dto.Name,
+		Domain3: dto.Domain3,
+		Email: dto.Email,
+		ManagerId: &managerId,
+	})
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, vendor)
+	return ctx.JSON(http.StatusCreated, VendorDTO{
+		Id: bto.ID,
+		Name: bto.Name,
+		Domain3: bto.Domain3,
+		Email: bto.Email,
+		ManagerId: *bto.ManagerId,
+	})
+}
+
+func (api *VendorRouter) update(ctx echo.Context) error {
+	dto := &VendorDTO{}
+	if err := ctx.Bind(dto); err != nil {
+		return errors.Wrap(err, "Bind vendor obj")
+	}
+	vendorId, err := uuid.FromString(ctx.Param("id"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+	}
+
+	if errs := ctx.Validate(dto); errs != nil {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
+	}
+
+	vendor, err := api.vendorService.UpdateVendor(&model.Vendor{
+		ID: vendorId,
+		Name: dto.Name,
+		Domain3: dto.Domain3,
+		Email: dto.Email,
+	})
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, VendorDTO{
+		Id: vendor.ID,
+		Name: vendor.Name,
+		Domain3: vendor.Domain3,
+		Email: vendor.Email,
+		ManagerId: *vendor.ManagerId,
+	})
 }
