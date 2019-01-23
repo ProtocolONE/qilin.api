@@ -11,12 +11,12 @@ type Vendor struct {
 	UpdatedAt time.Time
 	DeletedAt *time.Time 		`sql:"index"`
 
-	Name string 				`gorm:"column:name; not null;unique"`
+	Name string 				`gorm:"column:name; not null; unique"`
 	// 3d level domain - example.super.com
-	Domain3 string 				`gorm:"column:domain3; not null;unique"`
+	Domain3 string 				`gorm:"column:domain3; not null; unique"`
 	// Main email for notifications and bills
-	Email string 				`gorm:"column:email; not null;unique"`
-	HowManyProducts string		`gorm:"column:hawmanyproducts; not null;"`
+	Email string 				`gorm:"column:email; not null; unique"`
+	HowManyProducts string		`gorm:"column:howmanyproducts; not null;"`
 
 	Manager 	User 			`gorm:"foreignkey:ManagerId; association_foreignkey:Refer"`
 	ManagerId 	*uuid.UUID		`gorm:"column:manager_id; type:uuid"`
