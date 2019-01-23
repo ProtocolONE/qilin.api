@@ -19,7 +19,7 @@ paths:
     get:
       tags:
         - vendor
-      summary: Get vendor by it's ID or get error
+      summary: Get vendor by it's ID
       operationId: getVendorByID
       parameters:
         - name: id
