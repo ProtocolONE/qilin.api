@@ -149,6 +149,8 @@ components:
         email:
           type: string
           format: email
+        howmanyproducts:
+          type: string
         manager_id:
           type: string
           format: uuid
