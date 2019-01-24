@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 
@@ -17,9 +18,9 @@ type (
 	}
 
 	PricesDTO struct {
-		Normal   Price            `json:"normal" validate:"required,dive" mapper:"ignore"`
+		Common   BasePrice        `json:"common" validate:"required,dive"`
 		PreOrder PreOrder         `json:"preOrder" validate:"required,dive"`
-		Prices   []PricesInternal `json:"prices" validate:"required,dive"`
+		Prices   []PricesInternal `json:"prices" validate:"-"`
 	}
 
 	PricesInternal struct {
@@ -30,42 +31,45 @@ type (
 
 	PreOrder struct {
 		Date    string `json:"date" validate:"required"`
-		Enabled bool   `json:"enabled" validate:"required"`
+		Enabled bool   `json:"enabled"`
 	}
 
-	Price struct {
-		Currency string  `json:"currency" validate:"required"`
-		Price    float32 `json:"price" validate:"required"`
+	BasePrice struct {
+		Currency        string `json:"currency" validate:"required"`
+		NotifyRateJumps bool   `json:"notifyRateJumps"`
 	}
 )
 
 //InitPriceRouter is initialization method for router
-func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *echo.Group, err error) {
+func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *PriceRouter, err error) {
 	priceRouter := PriceRouter{
 		service: service,
 	}
 
-	router = group.Group("/games/:id")
+	r := group.Group("/games/:id")
 
-	router.GET("/prices", priceRouter.get)
+	r.GET("/prices", priceRouter.getBase)
+	r.GET("/prices", priceRouter.putBase)
+	r.GET("/prices/:currency", priceRouter.updatePrice)
+	r.GET("/prices/:currency", priceRouter.deletePrice)
 
-	return router, nil
+	return &priceRouter, nil
 }
 
-func (router *PriceRouter) get(ctx echo.Context) error {
+func (router *PriceRouter) getBase(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
 
-	price, err := router.service.Get(id)
+	price, err := router.service.GetBase(id)
 
 	if err != nil {
 		return err
 	}
 
-	result := Price{}
+	result := PricesDTO{}
 	err = mapper.Map(price, &result)
 
 	if err != nil {
@@ -75,14 +79,14 @@ func (router *PriceRouter) get(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, result)
 }
 
-func (router *PriceRouter) put(ctx echo.Context) error {
+func (router *PriceRouter) putBase(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
 
-	dto := new(Price)
+	dto := new(PricesDTO)
 
 	if err := ctx.Bind(dto); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -92,24 +96,85 @@ func (router *PriceRouter) put(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	prices := model.Price{}
-	err = mapper.Map(dto, &prices)
+	basePrice := model.BasePrice{}
+	err = mapper.Map(dto, &basePrice)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if err := router.service.Update(id, &prices); err != nil {
+	if err := router.service.UpdateBase(id, &basePrice); err != nil {
 		return err
 	}
 
 	return ctx.String(http.StatusOK, "")
 }
 
-func (router *PriceRouter) createPrice(ctx echo.Context) error {
-	panic("")
+func (router *PriceRouter) deletePrice(ctx echo.Context) error {
+	id, err := uuid.FromString(ctx.Param("id"))
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+	}
+
+	cur := ctx.Param("currency")
+
+	dto := new(PricesInternal)
+
+	if err := ctx.Bind(dto); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if cur != dto.Currency {
+		return echo.NewHTTPError(http.StatusBadRequest, "Currency not equal")
+	}
+
+	if errs := ctx.Validate(dto); errs != nil {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
+	}
+
+	price := model.Price{}
+	err = mapper.Map(dto, &price)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := router.service.Delete(id, &price); err != nil {
+		return err
+	}
+
+	return ctx.String(http.StatusOK, "")
 }
 
 func (router *PriceRouter) updatePrice(ctx echo.Context) error {
-	panic("")
+	id, err := uuid.FromString(ctx.Param("id"))
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+	}
+
+	dto := new(PricesInternal)
+
+	if err := ctx.Bind(dto); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	price := model.Price{}
+	err = mapper.Map(dto, &price)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	cur := ctx.Param("currency")
+	if cur != dto.Currency {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Currency not equal. param: %v in model: %v", cur, dto.Currency))
+	}
+
+	if err := router.service.Update(id, &price); err != nil {
+		return err
+	}
+
+	return ctx.String(http.StatusOK, "")
 }
