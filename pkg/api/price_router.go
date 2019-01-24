@@ -4,10 +4,11 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 
-	"github.com/labstack/echo"
 	"net/http"
 	"qilin-api/pkg/mapper"
-	"github.com/satori/go.uuid"
+
+	"github.com/labstack/echo"
+	uuid "github.com/satori/go.uuid"
 )
 
 type (
@@ -16,25 +17,25 @@ type (
 	}
 
 	PricesDTO struct {
-		Normal Price `json:"normal" validate:"required,dive"`
-		PreOrder PreOrder `json:"preOrder" validate:"required,dive"`
-		Prices []PricesInternal `json:"prices" validate:"required,dive"`
+		Normal   Price            `json:"normal" validate:"required,dive" mapper:"ignore"`
+		PreOrder PreOrder         `json:"preOrder" validate:"required,dive"`
+		Prices   []PricesInternal `json:"prices" validate:"required,dive"`
 	}
 
 	PricesInternal struct {
-		Currency string `json:"currency" validate:"required"`
-		Price float32 `json:"price" validate:"required"`
-		Vat int32 `json:"vat" validate:"required"`
+		Currency string  `json:"currency" validate:"required"`
+		Price    float32 `json:"price" validate:"required"`
+		Vat      int32   `json:"vat" validate:"required"`
 	}
 
 	PreOrder struct {
-		Date string `json:"date" validate:"required"`
-		Enabled bool `json:"enabled" validate:"required"`
+		Date    string `json:"date" validate:"required"`
+		Enabled bool   `json:"enabled" validate:"required"`
 	}
 
 	Price struct {
-		Currency string `json:"currency" validate:"required"`
-		Price float32 `json:"price" validate:"required"`
+		Currency string  `json:"currency" validate:"required"`
+		Price    float32 `json:"price" validate:"required"`
 	}
 )
 
@@ -57,7 +58,7 @@ func (router *PriceRouter) get(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
-	
+
 	price, err := router.service.Get(id)
 
 	if err != nil {
@@ -68,7 +69,7 @@ func (router *PriceRouter) get(ctx echo.Context) error {
 	err = mapper.Map(price, &result)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Can't decode price from domain to DTO. Error: " + err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, "Can't decode price from domain to DTO. Error: "+err.Error())
 	}
 
 	return ctx.JSON(http.StatusOK, result)

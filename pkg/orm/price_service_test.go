@@ -1,14 +1,15 @@
 package orm
 
 import (
-	"time"
-	"github.com/satori/go.uuid"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/suite"
+	uuid "github.com/satori/go.uuid"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type PriceServiceTestSuite struct {
@@ -47,9 +48,12 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 }
 
 func (suite *PriceServiceTestSuite) TearDownTest() {
-	// if err := suite.db.DB().DropTable(model.Media{}).Error; err != nil {
-	// 	panic(err)
-	// }
+	if err := suite.db.DB().DropTable(model.Price{}).Error; err != nil {
+		panic(err)
+	}
+	if err := suite.db.DB().DropTable(model.BasePrice{}).Error; err != nil {
+		panic(err)
+	}
 	if err := suite.db.Close(); err != nil {
 		panic(err)
 	}
@@ -61,35 +65,36 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 	assert.Nil(suite.T(), err, "Unable to media service")
 
 	id, _ := uuid.FromString(ID)
-	game := model.Price{
+	game := model.BasePrice{
 		ID: uuid.NewV4(),
-		Normal: model.JSONB {
+		Common: model.JSONB{
 			"currency": "USD",
-			"price": 100,
+			"price":    100.0,
 		},
-		PreOrder: model.JSONB {
-			"date": "2019-01-22T07:53:16Z",
+		PreOrder: model.JSONB{
+			"date":    "2019-01-22T07:53:16Z",
 			"enabled": false,
 		},
-		Prices: []model.JSONB {
-			model.JSONB { 
-				"currency": "USD",
-				"vat": 10,
-				"price": 29.99,
-			},
+		Prices: []model.Price{
+			model.Price{BasePriceID: id, Price: 100.0, Vat: 32, Currency: "EUR"},
+			model.Price{BasePriceID: id, Price: 93.23, Vat: 10, Currency: "RUR"},
 		},
 		UpdatedAt: &updatedAt,
 	}
 
-	err = service.Update(id, &game);
+	err = service.Update(id, &game)
 	assert.Nil(suite.T(), err, "Unable to update media for game")
 
 	gameFromDb, err := service.Get(id)
 	assert.Nil(suite.T(), err, "Unable to get game: %v", err)
 	assert.NotNil(suite.T(), gameFromDb, "Unable to get game: %v", id)
 	assert.Equal(suite.T(), game.ID, gameFromDb.ID, "Incorrect Game ID from DB")
-	assert.Equal(suite.T(), game.Normal, gameFromDb.Normal, "Incorrect Normal from DB")
+	assert.Equal(suite.T(), game.Common["currency"], gameFromDb.Common["currency"], "Incorrect Common from DB")
+	assert.Equal(suite.T(), game.Common["price"], gameFromDb.Common["price"], "Incorrect Common from DB")
 	assert.Equal(suite.T(), game.PreOrder, gameFromDb.PreOrder, "Incorrect PreOrder from DB")
-	assert.Equal(suite.T(), game.Prices, gameFromDb.Prices, "Incorrect Prices from DB")
-	assert.Equal(suite.T(), game.UpdatedAt, gameFromDb.UpdatedAt, "Incorrect UpdatedAt from DB")
+	for i := 0; i < 2; i++ {
+		assert.Equal(suite.T(), game.Prices[i].BasePriceID, gameFromDb.Prices[i].BasePriceID, "Incorrect Prices from DB")
+		assert.Equal(suite.T(), game.Prices[i].Price, gameFromDb.Prices[i].Price, "Incorrect Prices from DB")
+		assert.Equal(suite.T(), game.Prices[i].Currency, gameFromDb.Prices[i].Currency, "Incorrect Prices from DB")
+	}
 }

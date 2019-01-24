@@ -11,9 +11,13 @@ import (
 func SelectFields(object interface{}) []string {
 	elem := reflect.ValueOf(object).Elem()
 	typeOfT := elem.Type()
-	result := make([]string, elem.NumField())
+	result := make([]string, 0)
 	for i := 0; i < elem.NumField(); i++ {
-		result[i] = gorm.ToColumnName(typeOfT.Field(i).Name)
+		val, ok := typeOfT.Field(i).Tag.Lookup("field")
+		if ok && val == "ignore" {
+			continue
+		}
+		result = append(result, gorm.ToColumnName(typeOfT.Field(i).Name))
 	}
 
 	return result

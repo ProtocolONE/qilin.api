@@ -3,31 +3,24 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"errors"
+	"strings"
 )
 
 type JSONBArray []JSONB
 
-func (p JSONBArray) Value() (driver.Value, error) {
-	j, err := json.Marshal(p)
-	return j, err
+//Value is marshaling function
+func (j JSONBArray) Value() (driver.Value, error) {
+	valueString, err := json.Marshal(j)
+	js := string(valueString)
+	js = strings.Replace(js, "[", "{", -1)
+	js = strings.Replace(js, "]", "}", -1)
+	return js, err
 }
 
-func (p *JSONBArray) Scan(src interface{}) error {
-	source, ok := src.([]byte)
-	if !ok {
-		return errors.New("Type assertion .([]byte) failed.")
-	}
-
-	var i interface{}
-	if err := json.Unmarshal(source, &i); err != nil {
+//Scan is unmarshaling function
+func (j *JSONBArray) Scan(value interface{}) error {
+	if err := json.Unmarshal(value.([]byte), &j); err != nil {
 		return err
 	}
-
-	*p, ok = i.(JSONBArray)
-	if !ok {
-		return errors.New("Type assertion .(JSONBArray) failed.")
-	}
-
 	return nil
 }

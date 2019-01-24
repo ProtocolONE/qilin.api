@@ -1,12 +1,12 @@
 package orm
 
 import (
-	"fmt"
 	"net/http"
 	"qilin-api/pkg/model"
-	"github.com/satori/go.uuid"
+
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 )
 
 // PriceService is service to interact with database and Media object.
@@ -19,10 +19,10 @@ func NewPriceService(db *Database) (*PriceService, error) {
 	return &PriceService{db.database}, nil
 }
 
-func (p *PriceService) Get(id uuid.UUID) (*model.Price, error) {
+func (p *PriceService) Get(id uuid.UUID) (*model.BasePrice, error) {
 
-	result := &model.Price{}
-	err := p.db.Select(model.SelectFields(result)).Where("ID = ?", id).First(&result).Error
+	result := &model.BasePrice{}
+	err := p.db.Preload("Prices").Select(model.SelectFields(result)).Where("id = ?", id).First(result).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return nil, NewServiceError(http.StatusNotFound, "Game not found")
@@ -33,12 +33,10 @@ func (p *PriceService) Get(id uuid.UUID) (*model.Price, error) {
 	return result, err
 }
 
-func (p *PriceService) Update(id uuid.UUID, price *model.Price) error {
+func (p *PriceService) Update(id uuid.UUID, price *model.BasePrice) error {
 
-	domain := &model.Price{}
-	err := p.db.Select(model.SelectFields(domain)).Where("ID = ?", id).First(domain).Error
-
-	fmt.Printf("%#v", domain)
+	domain := &model.BasePrice{ID: id}
+	err := p.db.Preload("Prices").Select(model.SelectFields(domain)).Where("id = ?", id).First(domain).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return NewServiceError(http.StatusNotFound, "Game not found")
@@ -46,11 +44,8 @@ func (p *PriceService) Update(id uuid.UUID, price *model.Price) error {
 		return errors.Wrap(err, "search game by id")
 	}
 
-	if price.UpdatedAt.Before(*domain.UpdatedAt) && !price.UpdatedAt.Equal(*domain.UpdatedAt) {
-		// return NewServiceError(http.StatusConflict, "Object has new changes")
-	}
-
 	price.ID = domain.ID
+
 	err = p.db.Save(price).Error
 
 	if err != nil {
@@ -59,4 +54,3 @@ func (p *PriceService) Update(id uuid.UUID, price *model.Price) error {
 
 	return nil
 }
-
