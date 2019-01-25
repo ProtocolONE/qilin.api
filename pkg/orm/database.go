@@ -35,7 +35,8 @@ func (db *Database) Init() {
 		&model.User{},
 		&model.Vendor{},
 		&model.Game{},
-		&model.Prices{},
+		&model.BasePrice{},
+		&model.Price{},
 		&model.Media{})
 }
 

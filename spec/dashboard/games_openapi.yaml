@@ -530,11 +530,96 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'                    
   
+  /api/v1/games/{id}/prices/{currency}:
+    put:
+      tags:
+        - price
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: currency
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currency: 
+                    type: string
+                vat: 
+                  type: number
+                price:
+                  type: number
+                  format: float  
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+          
+    delete:
+      tags:
+        - price
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: currency
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currency: 
+                    type: string
+                vat: 
+                  type: number
+                price:
+                  type: number
+                  format: float  
+      responses:
+        200:
+          description: OK
+        401:
+          $ref: '#/components/responses/Unauthorized'                
+        403:
+          $ref: '#/components/responses/Forbidden'                
+        404:
+          $ref: '#/components/responses/NotFound'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
   /api/v1/games/{id}/prices:  
     get:
       tags:
         - price
-      summary: "Gets prices for game"
+      summary: "Gets base info about prices for game"
       parameters:
         - name: id
           in: path
@@ -548,10 +633,8 @@ paths:
           content:
             application/json:  
               schema:
-                type: object
-                properties:
-                  prices:
-                    $ref: '#/components/schemas/Prices'
+                $ref: '#/components/schemas/Prices'
+                    
         401:
           $ref: '#/components/responses/Unauthorized'                
         403:
@@ -582,7 +665,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Prices'
+              $ref: '#/components/schemas/BasePrices'
       responses:
         200:
           description: OK
@@ -731,6 +814,13 @@ paths:
       tags:
         - achievments
       summary: "Create new achievment"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       operationId: "createAchievment"
       requestBody:
         description: "New achievment object"
@@ -896,10 +986,10 @@ components:
       description: The numbers of items to return.
 
   schemas:
-    Prices:
+    BasePrices:
       type: object
       properties:
-        default:
+        common:
           type: object
           properties:
             currency:
@@ -908,9 +998,8 @@ components:
               - USD
               - EUR
               - RUR
-            price:
-              type: number
-              format: float
+            notifyRateJumps:
+              type: boolean
         preOrder:
           type: object
           properties:
@@ -920,18 +1009,24 @@ components:
             enabled:
               type: boolean
               default: false
-        prices:
-          type: array
-          items:
-            type: object
-            properties:
-              currency: 
-                type: string
-              vat: 
-                type: number
-              price:
-                type: number
-                format: float
+
+    Prices:
+      allOf:
+      - $ref: '#/components/schemas/BasePrices'
+      - type: object
+        properties:
+          prices:
+            type: array
+            items:
+              type: object
+              properties:
+                currency: 
+                  type: string
+                vat: 
+                  type: number
+                price:
+                  type: number
+                  format: float
         
     Discount:
       type: object

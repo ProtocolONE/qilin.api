@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/satori/go.uuid"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 // Game is the Central object in the open gde ecosystem, which describes information about the game
@@ -18,9 +19,6 @@ type Game struct {
 
 	// game description
 	Description *LocalizedString `json:"description"`
-
-	// game price
-	Prices Prices `json:"prices" gorm:"auto_preload"`
 
 	// date of create merchant in system
 	CreatedAt time.Time `json:"created_at"`
