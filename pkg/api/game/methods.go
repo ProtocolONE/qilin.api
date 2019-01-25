@@ -49,7 +49,7 @@ func (api *Router) GetInfo(ctx echo.Context) error {
     if err != nil {
         return err
     }
-    return ctx.JSON(http.StatusCreated, dto)
+    return ctx.JSON(http.StatusOK, dto)
 }
 
 func (api *Router) Delete(ctx echo.Context) error {
@@ -65,7 +65,7 @@ func (api *Router) Delete(ctx echo.Context) error {
     if err != nil {
         return err
     }
-    return ctx.JSON(http.StatusCreated, "OK")
+    return ctx.JSON(http.StatusOK, "OK")
 }
 
 func (api *Router) UpdateInfo(ctx echo.Context) error {
@@ -90,7 +90,7 @@ func (api *Router) UpdateInfo(ctx echo.Context) error {
     if err != nil {
         return err
     }
-    return ctx.JSON(http.StatusCreated, "OK")
+    return ctx.JSON(http.StatusOK, "OK")
 }
 
 func (api *Router) GetDescr(ctx echo.Context) error {
@@ -117,15 +117,15 @@ func (api *Router) GetDescr(ctx echo.Context) error {
             Twitter: descr.Socials.Twitter,
         },
     }
-    for _, r := range descr.Reviews {
+    for _, review := range descr.Reviews {
         dto.Reviews = append(dto.Reviews, DescrReview{
-            PressName: r.PressName,
-            Link: r.Link,
-            Score: r.Score,
-            Quote: r.Quote,
+            PressName: review.PressName,
+            Link: review.Link,
+            Score: review.Score,
+            Quote: review.Quote,
         })
     }
-    return ctx.JSON(http.StatusCreated, dto)
+    return ctx.JSON(http.StatusOK, dto)
 }
 
 func (api *Router) UpdateDescr(ctx echo.Context) error {
@@ -145,12 +145,12 @@ func (api *Router) UpdateDescr(ctx echo.Context) error {
         return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
     }
     reviews := []bto.GameReview{}
-    for _, r := range dto.Reviews {
+    for _, review := range dto.Reviews {
         reviews = append(reviews, bto.GameReview{
-            PressName: r.PressName,
-            Link: r.Link,
-            Score: r.Score,
-            Quote: r.Quote,
+            PressName: review.PressName,
+            Link: review.Link,
+            Score: review.Score,
+            Quote: review.Quote,
         })
     }
     err = api.gameService.UpdateDescr(userId, &model.GameDescr{
@@ -168,7 +168,7 @@ func (api *Router) UpdateDescr(ctx echo.Context) error {
     if err != nil {
         return err
     }
-    return ctx.JSON(http.StatusCreated, "OK")
+    return ctx.JSON(http.StatusOK, "OK")
 }
 
 func (api *Router) GetGenre(ctx echo.Context) error {
@@ -187,13 +187,13 @@ func (api *Router) GetGenre(ctx echo.Context) error {
         return err
     }
     dto := []GameTagDTO{}
-    for _, item := range genres {
+    for _, genre := range genres {
         dto = append(dto, GameTagDTO{
-            Id: item.ID,
-            Title: item.Title,
+            Id: genre.ID,
+            Title: genre.Title,
         })
     }
-    return ctx.JSON(http.StatusCreated, dto)
+    return ctx.JSON(http.StatusOK, dto)
 }
 
 func (api *Router) GetTags(ctx echo.Context) (err error) {
@@ -212,26 +212,26 @@ func (api *Router) GetTags(ctx echo.Context) (err error) {
         return err
     }
     dto := []GameTagDTO{}
-    for _, item := range tags {
+    for _, tag := range tags {
         dto = append(dto, GameTagDTO{
-            Id: item.ID,
-            Title: item.Title,
+            Id: tag.ID,
+            Title: tag.Title,
         })
     }
-    return ctx.JSON(http.StatusCreated, dto)
+    return ctx.JSON(http.StatusOK, dto)
 }
 
 func (api *Router) GetRatingDescriptors(ctx echo.Context) error {
-    items, err := api.gameService.GetRatingDescriptors()
+    descriptors, err := api.gameService.GetRatingDescriptors()
     if err != nil {
         return err
     }
     dto := []RatingDescriptorDTO{}
-    for _, it := range items {
+    for _, desc := range descriptors {
         dto = append(dto, RatingDescriptorDTO{
-            Id: it.ID,
-            Title: it.Title,
+            Id: desc.ID,
+            Title: desc.Title,
         })
     }
-    return ctx.JSON(http.StatusCreated, dto)
+    return ctx.JSON(http.StatusOK, dto)
 }

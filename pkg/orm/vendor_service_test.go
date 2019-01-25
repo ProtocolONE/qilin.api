@@ -62,7 +62,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 		ManagerID: userId,
 	}
 
-	_, err = vendorService.CreateVendor(&vendor)
+	_, err = vendorService.Create(&vendor)
 	require.Nil(err, "Unable to create vendor")
 	require.NotEmpty(vendor.ID, "Wrong ID for created vendor")
 
@@ -74,7 +74,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 	require.Equal(vendor.Domain3, vendorFromDb.Domain3, "Incorrect Vendor Domain3 from DB")
 
 	vendor.Domain3 = "zillo"
-	_, err = vendorService.UpdateVendor(&vendor)
+	_, err = vendorService.Update(&vendor)
 	require.Nil(err, "Unable to update vendor: %v", err)
 
 	vendorFromDb2, err := vendorService.FindByID(vendor.ID)
@@ -87,7 +87,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 		Email: "domino@proto.com",
 		ManagerID: userId,
 	}
-	_, err = vendorService.CreateVendor(&vendor2)
+	_, err = vendorService.Create(&vendor2)
 	require.NotNil(err, "Must be error cuz wrong domain name")
 
 	vendor3 := model.Vendor{
@@ -96,6 +96,6 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 		Email: "4456",
 		ManagerID: userId,
 	}
-	_, err = vendorService.CreateVendor(&vendor3)
+	_, err = vendorService.Create(&vendor3)
 	require.NotNil(err, "Must be error cuz invalid email")
 }

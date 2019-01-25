@@ -42,26 +42,26 @@ func (api *Router) GetList(ctx echo.Context) error {
 		return err
 	}
 	dto := []ShortGameInfoDTO{}
-	for _, g := range games {
+	for _, game := range games {
 		// Filter only game genres
 		genres := []GameTagDTO{}
-		for _, a := range g.Genre {
-			for _, b := range all_genres {
-				if b.ID == a {
-					genres = append(genres, GameTagDTO{Id: b.ID, Title: b.Title})
+		for _, genre_id := range game.Genre {
+			for _, genre := range all_genres {
+				if genre.ID == genre_id {
+					genres = append(genres, GameTagDTO{Id: genre.ID, Title: genre.Title})
 					break
 				}
 			}
 		}
 		dto = append(dto, ShortGameInfoDTO{
-			ID: g.ID,
-			InternalName: g.InternalName,
+			ID: game.ID,
+			InternalName: game.InternalName,
 			Icon: "",
 			Genre: genres,
-			ReleaseDate: g.ReleaseDate,
+			ReleaseDate: game.ReleaseDate,
 			Prices: GamePricesDTO{},
 		})
 	}
 
-	return ctx.JSON(http.StatusCreated, dto)
+	return ctx.JSON(http.StatusOK, dto)
 }

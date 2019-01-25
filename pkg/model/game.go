@@ -61,7 +61,7 @@ type (
         Socials                 game.Socials                `gorm:"type:jsonb; not null; default:'{}'"`
 
         Game                    *Game
-        GameID                  uuid.UUID                   `gorm:"type:uuid"`
+        GameID                  uuid.UUID
     }
 
     // GameService is a helper service class to interact with Game object.

@@ -86,7 +86,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 		HowManyProducts: "+1000",
 		ManagerID: userId,
 	}
-	vendor2, err := vendorService.CreateVendor(&vendor)
+	vendor2, err := vendorService.Create(&vendor)
 	require.Nil( err, "Must create new vendor")
 
 	suite.T().Log("Makes more game-tags")

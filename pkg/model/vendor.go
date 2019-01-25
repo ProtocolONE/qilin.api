@@ -19,14 +19,14 @@ type Vendor struct {
 	HowManyProducts string		`gorm:"column:howmanyproducts; not null;"`
 
 	Manager 	*User
-	ManagerID 	uuid.UUID       `gorm:"type:uuid"`
+	ManagerID 	uuid.UUID
 
 	Users       []User          `gorm:"many2many:vendor_users;"`
 }
 
 type VendorService interface {
-	CreateVendor(g *Vendor) (*Vendor, error)
-	UpdateVendor(g *Vendor) (*Vendor, error)
+	Create(g *Vendor) (*Vendor, error)
+	Update(g *Vendor) (*Vendor, error)
 	GetAll(int, int) ([]*Vendor, error)
 	FindByID(id uuid.UUID) (*Vendor, error)
 }

@@ -38,16 +38,16 @@ func (p *VendorService) validate(item *model.Vendor) error {
 	if strings.Index("0123456789", string(item.Domain3[0])) > -1 {
 		return NewServiceError(http.StatusBadRequest,"Domain is invalid")
 	}
+	if uuid.Equal(item.ManagerID, uuid.Nil) {
+		return NewServiceError(http.StatusBadRequest, errVendorManagerId)
+	}
 	return nil
 }
 
 // CreateVendor creates new Vendor object in database
-func (p *VendorService) CreateVendor(item *model.Vendor) (result *model.Vendor, err error) {
+func (p *VendorService) Create(item *model.Vendor) (result *model.Vendor, err error) {
 	if err := p.validate(item); err != nil {
 		return nil, err
-	}
-	if uuid.Equal(item.ManagerID, uuid.Nil) {
-		return nil, NewServiceError(http.StatusBadRequest, errVendorManagerId)
 	}
 	vendor := *item
 	if uuid.Nil == vendor.ID {
@@ -66,7 +66,7 @@ func (p *VendorService) CreateVendor(item *model.Vendor) (result *model.Vendor, 
 	return &vendor, nil
 }
 
-func (p *VendorService) UpdateVendor(item *model.Vendor) (vendor *model.Vendor, err error) {
+func (p *VendorService) Update(item *model.Vendor) (vendor *model.Vendor, err error) {
 	if err := p.validate(item); err != nil {
 		return nil, err
 	}
@@ -76,7 +76,9 @@ func (p *VendorService) UpdateVendor(item *model.Vendor) (vendor *model.Vendor, 
 			"name": item.Name,
 			"domain3": item.Domain3,
 			"email": item.Email,
-			"howmanyproducts": item.HowManyProducts}).Error
+			"howmanyproducts": item.HowManyProducts,
+			"manager_id": item.ManagerID,
+		}).Error
 
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
 		return nil, NewServiceError(http.StatusConflict, errVendorConflict)

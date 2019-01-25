@@ -103,7 +103,7 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 	data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
 	managerId, _ := uuid.FromBytes(data)
 
-	bto, err := api.vendorService.CreateVendor(&model.Vendor{
+	bto, err := api.vendorService.Create(&model.Vendor{
 		Name: dto.Name,
 		Domain3: dto.Domain3,
 		Email: dto.Email,
@@ -138,7 +138,7 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	vendor, err := api.vendorService.UpdateVendor(&model.Vendor{
+	vendor, err := api.vendorService.Update(&model.Vendor{
 		ID: vendorId,
 		Name: dto.Name,
 		Domain3: dto.Domain3,
