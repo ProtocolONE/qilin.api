@@ -24,6 +24,7 @@ type Database struct {
 	Database string
 	User     string
 	Password string
+	LogMode  bool
 }
 
 type Jwt struct {

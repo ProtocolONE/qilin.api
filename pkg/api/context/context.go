@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
-	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -33,19 +32,19 @@ func getToken(ctx echo.Context) *jwt.Token {
 	return obj.(*jwt.Token)
 }
 
-func GetAuthUUID(ctx echo.Context) (result *uuid.UUID, err error) {
+func GetAuthUUID(ctx echo.Context) (result uuid.UUID, err error) {
 	token := ctx.Get(TokenKey).(*jwt.Token)
 	if token == nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, "Invalid auth token")
+		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token")
 	}
 	claims := token.Claims.(jwt.MapClaims)
 	data, err := base64.StdEncoding.DecodeString(claims["id"].(string))
 	if data == nil {
-		return nil, errors.Wrap(err, "Unmarshal id from token")
+		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token")
 	}
 	uuidObj, err := uuid.FromBytes(data)
 	if data == nil {
-		return nil, errors.Wrap(err, "Uuid from bytes")
+		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token")
 	}
-	return &uuidObj, nil
+	return uuidObj, nil
 }

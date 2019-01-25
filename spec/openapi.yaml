@@ -17,110 +17,202 @@ info:
 paths:
   /api/v1/vendors/{id}:
     get:
-      summary: Get vendor by id
+      tags:
+        - vendor
+      summary: Get vendor by it's ID
       operationId: getVendorByID
-      description: Get vendor by it's ID or get error
       parameters:
         - name: id
           in: path
           description: Vendor ID
           required: true
           schema:
-            type: uuid
-            format: string
+            type: string
+            format: uuid
       responses:
-        '200':
+        200:
           description: Successful operation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Vendor'
-        '404':
-          description: not found
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
   /api/v1/vendors:
     get:
+      tags:
+        - vendor
       summary: Retrive list of vendors
       operationId: getVendors
-      description: Get all vendors in Qilin ordered by ID
       parameters:
         - name: limit
           in: query
           description: Limit for query
+          required: false
           schema:
             type: integer
+            default: "20"
+            minimum: 1
         - name: offset
           in: query
           description: Offset for query
+          required: false
           schema:
             type: integer
+            default: "0"
       responses:
-        '200':
+        200:
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Vendor'[]
-        '404':
-          description: not found
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vendor"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
     post:
+      tags:
+        - vendor
       summary: Create new Vendor
       operationId: addVendor
-      description: Create new Vendor from json body
-      parameters:
-        - name: body
-          in: body
-          description: Vendor object
-          schema:
-            $ref: '#/components/schemas/Vendor'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vendor'
       responses:
-        '200':
+        201:
           description: Successful operation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Vendor'
-        '400':
-          description: Bad request
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalError'
     put:
-      summary: Save exists Vendor
+      tags:
+        - vendor
+      summary: Save Vendor
       operationId: updateVendor
-      description: Update exists Vendor - email, name, domain3
-      parameters:
-        - name: body
-          in: body
-          description: Vendor object
-          schema:
-            $ref: '#/components/schemas/Vendor'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vendor'
       responses:
-        '200':
+        200:
           description: Successful operation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Vendor'
-        '400':
-          description: Bad request
-        '404':
-          description: not found
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
 components:
   schemas:
     Vendor:
       type: object
       properties:
         id:
-          type: uuid
-          format: string
+          type: string
+          format: uuid
         name:
           type: string
         domain3:
           type: string
         email:
-          type: email
-          format: string
+          type: string
+          format: email
+        howmanyproducts:
+          type: string
         manager_id:
-          type: integer
+          type: string
+          format: uuid
       required:
         - id
         - name
         - domain3
         - email
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 409
+            message: "Resource with same unique id already exists"
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 422
+            message: "Fields required: 'title, description'"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

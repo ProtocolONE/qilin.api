@@ -41,5 +41,17 @@ type (
 		RU  Langs   `json:"ru"`
 	}
 
+	GameReviews []GameReview
+	GameReview struct {
+		PressName   string          `json:"pressName"`
+		Link        string          `json:"link"`
+		Score       string          `json:"score"`
+		Quote       string          `json:"quote"`
+	}
+
+	Socials struct {
+		Facebook    string          `json:"facebook"`
+		Twitter     string          `json:"twitter"`
+	}
 )
 

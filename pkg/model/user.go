@@ -7,8 +7,8 @@ import (
 
 type User struct {
 	ID			uuid.UUID 		`gorm:"type:uuid; primary_key; default:gen_random_uuid()"`
-	CreatedAt 	time.Time		`gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt 	time.Time		`gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedAt 	time.Time		`gorm:"default:now()"`
+	UpdatedAt 	time.Time		`gorm:"default:now()"`
 	DeletedAt 	*time.Time 		`sql:"index"`
 
 	// User nickname for public display
@@ -17,6 +17,8 @@ type User struct {
 	Password        string
 	Lang            string		`gorm:"default:'ru'"`
 	Currency        string		`gorm:"default:'usd'"`
+
+	Vendors         []Vendor    `gorm:"many2many:vendor_users;"`
 }
 
 type UserInfo struct {

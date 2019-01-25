@@ -14,14 +14,18 @@ type VendorService struct {
 	db *gorm.DB
 }
 
+const (
+	errVendorConflict = "Other vendor with the same name, domain3 or email already exists"
+	errVendorNotFound = "Vendor not found"
+	errVendorManagerId = "ManagerId is invalid"
+)
+
 // NewVendorService initialize this service.
 func NewVendorService(db *Database) (*VendorService, error) {
 	return &VendorService{db.database}, nil
 }
 
 func (p *VendorService) validate(item *model.Vendor) error {
-	//p.db.First(&item2, "login = ? and password = ?", login, pass).Error
-
 	if strings.Index(item.Email, "@") < 1 {
 		return NewServiceError(http.StatusBadRequest,"Invalid Email")
 	}
@@ -34,57 +38,77 @@ func (p *VendorService) validate(item *model.Vendor) error {
 	if strings.Index("0123456789", string(item.Domain3[0])) > -1 {
 		return NewServiceError(http.StatusBadRequest,"Domain is invalid")
 	}
-	if item.ManagerId == nil || uuid.Equal(*item.ManagerId, uuid.Nil) {
-		return NewServiceError(http.StatusBadRequest,"ManagerId is invalid")
-	}
 	return nil
 }
 
 // CreateVendor creates new Vendor object in database
-func (p *VendorService) CreateVendor(item *model.Vendor) error {
+func (p *VendorService) CreateVendor(item *model.Vendor) (result *model.Vendor, err error) {
 	if err := p.validate(item); err != nil {
-		return err
+		return nil, err
 	}
-	item.ID = uuid.NewV4()
-	err := p.db.Create(item).Error
+	if uuid.Equal(item.ManagerID, uuid.Nil) {
+		return nil, NewServiceError(http.StatusBadRequest, errVendorManagerId)
+	}
+	vendor := *item
+	if uuid.Nil == vendor.ID {
+		vendor.ID = uuid.NewV4()
+	}
+	err = p.db.Create(&vendor).Error
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
-		return NewServiceError(http.StatusBadRequest,"Other vendor with the same name already exists")
+		return nil, NewServiceError(http.StatusConflict, errVendorConflict)
 	} else if err != nil {
-		err = errors.Wrap(err, "insert vendor")
+		return nil, errors.Wrap(err, "Insert vendor")
 	}
-	return err
+	err = p.db.Model(&vendor).Association("Users").Append(model.User{ID: vendor.ManagerID}).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Append to association")
+	}
+	return &vendor, nil
 }
 
-func (p *VendorService) UpdateVendor(item *model.Vendor) error {
+func (p *VendorService) UpdateVendor(item *model.Vendor) (vendor *model.Vendor, err error) {
 	if err := p.validate(item); err != nil {
-		return err
+		return nil, err
 	}
-	return errors.Wrap(p.db.Model(item).
+
+	err = p.db.Model(item).
 		Updates(map[string]interface{}{
 			"name": item.Name,
 			"domain3": item.Domain3,
 			"email": item.Email,
-			"howmanyproducts": item.HowManyProducts}).
-		Error, "insert vendor")
+			"howmanyproducts": item.HowManyProducts}).Error
+
+	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
+		return nil, NewServiceError(http.StatusConflict, errVendorConflict)
+	} else
+	if err != nil {
+		return nil, errors.Wrap(err, "Update vendor")
+	}
+
+	return p.FindByID(item.ID)
 }
 
-func (p *VendorService) FindByID(id uuid.UUID) (vendor model.Vendor, err error) {
-	err = p.db.First(&vendor, model.Vendor{ID: id}).Error
+func (p *VendorService) FindByID(id uuid.UUID) (vendor *model.Vendor, err error) {
+	vendor = &model.Vendor{}
+	err = p.db.First(vendor, "id = ?", id).Error
 	if err == gorm.ErrRecordNotFound {
-		err = NewServiceError(404, "Vendor not found")
+		err = NewServiceError(404, errVendorNotFound)
 	} else if err != nil {
-		err = errors.Wrap(err, "insert vendor")
+		err = errors.Wrap(err, "Find vendor")
 	}
 	return
 }
 
 func (p *VendorService) GetAll(limit, offset int) (vendors []*model.Vendor, err error) {
 
-	err = errors.Wrap(p.db.
+	err = p.db.
 		Offset(offset).
 		Limit(limit).
-		Order("id desc").
-		Find(&vendors).Error, "update vendor")
+		Order("created_at desc").
+		Find(&vendors).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Fetch vendors")
+	}
 
 	return vendors, err
 }

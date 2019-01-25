@@ -31,7 +31,7 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 		return err
 	}
 
-	userObj, err := api.service.FindByID(userId)
+	userObj, err := api.service.FindByID(&userId)
 	if err != nil {
 		return err
 	}
@@ -44,15 +44,6 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 	return ctx.JSON(http.StatusOK, result)
 }
 
-// @Summary Login user
-// @Description Login user using Qilin login/password or facebook/google/VK tokens.
-// @Tags User
-// @Accept json
-// @Produce json
-// @Success 200 {object} model.Merchant "OK"
-// @Failure 404 {object} model.Error "User not found"
-// @Failure 500 {object} model.Error "Some unknown error"
-// @Router /auth-api/login [post]
 func (api *UserRouter) login(ctx echo.Context) error {
 	vals, err := ctx.FormParams()
 	if err != nil {

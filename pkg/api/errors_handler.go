@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/labstack/echo"
-	md "github.com/labstack/echo/middleware"
 	"net/http"
 	"qilin-api/pkg/orm"
 )
@@ -13,14 +12,9 @@ func (s *Server) QilinErrorHandler(err error, c echo.Context) {
 		msg  interface{}
 	)
 
-	if herr, ok := err.(*echo.HTTPError); ok &&
-		(herr.Message == md.ErrJWTMissing.Message || herr.Message ==  md.ErrJWTInvalid.Message) {
-
-		code = 401
-		msg = echo.Map{"message": herr.Message, "code": code}
-	} else if _, ok := err.(*echo.HTTPError); ok {
-		s.echo.DefaultHTTPErrorHandler(err, c)
-		return
+	if he, ok := err.(*echo.HTTPError); ok {
+		msg = echo.Map{"message": he.Message, "code": he.Code}
+		code = he.Code
 	} else if se, ok := err.(*orm.ServiceError); ok {
 		msg = echo.Map{"message": se.Message, "code": se.Code}
 		code = se.Code

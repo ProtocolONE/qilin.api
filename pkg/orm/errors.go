@@ -18,8 +18,11 @@ func (he *ServiceError) Error() string {
 func NewServiceError(code int, message ...interface{}) *ServiceError {
 	he := &ServiceError{Code: code, Message: http.StatusText(code)}
 	if len(message) > 0 {
-		he.Message = message[0]
+		if errs, ok := message[0].(error); ok {
+			he.Message = errs.Error()
+		} else {
+			he.Message = message[0]
+		}
 	}
 	return he
 }
-

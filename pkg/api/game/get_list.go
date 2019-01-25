@@ -2,17 +2,22 @@ package game
 
 import (
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/context"
 	"strconv"
 )
 
 func (api *Router) GetList(ctx echo.Context) error {
+	vendorId, err := uuid.FromString(ctx.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+	}
 	offset, err := strconv.Atoi(ctx.FormValue("offset"))
 	if err != nil {
 		offset = 0
 	}
-	limit, _ := strconv.Atoi(ctx.FormValue("offset"))
+	limit, err := strconv.Atoi(ctx.FormValue("offset"))
 	if err != nil {
 		limit = 20
 	}
@@ -22,7 +27,7 @@ func (api *Router) GetList(ctx echo.Context) error {
 	releaseDate := ctx.FormValue("releaseDate")
 	sort := ctx.FormValue("sort")
 
-	vendorId, err := context.GetAuthUUID(ctx)
+	userId, err := context.GetAuthUUID(ctx)
 	if err != nil {
 		return err
 	}
@@ -32,13 +37,12 @@ func (api *Router) GetList(ctx echo.Context) error {
 		return err
 	}
 
-	games, err := api.gameService.GetList(vendorId, offset, limit, internalName, genre, releaseDate, sort, price)
+	games, err := api.gameService.GetList(userId, vendorId, offset, limit, internalName, genre, releaseDate, sort, price)
 	if err != nil {
 		return err
 	}
 	dto := []ShortGameInfoDTO{}
 	for _, g := range games {
-
 		// Filter only game genres
 		genres := []GameTagDTO{}
 		for _, a := range g.Genre {
@@ -49,7 +53,6 @@ func (api *Router) GetList(ctx echo.Context) error {
 				}
 			}
 		}
-
 		dto = append(dto, ShortGameInfoDTO{
 			ID: g.ID,
 			InternalName: g.InternalName,

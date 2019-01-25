@@ -22,7 +22,7 @@ func NewDatabase(config *conf.Database) (*Database, error) {
 		return nil, err
 	}
 
-	db.LogMode(true)
+	db.LogMode(config.LogMode)
 	db.DB().SetMaxIdleConns(10)
 	db.DB().SetMaxOpenConns(100)
 
@@ -36,6 +36,8 @@ func (db *Database) Init() {
 		&model.Game{},
 		&model.GameTag{},
 		&model.GameGenre{},
+		&model.GameDescr{},
+		&model.RatingDescriptor{},
 		&model.Prices{})
 }
 
