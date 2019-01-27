@@ -25,12 +25,16 @@ func (s *DiscountService) GetDiscountsForGame(id uuid.UUID) ([]model.Discount, e
 
 	var result []model.Discount
 	game := model.Game{ID: id}
-	err := s.db.Model(&game).Related(&result).Error
+	err := s.db.Where("id = ?", id).First(&game).Related(&result).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return nil, NewServiceError(http.StatusNotFound, "Game not found")
 	} else if err != nil {
 		return nil, errors.Wrap(err, "search game by id")
+	}
+
+	if result == nil {
+		return make([]model.Discount, 0), nil
 	}
 
 	return result, nil
@@ -68,7 +72,7 @@ func (s *DiscountService) UpdateDiscountForGame(discount *model.Discount) error 
 	discountInDb := model.Discount{}
 	discountInDb.ID = discount.ID
 
-	err := s.db.Model(&discountInDb).First(&discount).Error
+	err := s.db.Model(&discountInDb).Where("id = ?", discount.ID).First(&discount).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return NewServiceError(http.StatusNotFound, "Discount not found")
@@ -95,11 +99,11 @@ func (s *DiscountService) RemoveDiscountForGame(id uuid.UUID) error {
 	discountInDb := model.Discount{}
 	discountInDb.ID = id
 
-	err := s.db.Model(&discountInDb).Delete(&discountInDb).Error
-	if err == gorm.ErrRecordNotFound {
+	res := s.db.Model(&discountInDb).Delete(&discountInDb)
+	if res.Error == gorm.ErrRecordNotFound || res.RowsAffected == 0 {
 		return NewServiceError(http.StatusNotFound, "Discount not found")
-	} else if err != nil {
-		return errors.Wrap(err, "search game by id")
+	} else if res.Error != nil {
+		return errors.Wrap(res.Error, "search game by id")
 	}
 
 	return nil

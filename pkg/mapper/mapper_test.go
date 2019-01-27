@@ -118,3 +118,28 @@ func Test_MappingDomainToDto(t *testing.T) {
 	assert.Equal(t, def, dto.Default, "Default not equal")
 	assert.Equal(t, &updatedAt, dto.UpdatedAt, "UpdatedAt not equal")
 }
+
+func Test_ArrayMapping(t *testing.T) {
+	prices := []model.JSONB{
+		model.JSONB{
+			"Price": 123.421,
+		},
+		model.JSONB{
+			"Price": 666.666,
+		},
+	}
+	pricesDto := []PriceDTO{
+		PriceDTO{
+			Price: 123.421,
+		},
+		PriceDTO{
+			Price: 666.666,
+		},
+	}
+
+	var dto []PriceDTO
+	err := mapper.Map(prices, &dto)
+
+	assert.Nil(t, err, "Error: %v", err)
+	assert.Equal(t, pricesDto, dto, "Prices not equal")
+}
