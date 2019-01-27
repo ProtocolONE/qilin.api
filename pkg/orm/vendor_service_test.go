@@ -58,7 +58,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 		ManagerId: &uuid.NamespaceDNS,
 	}
 
-	err = vendorService.CreateVendor(&vendor)
+	_, err = vendorService.CreateVendor(&vendor)
 	assert.Nil(suite.T(), err, "Unable to create vendor")
 	assert.NotEmpty(suite.T(), vendor.ID, "Wrong ID for created vendor")
 
@@ -70,7 +70,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 	assert.Equal(suite.T(), vendor.Domain3, vendorFromDb.Domain3, "Incorrect Vendor Domain3 from DB")
 
 	vendor.Domain3 = "zillo"
-	err = vendorService.UpdateVendor(&vendor)
+	_, err = vendorService.UpdateVendor(&vendor)
 	assert.Nil(suite.T(), err, "Unable to update vendor: %v", err)
 
 	vendorFromDb2, err := vendorService.FindByID(vendor.ID)
@@ -83,7 +83,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 		Email: "domino@proto.com",
 		ManagerId: &uuid.NamespaceDNS,
 	}
-	err = vendorService.CreateVendor(&vendor2)
+	_, err = vendorService.CreateVendor(&vendor2)
 	assert.NotNil(suite.T(), err, "Must be error cuz wrong domain name")
 
 	vendor3 := model.Vendor{
@@ -92,6 +92,6 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 		Email: "4456",
 		ManagerId: &uuid.NamespaceDNS,
 	}
-	err = vendorService.CreateVendor(&vendor3)
+	_, err = vendorService.CreateVendor(&vendor3)
 	assert.NotNil(suite.T(), err, "Must be error cuz invalid email")
 }

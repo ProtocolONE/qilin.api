@@ -37,7 +37,9 @@ func (db *Database) Init() {
 		&model.Game{},
 		&model.BasePrice{},
 		&model.Price{},
-		&model.Media{})
+		&model.Media{},
+		&model.Discount{},
+	)
 }
 
 func (db *Database) DB() *gorm.DB {
