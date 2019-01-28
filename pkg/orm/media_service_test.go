@@ -99,6 +99,7 @@ func (suite *MediaServiceTestSuite) TestCreateMediaShouldChangeGameInDB() {
 				"en": RandStringRunes(10),
 			},
 		},
+		UpdatedAt: time.Now(),
 	}
 
 	err = mediaService.Update(id, &game)

@@ -73,7 +73,7 @@ func Test_MappingDtoToDomain(t *testing.T) {
 	assert.Equal(t, id, domain.ID, "ID not equal")
 	assert.Equal(t, prices, domain.Price, "Prices not equal")
 	assert.Equal(t, def, domain.Default, "Default not equal")
-	assert.Equal(t, updatedAt, domain.UpdatedAt, "UpdatedAt not equal")
+	assert.Equal(t, &updatedAt, domain.UpdatedAt, "UpdatedAt not equal")
 
 }
 

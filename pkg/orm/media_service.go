@@ -1,11 +1,11 @@
 package orm
 
 import (
-	"net/http"
-	"qilin-api/pkg/model"
-	"github.com/satori/go.uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	"github.com/satori/go.uuid"
+	"net/http"
+	"qilin-api/pkg/model"
 )
 
 // MediaService is service to interact with database and Media object.
