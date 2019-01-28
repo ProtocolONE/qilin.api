@@ -10,8 +10,9 @@ install: true
 
 before_script:
   - psql -c 'create database qilin;' -U postgres
-  - psql -c "ALTER USER CURRENT_USER WITH PASSWORD 'travis'" -U travis;
-  - sed -i -e 's/postgres/travis/g' ./etc/config.yaml
+  - psql -c "CREATE USER travistest WITH PASSWORD 'travistest';" -U postgres
+  - psql -c "grant all privileges on database qilin to travistest;" -U postgres
+  - sed -i -e 's/postgres/travistest/g' ./etc/config.yaml
 
 script:
 - go test ./... -coverprofile=coverage.out -covermode=atomic
