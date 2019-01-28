@@ -1,6 +1,8 @@
 package api
 
 import (
+	"github.com/lib/pq"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/conf"
@@ -8,6 +10,7 @@ import (
 	"qilin-api/pkg/orm"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo"
 	uuid "github.com/satori/go.uuid"
@@ -52,7 +55,15 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 	db.Init()
 
 	id, _ := uuid.FromString(ID)
-	db.DB().Save(&model.Game{ID: id})
+	err = db.DB().Save(&model.Game{
+		ID: id,
+		InternalName: "Test_game_2",
+		ReleaseDate: time.Now(),
+		Genre: pq.StringArray{},
+		Tags: pq.StringArray{},
+		FeaturesCommon: pq.StringArray{},
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make game")
 
 	echo := echo.New()
 	service, err := orm.NewPriceService(db)

@@ -1,12 +1,13 @@
 package orm
 
 import (
+	"github.com/lib/pq"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"testing"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -42,7 +43,15 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 	db.Init()
 
 	id, _ := uuid.FromString(ID)
-	db.DB().Save(&model.Game{ID: id, Name: "Test game"})
+	err = db.DB().Save(&model.Game{
+		ID: id,
+		InternalName: "Test_game_2",
+		ReleaseDate: time.Now(),
+		Genre: pq.StringArray{},
+		Tags: pq.StringArray{},
+		FeaturesCommon: pq.StringArray{},
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make game")
 
 	suite.db = db
 }
@@ -76,8 +85,8 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 			"enabled": false,
 		},
 		Prices: []model.Price{
-			model.Price{BasePriceID: id, Price: 100.0, Vat: 32, Currency: "EUR"},
-			model.Price{BasePriceID: id, Price: 93.23, Vat: 10, Currency: "RUR"},
+			{BasePriceID: id, Price: 100.0, Vat: 32, Currency: "EUR"},
+			{BasePriceID: id, Price: 93.23, Vat: 10, Currency: "RUR"},
 		},
 		UpdatedAt: &updatedAt,
 	}

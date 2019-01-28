@@ -1,6 +1,7 @@
 package api
 
 import (
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"github.com/mitchellh/mapstructure"
 	"net/http"
@@ -20,13 +21,13 @@ type (
 	Media struct {
 		
 		// localized cover image of game
-		CoverImage *model.LocalizedString `json:"coverImage" validate:"required"`
+		CoverImage *utils.LocalizedString `json:"coverImage" validate:"required"`
 
 		// localized cover video of game
-		CoverVideo *model.LocalizedString `json:"coverVideo" validate:"required"`
+		CoverVideo *utils.LocalizedString `json:"coverVideo" validate:"required"`
 
 		// localized cover video of game
-		Trailers *model.LocalizedString `json:"trailers" validate:"required"`
+		Trailers *utils.LocalizedString `json:"trailers" validate:"required"`
 
 		// localized cover video of game
 		Store *Store `json:"store" validate:"required,dive"`
@@ -36,16 +37,16 @@ type (
 
 	//Capsule is DTO object with information about capsule media for game
 	Capsule struct {
-		Generic *model.LocalizedString `json:"generic" validate:"required"`
+		Generic *utils.LocalizedString `json:"generic" validate:"required"`
 
-		Small *model.LocalizedString `json:"small" validate:"required"`
+		Small *utils.LocalizedString `json:"small" validate:"required"`
 	}
 
 	//Store is DTO object with information about store media for game
 	Store struct {
-		Special *model.LocalizedString `json:"special" validate:"required"`
+		Special *utils.LocalizedString `json:"special" validate:"required"`
 
-		Friends *model.LocalizedString `json:"friends" validate:"required"`
+		Friends *utils.LocalizedString `json:"friends" validate:"required"`
 	}
 )
 

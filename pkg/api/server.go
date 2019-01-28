@@ -1,11 +1,13 @@
 package api
 
 import (
+	"gopkg.in/go-playground/validator.v9"
+	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/api/game"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
 	"strconv"
-	"gopkg.in/go-playground/validator.v9"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/sirupsen/logrus"
@@ -61,9 +63,11 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		TokenLookup:   "cookie:token",
-		SigningKey:    opts.Jwt.SignatureSecret,
-		SigningMethod: opts.Jwt.Algorithm,
+		ContextKey:     context.TokenKey,
+		AuthScheme:     "Bearer",
+		TokenLookup: 	"header:Authorization",
+		SigningKey:    	opts.Jwt.SignatureSecret,
+		SigningMethod: 	opts.Jwt.Algorithm,
 	}))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
@@ -84,7 +88,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	if err := InitGameRoutes(s, gameService); err != nil {
+	if err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
 

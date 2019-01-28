@@ -88,7 +88,11 @@ paths:
               properties:
                 internalName:
                   type: string
-                  example: "MEGA PUBG CLONE"
+                  example: "MEGA_PUBG_CLONE"
+                vendorId:
+                  type: string
+                  format: uuid
+                  description: "Vendor who owns the game"
       responses:
         201:
           description: Created
@@ -109,60 +113,70 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
+    /api/v1/vendor/:id/games:
     get:
       tags: 
       - "game"
-      summary: "Get list of games"
+      - "vendor"
+      summary: "Get list of games in vendor"
       operationId: "listGames"
       parameters:
-      - $ref: '#/components/parameters/Offset'
-      - $ref: '#/components/parameters/Limit'
-      - name: "technicalName"
-        in: query
-        description: "Filter games by technicalName"
-        schema:
-          type: "string"
-        required: false
-      - name: "genre"
-        in: query
-        description: "Filter games by genre"
-        schema:
-          type: "string"
-        required: false
-      - name: "price"
-        in: query
-        description: "Filter games by price"
-        schema:
-          type: "number"
-          format: float
-        example: 59.99
-        required: false
-      - name: "releaseDate"
-        in: query
-        description: "Filter games by release date"
-        schema:
-          type: "string"
-          format: "date-time"
-        example: "2017-07-21T17:32:28Z"
-        required: false
-      - name: "sort"
-        in: query
-        description: "Game name query filter"
-        example: -genre,-releaseDate,+name
-        schema:
-          type: "array"
-          items: 
+        - name: "id"
+          in: "path"
+          description: "Id of vendor"
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+        - name: "technicalName"
+          in: query
+          description: "Filter games by technicalName"
+          schema:
             type: "string"
-            enum:
-            - -genre
-            - +genre
-            - -releaseDate
-            - +releaseDate
-            - -price
-            - +price
-            - -name
-            - +name
-        required: false
+          required: false
+        - name: "genre"
+          in: query
+          description: "Filter games by genre"
+          schema:
+            type: "string"
+          required: false
+        - name: "price"
+          in: query
+          description: "Filter games by price"
+          schema:
+            type: "number"
+            format: float
+          example: 59.99
+          required: false
+        - name: "releaseDate"
+          in: query
+          description: "Filter games by release date"
+          schema:
+            type: "string"
+            format: "date-time"
+          example: "2017-07-21T17:32:28Z"
+          required: false
+        - name: "sort"
+          in: query
+          description: "Game name query filter"
+          example: -genre,-releaseDate,+name
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              enum:
+              - -genre
+              - +genre
+              - -releaseDate
+              - +releaseDate
+              - -price
+              - +price
+              - -name
+              - +name
+          required: false
       responses:
         200:
           description: OK
