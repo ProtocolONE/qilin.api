@@ -9,7 +9,7 @@ addons:
 env:
   global:
     - GO111MODULE=on
-    - TEST_CONFIG=/application/etc/config.yaml
+    - TEST_CONFIG=${TRAVIS_BUILD_DIR}/etc/config.yaml
 install: true
 
 before_script:
