@@ -15,8 +15,8 @@ install: true
 before_script:
   - psql -c 'create database qilin;' -U postgres
   - psql -c "CREATE USER travistest WITH PASSWORD 'travistest';" -U postgres
-  - psql -c "grant all privileges on database qilin to travistest;" -U postgres
-  - psql -c "drop extension pgcrypto;" -U postgres
+  - psql -c "ALTER USER travistest WITH SUPERUSER;" -U postgres
+  - psql -c "select * from pg_proc where proname like 'gen_random_%';" -U postgres
   - psql -c "CREATE EXTENSION pgcrypto;" -U postgres
   - sed -i -e 's/postgres/travistest/g' ./etc/config.yaml
 
