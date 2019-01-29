@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"html/template"
@@ -49,10 +48,10 @@ func (p *UserService) UpdateUser(u *model.User) error {
 	return p.db.Update(u).Error
 }
 
-func (p *UserService) FindByID(id uuid.UUID) (user model.User, err error) {
-	err = p.db.First(&user, model.User{ID: id}).Error
+func (p *UserService) FindByID(id *uuid.UUID) (user model.User, err error) {
+	err = p.db.First(&user, model.User{ID: *id}).Error
 	if err == gorm.ErrRecordNotFound {
-		return user, echo.NewHTTPError(http.StatusNotFound, "User not found")
+		return user, NewServiceError(http.StatusNotFound, "User not found")
 	} else if err != nil {
 		return user, errors.Wrap(err, "search user by id")
 	}
@@ -65,7 +64,7 @@ func (p *UserService) Login(login, pass string) (result model.LoginResult, err e
 
 	err = p.db.First(&user, "login = ? and password = ?", login, pass).Error
 	if err == gorm.ErrRecordNotFound {
-		return result, echo.NewHTTPError(http.StatusNotFound, "User not found")
+		return result, NewServiceError(http.StatusNotFound, "User not found")
 	} else if err != nil {
 		return result, errors.Wrap(err, "when searching user by login and passwd")
 	}
@@ -94,7 +93,7 @@ func (p *UserService) Register(login, pass, lang string) (userId uuid.UUID, err 
 		return uuid.Nil, errors.Wrap(err, "while check user login")
 	}
 	if foundUsr > 0 {
-		return uuid.Nil, echo.NewHTTPError(http.StatusConflict, "User already registered")
+		return uuid.Nil, NewServiceError(http.StatusConflict, "User already registered")
 	}
 
 	user := model.User{
@@ -123,7 +122,7 @@ func (p *UserService) ResetPassw(email string) (err error) {
 
 	err = p.db.First(&user, "login = ?", email).Error
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+		return NewServiceError(http.StatusNotFound, "User not found")
 	}
 
 	body := bytes.Buffer{}

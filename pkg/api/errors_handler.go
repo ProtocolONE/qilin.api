@@ -13,9 +13,9 @@ func (s *Server) QilinErrorHandler(err error, c echo.Context) {
 		msg  interface{}
 	)
 
-	if _, ok := err.(*echo.HTTPError); ok {
-		s.echo.DefaultHTTPErrorHandler(err, c)
-		return
+	if he, ok := err.(*echo.HTTPError); ok {
+		msg = echo.Map{"message": he.Message, "code": he.Code}
+		code = he.Code
 	} else if se, ok := err.(*orm.ServiceError); ok {
 		msg = echo.Map{"message": se.Message, "code": se.Code}
 		code = se.Code

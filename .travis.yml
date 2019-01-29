@@ -1,20 +1,25 @@
-env:
-  global:
-  - REPO=p1hub/qilin.api
-  - secure: DtkDxVu6cHYUlDUxJmU7UjAabTrX0A62n3rU6fxG6NsjE50fFGSyRTzPGaHSIVCdn0SJQ7RRjLZbmwC/0hA5xW9+zfXAbwml0e0x+AL/m2wi3Pwnw4zQEz96P6uQyZkSkTY2Tifwlaqn+T2JW3dNxY1SihERRczx/lcyfw9a1ClEYvehUzEDk+xITbFXfO4cW4LXiCnH04S9fURz4/C4jsd51dHOMQn1lAyz+rtXklVtUlWOP/La2VNIEj89hIj5tg/lipi/+D363jnJITW2TG7vtW00GmrVBnZ/G9GXDDW5dVVEJ97Nek00TFsRTfRfEDgh2vnhlH4hbDHMBE3RDvg8qn3WiklUfkddfliFXXdUkk4/l6nh90//kZSWmDo+/LH44G/qZhrKiGF4oSyHeWOuT0kczMZJWT+iO7mcc+voDW8EPsswnE7KKufxn+wrWulxoIqtsDZhRFCNjfGdfFXvfTRoYlcN75OiAC4MpnKBH+I4J2CLAuooR3zbxNHftBiWZGypALjB2XomZkyxRhPbR5u+2ctGbXoN34PurWJwcJSXsRCR9/WVUiWpjPfuNzdHPaigHzN+H/m9U1XdTyo/T2YVlSdhyCe8gFFHbRDuQ11pyN1VlKq/9n0opeIfWBrFxqw5asJKUGrnX4LO+C+DK+se0POCdhUz/8/ItGA=
-  - secure: WCH/Waqwt2KDDn1nlAiR3lufshIj/d69IWWsybOTdhZ0MxSmGhgXvm7krPpO4xtdVOfBJPiNfxkghsQmc5CoQun+0yxtA1DGU9Y5ZiFcJCrYdUgIVQ6JuLQUJTYKxLt8+xTslU2QWE3wSFnPvqE+Wvc/L4wEu/6oVfcg2x3cUSaYug6pnl6gCimCGbQ572/x4AuqwkhjJ5N0LQ4zFNglaY8tSRWnwmh0lttSxd+JGTNzX7ta/nCmEx72tVY8ndEMiITYL84ScLXrRvdbP80xlo5AJPmGKotpsGUzCSW115cg61VP0HPd8zCrsnr5LcR8cKuY/fCL5UdEh0luxtZtDTztNeWucrWl15GkOwQz5py9GzBY/nDzqClbEi0P7k5v4rXRipFLCQMS6LkeKtuvxCPn6dl/s3ywA4+/ohURiAPsNGIf4mqEB7Dyfa3welTdhUftFGpebgUD+gZ+jWZkXS6CyVnG/SPVhM5MhMgYln9mSylIq3tUKIrwPSxcfyu5OnH2Hrdv2oA17fY3rT6Qrc/m7oZcKZ5/2E1ngSTSR4xgxEYwyATXweb9UcZreX2nDChjdR9ZlYi95greIieOE7xr4VvneuEFTnT/qwMn4cQ0Dr323VgLJ0uLRBubvLzvtmFmUtLfA2sFkFzx8dDCiYvuXteYtgxvbyoNqTU7tg4=
-sudo: true
+language: go
+sudo: false
+go:
+- 1.11.x
 services:
-- docker
-jobs:
-  include:
-  - stage: Building images for qilin.api
-    script:
-    - export TAG=`if [[ $TRAVIS_BRANCH == "master" ]]; then echo "latest"; else echo
-      $TRAVIS_TAG; fi`
-    - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-    - docker build -t "$REPO:$TAG" -t "$REPO:0.0.$TRAVIS_BUILD_NUMBER" .
-    - docker push $REPO
+  - postgresql
+env:
+- GO111MODULE=on
+install: true
+
+before_script:
+  - psql -c 'create database qilin;' -U postgres
+  - psql -c "CREATE USER travistest WITH PASSWORD 'travistest';" -U postgres
+  - psql -c "grant all privileges on database qilin to travistest;" -U postgres
+  - sed -i -e 's/postgres/travistest/g' ./etc/config.yaml
+
+script:
+- go test ./... -coverprofile=coverage.out -covermode=atomic
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+
 notifications:
   email: false
   slack:

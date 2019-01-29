@@ -1,9 +1,11 @@
 package api
 
 import (
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
+	"github.com/stretchr/testify/require"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -13,6 +15,7 @@ import (
 	"net/http/httptest"
 	"gopkg.in/go-playground/validator.v9"
 	"github.com/stretchr/testify/suite"
+	"time"
 )
 
 type MediaRouterTestSuite struct {
@@ -50,7 +53,15 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 	db.Init()
 
 	id, _ := uuid.FromString(ID)
-	db.DB().Save(&model.Game{ID: id})
+	err = db.DB().Save(&model.Game{
+		ID: id,
+		InternalName: "Test_game_1",
+		ReleaseDate: time.Now(),
+		Genre: pq.StringArray{},
+		Tags: pq.StringArray{},
+		FeaturesCommon: pq.StringArray{},
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make game")
 
 	echo := echo.New()
 	service, err := orm.NewMediaService(db)

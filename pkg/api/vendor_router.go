@@ -62,7 +62,7 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 			Name: v.Name,
 			Domain3: v.Domain3,
 			Email: v.Email,
-			ManagerId: *v.ManagerId,
+			ManagerId: v.ManagerID,
 			HowManyProducts: v.HowManyProducts,
 		})
 	}
@@ -84,7 +84,7 @@ func (api *VendorRouter) get(ctx echo.Context) error {
 		Name: vendor.Name,
 		Domain3: vendor.Domain3,
 		Email: vendor.Email,
-		ManagerId: *vendor.ManagerId,
+		ManagerId: vendor.ManagerID,
 		HowManyProducts: vendor.HowManyProducts,
 	})
 }
@@ -105,12 +105,12 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 	data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
 	managerId, _ := uuid.FromBytes(data)
 
-	bto, err := api.vendorService.CreateVendor(&model.Vendor{
+	bto, err := api.vendorService.Create(&model.Vendor{
 		Name: dto.Name,
 		Domain3: dto.Domain3,
 		Email: dto.Email,
 		HowManyProducts: dto.HowManyProducts,
-		ManagerId: &managerId,
+		ManagerID: managerId,
 	})
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 		Domain3: bto.Domain3,
 		Email: bto.Email,
 		HowManyProducts: bto.HowManyProducts,
-		ManagerId: *bto.ManagerId,
+		ManagerId: bto.ManagerID,
 	})
 }
 
@@ -140,7 +140,7 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	vendor, err := api.vendorService.UpdateVendor(&model.Vendor{
+	vendor, err := api.vendorService.Update(&model.Vendor{
 		ID: vendorId,
 		Name: dto.Name,
 		Domain3: dto.Domain3,
@@ -157,6 +157,6 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 		Domain3: vendor.Domain3,
 		Email: vendor.Email,
 		HowManyProducts: vendor.HowManyProducts,
-		ManagerId: *vendor.ManagerId,
+		ManagerId: vendor.ManagerID,
 	})
 }

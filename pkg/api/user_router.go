@@ -1,12 +1,10 @@
 package api
 
 import (
-	"encoding/base64"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/model"
 	"time"
 )
@@ -28,17 +26,12 @@ func InitUserRoutes(api *Server, service model.UserService) error {
 
 func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 
-	token := ctx.Get("user").(*jwt.Token)
-	userId := uuid.UUID{}
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
-		userId, _ = uuid.FromBytes(data)
-	}
-	if userId == uuid.Nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Token")
+	userId, err := context.GetAuthUUID(ctx)
+	if err != nil {
+		return err
 	}
 
-	userObj, err := api.service.FindByID(userId)
+	userObj, err := api.service.FindByID(&userId)
 	if err != nil {
 		return err
 	}
@@ -51,15 +44,6 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 	return ctx.JSON(http.StatusOK, result)
 }
 
-// @Summary Login user
-// @Description Login user using Qilin login/password or facebook/google/VK tokens.
-// @Tags User
-// @Accept json
-// @Produce json
-// @Success 200 {object} model.Merchant "OK"
-// @Failure 404 {object} model.Error "User not found"
-// @Failure 500 {object} model.Error "Some unknown error"
-// @Router /auth-api/login [post]
 func (api *UserRouter) login(ctx echo.Context) error {
 	vals, err := ctx.FormParams()
 	if err != nil {
@@ -78,7 +62,6 @@ func (api *UserRouter) login(ctx echo.Context) error {
 	ctx.SetCookie(cookie)
 	return ctx.JSON(http.StatusOK, result)
 }
-
 
 func (api *UserRouter) register(ctx echo.Context) error {
 	vals, err := ctx.FormParams()

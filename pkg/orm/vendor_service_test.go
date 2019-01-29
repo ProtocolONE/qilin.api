@@ -2,7 +2,7 @@ package orm_test
 
 import (
 	"github.com/satori/go.uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
@@ -22,10 +22,10 @@ func Test_VendorService(t *testing.T) {
 func (suite *VendorServiceTestSuite) SetupTest() {
 	dbConfig := conf.Database{
 		Host:     "localhost",
-		Port:     "5440",
+		Port:     "5432",
 		Database: "test_qilin",
 		User:     "postgres",
-		Password: "",
+		Password: "postgres",
 	}
 
 	db, err := orm.NewDatabase(&dbConfig)
@@ -48,50 +48,54 @@ func (suite *VendorServiceTestSuite) TearDownTest() {
 }
 
 func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
+	require := require.New(suite.T())
+	
 	vendorService, err := orm.NewVendorService(suite.db)
+
+	userId := uuid.NamespaceDNS
 
 	vendor := model.Vendor{
 		ID: uuid.NewV4(),
 		Name: "1C",
 		Domain3: "godzilla",
 		Email: "godzilla@proto.one",
-		ManagerId: &uuid.NamespaceDNS,
+		ManagerID: userId,
 	}
 
-	_, err = vendorService.CreateVendor(&vendor)
-	assert.Nil(suite.T(), err, "Unable to create vendor")
-	assert.NotEmpty(suite.T(), vendor.ID, "Wrong ID for created vendor")
+	_, err = vendorService.Create(&vendor)
+	require.Nil(err, "Unable to create vendor")
+	require.NotEmpty(vendor.ID, "Wrong ID for created vendor")
 
 	vendorFromDb, err := vendorService.FindByID(vendor.ID)
-	assert.Nil(suite.T(), err, "Unable to get vendor: %v", err)
-	assert.Equal(suite.T(), vendor.ID, vendorFromDb.ID, "Incorrect Vendor ID from DB")
-	assert.Equal(suite.T(), vendor.Name, vendorFromDb.Name, "Incorrect Vendor Name from DB")
-	assert.Equal(suite.T(), vendor.Email, vendorFromDb.Email, "Incorrect Vendor Email from DB")
-	assert.Equal(suite.T(), vendor.Domain3, vendorFromDb.Domain3, "Incorrect Vendor Domain3 from DB")
+	require.Nil(err, "Unable to get vendor: %v", err)
+	require.Equal(vendor.ID, vendorFromDb.ID, "Incorrect Vendor ID from DB")
+	require.Equal(vendor.Name, vendorFromDb.Name, "Incorrect Vendor Name from DB")
+	require.Equal(vendor.Email, vendorFromDb.Email, "Incorrect Vendor Email from DB")
+	require.Equal(vendor.Domain3, vendorFromDb.Domain3, "Incorrect Vendor Domain3 from DB")
 
 	vendor.Domain3 = "zillo"
-	_, err = vendorService.UpdateVendor(&vendor)
-	assert.Nil(suite.T(), err, "Unable to update vendor: %v", err)
+	_, err = vendorService.Update(&vendor)
+	require.Nil(err, "Unable to update vendor: %v", err)
 
 	vendorFromDb2, err := vendorService.FindByID(vendor.ID)
-	assert.Nil(suite.T(), err, "Unable to get vendor: %v", err)
-	assert.Equal(suite.T(), vendor.Domain3, vendorFromDb2.Domain3, "Incorrect updated Vendor Domain3 from DB")
+	require.Nil(err, "Unable to get vendor: %v", err)
+	require.Equal(vendor.Domain3, vendorFromDb2.Domain3, "Incorrect updated Vendor Domain3 from DB")
 
 	vendor2 := model.Vendor{
 		Name: "domino",
 		Domain3: "2domino",
 		Email: "domino@proto.com",
-		ManagerId: &uuid.NamespaceDNS,
+		ManagerID: userId,
 	}
-	_, err = vendorService.CreateVendor(&vendor2)
-	assert.NotNil(suite.T(), err, "Must be error cuz wrong domain name")
+	_, err = vendorService.Create(&vendor2)
+	require.NotNil(err, "Must be error cuz wrong domain name")
 
 	vendor3 := model.Vendor{
 		Name: "domino",
 		Domain3: "domino",
 		Email: "4456",
-		ManagerId: &uuid.NamespaceDNS,
+		ManagerID: userId,
 	}
-	_, err = vendorService.CreateVendor(&vendor3)
-	assert.NotNil(suite.T(), err, "Must be error cuz invalid email")
+	_, err = vendorService.Create(&vendor3)
+	require.NotNil(err, "Must be error cuz invalid email")
 }

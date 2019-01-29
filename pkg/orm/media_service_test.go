@@ -1,12 +1,14 @@
 package orm_test
 
 import (
+	"github.com/lib/pq"
 	"math/rand"
 	"github.com/satori/go.uuid"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +44,15 @@ func (suite *MediaServiceTestSuite) SetupTest() {
 	db.Init()
 
 	id, _ := uuid.FromString(Id)
-	db.DB().Save(&model.Game{ID: id})
+	err = db.DB().Save(&model.Game{
+		ID: id,
+		InternalName: "Test_game_3",
+		ReleaseDate: time.Now(),
+		Genre: pq.StringArray{},
+		Tags: pq.StringArray{},
+		FeaturesCommon: pq.StringArray{},
+	}).Error
+	assert.Nil(suite.T(), err, "Unable to make game")
 
 	suite.db = db
 }
@@ -89,9 +99,10 @@ func (suite *MediaServiceTestSuite) TestCreateMediaShouldChangeGameInDB() {
 				"en": RandStringRunes(10),
 			},
 		},
+		UpdatedAt: time.Now(),
 	}
 
-	err = mediaService.Update(id, &game);
+	err = mediaService.Update(id, &game)
 	assert.Nil(suite.T(), err, "Unable to update media for game")
 
 	gameFromDb, err := mediaService.Get(id)
