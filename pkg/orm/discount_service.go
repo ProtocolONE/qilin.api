@@ -46,7 +46,7 @@ func (s *DiscountService) AddDiscountForGame(id uuid.UUID, discount *model.Disco
 	count := 0
 	err := s.db.Model(&game).Count(&count).Error
 
-	if err == gorm.ErrRecordNotFound || count == 0 {
+	if count == 0 {
 		return uuid.Nil, NewServiceError(http.StatusNotFound, "Game not found")
 	} else if err != nil {
 		return uuid.Nil, errors.Wrap(err, "search game by id")
