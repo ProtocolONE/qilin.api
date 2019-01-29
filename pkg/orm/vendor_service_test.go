@@ -20,17 +20,13 @@ func Test_VendorService(t *testing.T) {
 }
 
 func (suite *VendorServiceTestSuite) SetupTest() {
-	dbConfig := conf.Database{
-		Host:     "localhost",
-		Port:     "5432",
-		Database: "test_qilin",
-		User:     "postgres",
-		Password: "postgres",
-	}
-
-	db, err := orm.NewDatabase(&dbConfig)
+	config, err := conf.LoadTestConfig()
 	if err != nil {
-		suite.Fail("Unable to connect to database: %s", err)
+		suite.FailNow("Unable to load config", "%v", err)
+	}
+	db, err := orm.NewDatabase(&config.Database)
+	if err != nil {
+		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
 	db.Init()

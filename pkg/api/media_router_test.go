@@ -1,20 +1,20 @@
 package api
 
 import (
-	"github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
 	"github.com/labstack/echo"
+	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	"gopkg.in/go-playground/validator.v9"
+	"net/http"
+	"net/http/httptest"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
-	"testing"
 	"strings"
-	"net/http"
-	"net/http/httptest"
-	"gopkg.in/go-playground/validator.v9"
-	"github.com/stretchr/testify/suite"
+	"testing"
 	"time"
 )
 
@@ -37,17 +37,13 @@ var (
 )
 
 func (suite *MediaRouterTestSuite) SetupTest() {
-	dbConfig := conf.Database{
-		Host:     "localhost",
-		Port:     "5432",
-		Database: "test_qilin",
-		User:     "postgres",
-		Password: "postgres",
-	}
-
-	db, err := orm.NewDatabase(&dbConfig)
+	config, err := conf.LoadTestConfig()
 	if err != nil {
-		suite.Fail("Unable to connect to database: %s", err)
+		suite.FailNow("Unable to load config", "%v", err)
+	}
+	db, err := orm.NewDatabase(&config.Database)
+	if err != nil {
+		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
 	db.Init()
