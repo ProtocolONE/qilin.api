@@ -4,8 +4,12 @@ go:
 - 1.11.x
 services:
   - postgresql
+addons:
+  postgresql: "9.4"
 env:
-- GO111MODULE=on
+  global:
+    - GO111MODULE=on
+    - TEST_CONFIG=/application/etc/config.yaml
 install: true
 
 before_script:
@@ -15,7 +19,7 @@ before_script:
   - sed -i -e 's/postgres/travistest/g' ./etc/config.yaml
 
 script:
-- go test ./... -coverprofile=coverage.out -covermode=atomic
+- go test ./... -coverprofile=coverage.out -covermode=atomic -p=1 -v
 
 after_success:
 - bash <(curl -s https://codecov.io/bash)

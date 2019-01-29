@@ -2,6 +2,8 @@ package conf
 
 import (
 	"encoding/base64"
+	"github.com/pkg/errors"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -73,12 +75,12 @@ func LoadConfig(configFile string) (*Config, error) {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Read config file")
 	}
 
 	config := new(Config)
 	if err := viper.Unmarshal(config); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Unmarshal config file")
 	}
 
 	if config.Jwt.Algorithm == "" {
@@ -87,10 +89,42 @@ func LoadConfig(configFile string) (*Config, error) {
 
 	pemKey, err := base64.StdEncoding.DecodeString(config.Jwt.SignatureSecretBase64)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Decode JWT")
 	}
 
 	config.Jwt.SignatureSecret = pemKey
+
+	return config, nil
+}
+
+// Config for testing the application jobs
+type TestConfig struct {
+	Database  Database
+}
+
+func LoadTestConfig() (*TestConfig, error) {
+	viper.SetEnvPrefix("QILIN")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
+
+	configFile := os.Getenv("TEST_CONFIG")
+	if configFile != "" {
+		viper.SetConfigFile(configFile)
+	} else {
+		viper.SetConfigName("test.config.yaml")
+		viper.AddConfigPath("./")
+		viper.AddConfigPath("$HOME")
+		viper.AddConfigPath("./etc")
+	}
+
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, errors.Wrap(err, "Read test config file")
+	}
+
+	config := new(TestConfig)
+	if err := viper.Unmarshal(config); err != nil {
+		return nil, errors.Wrap(err, "Unmarshal test config file")
+	}
 
 	return config, nil
 }
