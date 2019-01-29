@@ -30,15 +30,12 @@ var (
 )
 
 func (suite *DiscountServiceTestSuite) SetupTest() {
-	dbConfig := conf.Database{
-		Host:     "localhost",
-		Port:     "5432",
-		Database: "test_qilin",
-		User:     "postgres",
-		Password: "postgres",
+	config, err := conf.LoadTestConfig()
+	if err != nil {
+		suite.FailNow("Unable to load config", "%v", err)
 	}
 
-	db, err := orm.NewDatabase(&dbConfig)
+	db, err := orm.NewDatabase(&config.Database)
 	if err != nil {
 		suite.Fail("Unable to connect to database:", "%v", err)
 	}
