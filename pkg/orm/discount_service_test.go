@@ -3,6 +3,7 @@ package orm_test
 import (
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
+	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/orm"
 	"testing"
 	"time"
@@ -39,29 +40,71 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 
 	db, err := orm.NewDatabase(&dbConfig)
 	if err != nil {
-		suite.Fail("Unable to connect to database: %s", err)
+		suite.Fail("Unable to connect to database:", "%v", err)
 	}
 
 	db.Init()
-
-	id, _ := uuid.FromString(GameID)
-	db.DB().Save(&model.Game{ID: id, Name: "Test game"})
 
 	suite.db = db
 
 	service, err := orm.NewDiscountService(suite.db)
 	if err != nil {
-		suite.Fail("Unable to create service %s", err)
+		suite.Fail("Unable to create service", "%v", err)
 	}
 
 	suite.service = service
+
+	user := model.User{
+		ID:       uuid.NewV4(),
+		Login:    "test@protocol.one",
+		Password: "megapass",
+		Nickname: "Test",
+		Lang:     "ru",
+	}
+
+	err = db.DB().Create(&user).Error
+	suite.Nil(err, "Unable to create user")
+
+	userId := user.ID
+
+	vendorService, err := orm.NewVendorService(db)
+	suite.Nil(err, "Unable make vendor service")
+
+	vendor := model.Vendor{
+		ID:              uuid.NewV4(),
+		Name:            "domino",
+		Domain3:         "domino",
+		Email:           "domino@proto.com",
+		HowManyProducts: "+1000",
+		ManagerID:       userId,
+	}
+	_, err = vendorService.Create(&vendor)
+	suite.Nil(err, "Must create new vendor")
+
+	id, _ := uuid.FromString(GameID)
+	game := model.Game{}
+	game.ID = id
+	game.InternalName = "internalName"
+	game.FeaturesCtrl = ""
+	game.FeaturesCommon = []string{}
+	game.Platforms = bto.Platforms{}
+	game.Requirements = bto.GameRequirements{}
+	game.Languages = bto.GameLangs{}
+	game.FeaturesCommon = []string{}
+	game.Genre = []string{}
+	game.Tags = []string{}
+	game.VendorID = vendor.ID
+	game.CreatorID = userId
+
+	err = db.DB().Create(&game).Error
+
+	if err != nil {
+		suite.Fail("Unable to create game", "%v", err)
+	}
 }
 
 func (suite *DiscountServiceTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Game{}).Error; err != nil {
-		panic(err)
-	}
-	if err := suite.db.DB().DropTable(model.Discount{}).Error; err != nil {
+	if err := suite.db.DB().DropTable(model.Game{}, model.Vendor{}, model.User{}, model.GameTag{}, model.Discount{}, model.Price{}).Error; err != nil {
 		panic(err)
 	}
 
