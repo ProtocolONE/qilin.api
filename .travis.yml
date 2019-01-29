@@ -20,7 +20,7 @@ before_script:
   - sed -i -e 's/postgres/travistest/g' ./etc/config.yaml
 
 script:
-- go test ./... -coverprofile=coverage.out -covermode=atomic -p=1 -v
+- go test ./... -coverprofile=coverage.out -covermode=atomic -p=1
 
 after_success:
 - bash <(curl -s https://codecov.io/bash)
