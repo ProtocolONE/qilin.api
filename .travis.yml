@@ -7,13 +7,17 @@ services:
 addons:
   postgresql: "9.4"
 env:
-- GO111MODULE=on
+  global:
+    - GO111MODULE=on
+    - TEST_CONFIG=${TRAVIS_BUILD_DIR}/etc/config.yaml
 install: true
 
 before_script:
   - psql -c 'create database qilin;' -U postgres
   - psql -c "CREATE USER travistest WITH PASSWORD 'travistest';" -U postgres
-  - psql -c "grant all privileges on database qilin to travistest;" -U postgres
+  - psql -c "ALTER USER travistest WITH SUPERUSER;" -U postgres
+  - psql -c "CREATE EXTENSION pgcrypto;" -U postgres
+  - psql -c "select * from pg_proc where proname like 'gen_random_%';" -U postgres
   - sed -i -e 's/postgres/travistest/g' ./etc/config.yaml
 
 script:
