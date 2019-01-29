@@ -32,7 +32,7 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}
-	db, err := orm.NewDatabase(&config.Database)
+	db, err := NewDatabase(&config.Database)
 	if err != nil {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
