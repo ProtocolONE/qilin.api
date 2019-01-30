@@ -57,8 +57,14 @@ func (p *GameService) GetGenres(ids []string) (genres []model.GameGenre, err err
 	return
 }
 
-func (p *GameService) GetRatingDescriptors() (items []model.RatingDescriptor, err error) {
-	err = p.db.Order("title ->> 'en'").Find(&items).Error
+func (p *GameService) GetRatingDescriptors(system string) (items []model.Descriptor, err error) {
+	query := p.db.Order("title ->> 'en'")
+
+	if system != "" {
+		query = query.Where("system = ?", system)
+	}
+
+	err = query.Find(&items).Error
 	if err != nil {
 		return nil, errors.Wrap(err, "Fetch rating descriptors")
 	}

@@ -59,16 +59,16 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 
-	echo := echo.New()
+	e := echo.New()
 	service, err := orm.NewMediaService(db)
-	router, err := InitMediaRouter(echo.Group("/api/v1"), service)
+	router, err := InitMediaRouter(e.Group("/api/v1"), service)
 
-	echo.Validator = &QilinValidator{validator: validator.New()}
+	e.Validator = &QilinValidator{validator: validator.New()}
 
 	suite.db = db
 	suite.service = service
 	suite.router = router
-	suite.echo = echo
+	suite.echo = e
 }
 
 func (suite *MediaRouterTestSuite) TearDownTest() {

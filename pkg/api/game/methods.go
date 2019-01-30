@@ -222,7 +222,8 @@ func (api *Router) GetTags(ctx echo.Context) (err error) {
 }
 
 func (api *Router) GetRatingDescriptors(ctx echo.Context) error {
-    descriptors, err := api.gameService.GetRatingDescriptors()
+    system := ctx.QueryParam("title")
+    descriptors, err := api.gameService.GetRatingDescriptors(system)
     if err != nil {
         return err
     }
@@ -231,6 +232,7 @@ func (api *Router) GetRatingDescriptors(ctx echo.Context) error {
         dto = append(dto, RatingDescriptorDTO{
             Id: desc.ID,
             Title: desc.Title,
+            System: desc.System,
         })
     }
     return ctx.JSON(http.StatusOK, dto)

@@ -119,5 +119,23 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
+	priceService, err := orm.NewPriceService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitPriceRouter(s.Router, priceService); err != nil {
+		return err
+	}
+
+	ratingService, err := orm.NewRatingService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitRatingsRouter(s.Router, ratingService); err != nil {
+		return err
+	}
+
 	return nil
 }

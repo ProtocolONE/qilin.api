@@ -42,7 +42,8 @@ func (db *Database) Init() {
 		&model.GameTag{},
 		&model.GameGenre{},
 		&model.GameDescr{},
-		&model.RatingDescriptor{},
+		&model.Descriptor{},
+		&model.GameRating{},
 	)
 }
 
