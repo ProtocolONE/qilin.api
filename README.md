@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/ProtocolONE/qilin.api)](https://goreportcard.com/report/github.com/ProtocolONE/qilin.api)
+[![Build Status](https://travis-ci.org/ProtocolONE/qilin.api.svg?branch=master)](https://travis-ci.org/ProtocolONE/qilin.api) [![codecov](https://codecov.io/gh/ProtocolONE/qilin.api/branch/master/graph/badge.svg)](https://codecov.io/gh/ProtocolONE/qilin.api)[![Go Report Card](https://goreportcard.com/badge/github.com/ProtocolONE/qilin.api)](https://goreportcard.com/report/github.com/ProtocolONE/qilin.api)
 
 # Qilin - DRM Platform
 

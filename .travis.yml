@@ -9,17 +9,18 @@ addons:
 env:
   global:
     - GO111MODULE=on
-    - TEST_CONFIG=/application/etc/config.yaml
+    - TEST_CONFIG=${TRAVIS_BUILD_DIR}/etc/config.yaml
 install: true
 
 before_script:
   - psql -c 'create database qilin;' -U postgres
   - psql -c "CREATE USER travistest WITH PASSWORD 'travistest';" -U postgres
-  - psql -c "grant all privileges on database qilin to travistest;" -U postgres
+  - psql -c "ALTER USER travistest WITH SUPERUSER;" -U postgres
+  - psql -d qilin -c "CREATE EXTENSION pgcrypto;" -U postgres
   - sed -i -e 's/postgres/travistest/g' ./etc/config.yaml
 
 script:
-- go test ./... -coverprofile=coverage.out -covermode=atomic -p=1 -v
+- go test ./... -coverprofile=coverage.out -covermode=atomic -p=1
 
 after_success:
 - bash <(curl -s https://codecov.io/bash)

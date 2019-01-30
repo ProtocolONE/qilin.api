@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"github.com/pkg/errors"
 	"os"
+	"path"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -112,9 +114,9 @@ func LoadTestConfig() (*TestConfig, error) {
 		viper.SetConfigFile(configFile)
 	} else {
 		viper.SetConfigName("test.config.yaml")
-		viper.AddConfigPath("./")
+		_, moduleFile, _, _ := runtime.Caller(0)
+		viper.AddConfigPath(path.Dir(moduleFile) + "/../../etc")
 		viper.AddConfigPath("$HOME")
-		viper.AddConfigPath("./etc")
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
