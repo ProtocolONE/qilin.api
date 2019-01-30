@@ -113,7 +113,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-    /api/v1/vendor/:id/games:
+  /api/v1/vendor/:id/games:
     get:
       tags: 
       - "game"
@@ -602,19 +602,7 @@ paths:
           required: true
           schema:
             type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                currency: 
-                    type: string
-                vat: 
-                  type: number
-                price:
-                  type: number
-                  format: float  
+
       responses:
         200:
           description: OK
@@ -714,12 +702,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  discounts:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Discount'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Discount'
         401:
           $ref: '#/components/responses/Unauthorized'
         403:

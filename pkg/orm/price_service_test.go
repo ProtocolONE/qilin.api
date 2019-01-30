@@ -1,13 +1,13 @@
 package orm
 
 import (
-	"github.com/lib/pq"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"testing"
 	"time"
 
-	"github.com/satori/go.uuid"
+	"github.com/lib/pq"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,11 +41,11 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 
 	id, _ := uuid.FromString(ID)
 	err = db.DB().Save(&model.Game{
-		ID: id,
-		InternalName: "Test_game_2",
-		ReleaseDate: time.Now(),
-		Genre: pq.StringArray{},
-		Tags: pq.StringArray{},
+		ID:             id,
+		InternalName:   "Test_game_2",
+		ReleaseDate:    time.Now(),
+		Genre:          pq.StringArray{},
+		Tags:           pq.StringArray{},
 		FeaturesCommon: pq.StringArray{},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
