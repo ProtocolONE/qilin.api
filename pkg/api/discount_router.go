@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"time"
 
@@ -12,8 +13,8 @@ import (
 )
 
 type Discount struct {
-	Title       *model.LocalizedString `json:"title" validate:"required"`
-	Description *model.LocalizedString `json:"description"`
+	Title       *utils.LocalizedString `json:"title" validate:"required"`
+	Description *utils.LocalizedString `json:"description"`
 	Date        DateRange              `json:"date" validate:"required,dive,required"`
 	Rate        float32                `json:"rate" validate:"required,gte=0"`
 }
