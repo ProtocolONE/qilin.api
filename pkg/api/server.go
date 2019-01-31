@@ -115,7 +115,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	if err := game.InitRoutes(s.Router, gameService); err != nil {
+	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
 
