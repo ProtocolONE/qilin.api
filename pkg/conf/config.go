@@ -113,7 +113,7 @@ func LoadTestConfig() (*TestConfig, error) {
 	if configFile != "" {
 		viper.SetConfigFile(configFile)
 	} else {
-		viper.SetConfigName("test.config.yaml")
+		viper.SetConfigName("test.config")
 		_, moduleFile, _, _ := runtime.Caller(0)
 		viper.AddConfigPath(path.Dir(moduleFile) + "/../../etc")
 		viper.AddConfigPath("$HOME")

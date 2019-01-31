@@ -83,15 +83,6 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
-	gameService, err := orm.NewGameService(s.db)
-	if err != nil {
-		return err
-	}
-
-	if err := game.InitRoutes(s.Router, gameService); err != nil {
-		return err
-	}
-
 	userService, err := orm.NewUserService(s.db, jwtConf, mailer)
 	if err != nil {
 		return err
@@ -116,6 +107,15 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	}
 
 	if _, err := InitMediaRouter(s.Router, mediaService); err != nil {
+		return err
+	}
+
+	gameService, err := orm.NewGameService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
 
