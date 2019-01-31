@@ -72,7 +72,7 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 }
 
 func (suite *MediaRouterTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Media{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {

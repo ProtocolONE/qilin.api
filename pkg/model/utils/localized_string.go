@@ -17,7 +17,7 @@ type LocalizedString struct {
 
 func (p LocalizedString) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
-	return j, err
+	return string(j), err
 }
 
 func (p *LocalizedString) Scan(src interface{}) error {

@@ -25,7 +25,6 @@ func Test_GameService(t *testing.T) {
 }
 
 func (suite *GameServiceTestSuite) SetupTest() {
-
 	config, err := conf.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
@@ -39,37 +38,37 @@ func (suite *GameServiceTestSuite) SetupTest() {
 
 	suite.db = db
 
-	suite.NoError(db.DB().Create(&model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	suite.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "PEGI",
 	}).Error)
 
-	suite.NoError(db.DB().Create(&model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	suite.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "ESRB",
 	}).Error)
 
-	suite.NoError(db.DB().Create(&model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	suite.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "USK",
 	}).Error)
 
-	suite.NoError(db.DB().Create(&model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	suite.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "CERO",
 	}).Error)
 }
 
 func (suite *GameServiceTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Game{}, model.Vendor{}, model.User{}, model.GameTag{}, model.Descriptor{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {
@@ -81,7 +80,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require := require.New(suite.T())
 
 	// Go to project root directory
-	_ = os.Chdir("../..")
+	//_ = os.Chdir("../..")
 
 	gameService, err := orm.NewGameService(suite.db)
 	require.Nil(err, "Unable make game service")
@@ -259,9 +258,9 @@ func (suite *GameServiceTestSuite) TestGames() {
 }
 
 func (suite *GameServiceTestSuite) TestDescriptors() {
-	testDescr := model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	testDescr := model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "CERO"}
 	require := require.New(suite.T())

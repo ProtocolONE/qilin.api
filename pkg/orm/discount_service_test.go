@@ -101,7 +101,7 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 }
 
 func (suite *DiscountServiceTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Game{}, model.Vendor{}, model.User{}, model.GameTag{}, model.Discount{}, model.Price{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 

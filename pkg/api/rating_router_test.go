@@ -70,7 +70,7 @@ func (suite *RatingRouterTestSuite) SetupTest() {
 }
 
 func (suite *RatingRouterTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Game{}, model.Discount{}, model.GameGenre{}, model.Price{}, model.Vendor{}, model.User{}, model.GameTag{}, model.Descriptor{}, model.GameRating{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {

@@ -3,6 +3,7 @@ package orm
 import (
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"testing"
 	"time"
 
@@ -51,30 +52,30 @@ func (suite *RatingServiceTestSuite) SetupTest() {
 
 	suite.db = db
 
-	require.NoError(db.DB().Create(&model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	require.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "PEGI",
 	}).Error)
 
-	require.NoError(db.DB().Create(&model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	require.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "ESRB",
 	}).Error)
 
-	require.NoError(db.DB().Create(&model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	require.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "USK",
 	}).Error)
 
-	require.NoError(db.DB().Create(&model.Descriptor{Title: model.JSONB{
-		"en": "Blood",
-		"ru": "Кровь",
+	require.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
 	},
 		System: "CERO",
 	}).Error)
@@ -86,7 +87,7 @@ func (suite *RatingServiceTestSuite) SetupTest() {
 }
 
 func (suite *RatingServiceTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Game{}, model.Discount{}, model.GameGenre{}, model.Price{}, model.Vendor{}, model.User{}, model.GameTag{}, model.Descriptor{}, model.GameRating{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {
