@@ -8,9 +8,11 @@ import (
 	"github.com/satori/go.uuid"
 	"html/template"
 	"net/http"
+	"path"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/sys"
+	"runtime"
 )
 
 type UserService struct {
@@ -24,14 +26,17 @@ type UserService struct {
 
 func NewUserService(db *Database, jwtConf *conf.Jwt, mailer sys.Mailer) (*UserService, error) {
 
-	langMap, err := sys.NewLangMap("locale/*.json")
+	_, moduleFile, _, _ := runtime.Caller(0)
+	rootProj := path.Dir(moduleFile) + "/../.."
+
+	langMap, err := sys.NewLangMap(rootProj + "/locale/*.json")
 	if err != nil {
 		return nil, errors.Wrap(err, "loading lang files")
 	}
 
 	templates, err := template.New("").
 		Funcs(langMap.GetTemplFunc()).
-		ParseGlob("templates/*.gohtml")
+		ParseGlob(rootProj + "/templates/*.gohtml")
 	if err != nil {
 		return nil, errors.Wrap(err, "loading templates")
 	}
