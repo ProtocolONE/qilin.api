@@ -9,7 +9,7 @@ type Router struct {
 	gameService model.GameService
 }
 
-func InitRoutes(router *echo.Group, service model.GameService) error {
+func InitRoutes(router *echo.Group, service model.GameService) (*Router, error) {
 	Router := Router{
 		gameService: service,
 	}
@@ -26,6 +26,5 @@ func InitRoutes(router *echo.Group, service model.GameService) error {
 	router.GET("/tags", Router.GetTags)
 	router.GET("/descriptors", Router.GetRatingDescriptors)
 
-	return nil
+	return &Router, nil
 }
-

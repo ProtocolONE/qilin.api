@@ -99,12 +99,7 @@ func LoadConfig(configFile string) (*Config, error) {
 	return config, nil
 }
 
-// Config for testing the application jobs
-type TestConfig struct {
-	Database  Database
-}
-
-func LoadTestConfig() (*TestConfig, error) {
+func LoadTestConfig() (*Config, error) {
 	viper.SetEnvPrefix("QILIN")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
@@ -123,10 +118,20 @@ func LoadTestConfig() (*TestConfig, error) {
 		return nil, errors.Wrap(err, "Read test config file")
 	}
 
-	config := new(TestConfig)
+	config := new(Config)
 	if err := viper.Unmarshal(config); err != nil {
 		return nil, errors.Wrap(err, "Unmarshal test config file")
 	}
+
+	if config.Jwt.Algorithm == "" {
+		config.Jwt.Algorithm = DefaultJwtSignAlgorithm
+	}
+
+	pemKey, err := base64.StdEncoding.DecodeString(config.Jwt.SignatureSecretBase64)
+	if err != nil {
+		return nil, errors.Wrap(err, "Decode JWT")
+	}
+	config.Jwt.SignatureSecret = pemKey
 
 	return config, nil
 }

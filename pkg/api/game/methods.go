@@ -11,9 +11,18 @@ import (
     "strconv"
 )
 
+type CreateGameDTO struct {
+    InternalName        string
+    VendorId            string
+}
+
 func (api *Router) Create(ctx echo.Context) error {
-    internalName := ctx.FormValue("internalName")
-    vendorId, err := uuid.FromString(ctx.FormValue("vendorId"))
+    params := CreateGameDTO{}
+    err := ctx.Bind(&params)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Wrong parameters in body")
+    }
+    vendorId, err := uuid.FromString(params.VendorId)
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendorId")
     }
@@ -21,7 +30,7 @@ func (api *Router) Create(ctx echo.Context) error {
     if err != nil {
         return err
     }
-    game, err := api.gameService.Create(userId, vendorId, internalName)
+    game, err := api.gameService.Create(userId, vendorId, params.InternalName)
     if err != nil {
         return err
     }
