@@ -2,16 +2,16 @@ package orm_test
 
 import (
 	"github.com/lib/pq"
-	"math/rand"
 	"github.com/satori/go.uuid"
+	"math/rand"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type MediaServiceTestSuite struct {
@@ -41,11 +41,11 @@ func (suite *MediaServiceTestSuite) SetupTest() {
 
 	id, _ := uuid.FromString(Id)
 	err = db.DB().Save(&model.Game{
-		ID: id,
-		InternalName: "Test_game_3",
-		ReleaseDate: time.Now(),
-		Genre: pq.StringArray{},
-		Tags: pq.StringArray{},
+		ID:             id,
+		InternalName:   "Test_game_3",
+		ReleaseDate:    time.Now(),
+		Genre:          pq.StringArray{},
+		Tags:           pq.StringArray{},
 		FeaturesCommon: pq.StringArray{},
 	}).Error
 	assert.Nil(suite.T(), err, "Unable to make game")
@@ -69,28 +69,28 @@ func (suite *MediaServiceTestSuite) TestCreateMediaShouldChangeGameInDB() {
 	id, _ := uuid.FromString(Id)
 	game := model.Media{
 		ID: uuid.NewV4(),
-		CoverImage: model.JSONB {
+		CoverImage: model.JSONB{
 			"ru": RandStringRunes(10),
 			"en": RandStringRunes(10),
 		},
-		Trailers: model.JSONB {
+		Trailers: model.JSONB{
 			"ru": RandStringRunes(10),
 			"en": RandStringRunes(10),
 		},
-		Store:  model.JSONB {
+		Store: model.JSONB{
 			"ru": RandStringRunes(10),
 			"en": RandStringRunes(10),
 		},
-		CoverVideo:  model.JSONB {
+		CoverVideo: model.JSONB{
 			"ru": RandStringRunes(10),
 			"en": RandStringRunes(10),
 		},
-		Capsule: model.JSONB {
-			"generic": map[string]interface {} {
+		Capsule: model.JSONB{
+			"generic": map[string]interface{}{
 				"ru": RandStringRunes(10),
 				"en": RandStringRunes(10),
 			},
-			"small": map[string]interface {} {
+			"small": map[string]interface{}{
 				"ru": RandStringRunes(10),
 				"en": RandStringRunes(10),
 			},
@@ -114,9 +114,9 @@ func (suite *MediaServiceTestSuite) TestCreateMediaShouldChangeGameInDB() {
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func RandStringRunes(n int) string {
-    b := make([]rune, n)
-    for i := range b {
-        b[i] = letterRunes[rand.Intn(len(letterRunes))]
-    }
-    return string(b)
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

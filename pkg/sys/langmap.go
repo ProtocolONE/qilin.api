@@ -39,6 +39,6 @@ func (lm *LangMap) Locale(lang, text string) string {
 	return (*lm)[lang].(map[string]interface{})[text].(string)
 }
 
-func (lm *LangMap) GetTemplFunc() (template.FuncMap) {
+func (lm *LangMap) GetTemplFunc() template.FuncMap {
 	return template.FuncMap{"t": lm.Locale}
 }

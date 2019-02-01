@@ -22,7 +22,7 @@ type MediaRouterTestSuite struct {
 	suite.Suite
 	db      *orm.Database
 	service *orm.MediaService
-	echo 	*echo.Echo
+	echo    *echo.Echo
 	router  *MediaRouter
 }
 
@@ -31,8 +31,8 @@ func Test_MediaRouter(t *testing.T) {
 }
 
 var (
-	ID = "029ce039-888a-481a-a831-cde7ff4e50b8"
-	emptyObject = `{"coverImage":null,"coverVideo":null,"trailers":null,"store":null,"capsule":null}`
+	ID            = "029ce039-888a-481a-a831-cde7ff4e50b8"
+	emptyObject   = `{"coverImage":null,"coverVideo":null,"trailers":null,"store":null,"capsule":null}`
 	partialObject = `{"coverImage":{"en":"123", "ru":"321"},"coverVideo":{"en":"123", "ru":"321"},"trailers":{"en":"123", "ru":"321"},"store":null,"capsule":null}`
 )
 
@@ -50,25 +50,25 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 
 	id, _ := uuid.FromString(ID)
 	err = db.DB().Save(&model.Game{
-		ID: id,
-		InternalName: "Test_game_1",
-		ReleaseDate: time.Now(),
-		Genre: pq.StringArray{},
-		Tags: pq.StringArray{},
+		ID:             id,
+		InternalName:   "Test_game_1",
+		ReleaseDate:    time.Now(),
+		Genre:          pq.StringArray{},
+		Tags:           pq.StringArray{},
 		FeaturesCommon: pq.StringArray{},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 
-	echo := echo.New()
+	echoObj := echo.New()
 	service, err := orm.NewMediaService(db)
-	router, err := InitMediaRouter(echo.Group("/api/v1"), service)
+	router, err := InitMediaRouter(echoObj.Group("/api/v1"), service)
 
-	echo.Validator = &QilinValidator{validator: validator.New()}
+	echoObj.Validator = &QilinValidator{validator: validator.New()}
 
 	suite.db = db
 	suite.service = service
 	suite.router = router
-	suite.echo = echo
+	suite.echo = echoObj
 }
 
 func (suite *MediaRouterTestSuite) TearDownTest() {
@@ -88,7 +88,7 @@ func (suite *MediaRouterTestSuite) TestGetMediaShouldReturnEmptyObject() {
 	c.SetPath("/api/v1/games/:id/media")
 	c.SetParamNames("id")
 	c.SetParamValues(ID)
-		
+
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
@@ -104,9 +104,9 @@ func (suite *MediaRouterTestSuite) TestGetMediaShouldReturnNotFound() {
 	c.SetPath("/api/v1/games/:id/media")
 	c.SetParamNames("id")
 	c.SetParamValues("00000000-0000-0000-0000-000000000000")
-	
+
 	// Assertions
-	
+
 	he := suite.router.get(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusNotFound, he.Code)
 }
@@ -119,7 +119,7 @@ func (suite *MediaRouterTestSuite) TestPutMediaShouldUpdateGame() {
 	c.SetPath("/api/v1/games/:id/media")
 	c.SetParamNames("id")
 	c.SetParamValues(ID)
-	
+
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
@@ -135,9 +135,9 @@ func (suite *MediaRouterTestSuite) TestPutMediaShouldreturnNotFound() {
 	c.SetPath("/api/v1/games/:id/media")
 	c.SetParamNames("id")
 	c.SetParamValues("00000000-0000-0000-0000-000000000000")
-	
+
 	// Assertions
-	
+
 	he := suite.router.get(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusNotFound, he.Code)
 }

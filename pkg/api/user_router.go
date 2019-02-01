@@ -37,7 +37,7 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 	}
 
 	result := model.AppState{User: model.UserInfo{
-		Id: userObj.ID,
+		Id:       userObj.ID,
 		Nickname: userObj.Nickname,
 	}}
 

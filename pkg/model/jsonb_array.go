@@ -19,8 +19,5 @@ func (j JSONBArray) Value() (driver.Value, error) {
 
 //Scan is unmarshaling function
 func (j *JSONBArray) Scan(value interface{}) error {
-	if err := json.Unmarshal(value.([]byte), &j); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(value.([]byte), &j)
 }

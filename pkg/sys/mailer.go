@@ -2,9 +2,9 @@ package sys
 
 import (
 	"crypto/tls"
+	"gopkg.in/gomail.v2"
 	"log"
 	"qilin-api/pkg/conf"
-	"gopkg.in/gomail.v2"
 )
 
 type Mailer interface {
@@ -12,9 +12,9 @@ type Mailer interface {
 }
 
 type MailerImpl struct {
-	replyTo		string
-	from 		string
-	dialer 		*gomail.Dialer
+	replyTo string
+	from    string
+	dialer  *gomail.Dialer
 }
 
 func NewMailer(config conf.Mailer) (mailer Mailer) {

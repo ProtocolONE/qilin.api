@@ -54,12 +54,12 @@ func (api *Router) GetList(ctx echo.Context) error {
 			}
 		}
 		dto = append(dto, ShortGameInfoDTO{
-			ID: game.ID,
+			ID:           game.ID,
 			InternalName: game.InternalName,
-			Icon: "",
-			Genre: genres,
-			ReleaseDate: game.ReleaseDate,
-			Prices: GamePricesDTO{},
+			Icon:         "",
+			Genre:        genres,
+			ReleaseDate:  game.ReleaseDate,
+			Prices:       GamePricesDTO{},
 		})
 	}
 

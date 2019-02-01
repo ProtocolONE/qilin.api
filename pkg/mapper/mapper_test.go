@@ -37,10 +37,10 @@ type (
 func Test_MappingDtoToDomain(t *testing.T) {
 	id, _ := uuid.FromString("23a1d325-8969-44d6-83be-06b074be58af")
 	prices := []model.JSONB{
-		model.JSONB{
+		{
 			"Price": 123.421,
 		},
-		model.JSONB{
+		{
 			"Price": 666.666,
 		},
 	}
@@ -54,10 +54,10 @@ func Test_MappingDtoToDomain(t *testing.T) {
 	dto := TestDTO{
 		ID: id,
 		Price: []PriceDTO{
-			PriceDTO{
+			{
 				Price: 123.421,
 			},
-			PriceDTO{
+			{
 				Price: 666.666,
 			},
 		},
@@ -82,10 +82,10 @@ func Test_MappingDomainToDto(t *testing.T) {
 	updatedAt, _ := time.Parse(time.RFC3339, "2019-01-22T07:53:16Z")
 	updatedAtDomain, _ := time.Parse(time.RFC3339, "2019-01-22T07:53:16Z")
 	prices := []PriceDTO{
-		PriceDTO{
+		{
 			Price: 123.421,
 		},
-		PriceDTO{
+		{
 			Price: 666.666,
 		},
 	}
@@ -100,10 +100,10 @@ func Test_MappingDomainToDto(t *testing.T) {
 		},
 		UpdatedAt: &updatedAtDomain,
 		Price: []model.JSONB{
-			model.JSONB{
+			{
 				"Price": 123.421,
 			},
-			model.JSONB{
+			{
 				"Price": 666.666,
 			},
 		},
@@ -121,18 +121,18 @@ func Test_MappingDomainToDto(t *testing.T) {
 
 func Test_ArrayMapping(t *testing.T) {
 	prices := []model.JSONB{
-		model.JSONB{
+		{
 			"Price": 123.421,
 		},
-		model.JSONB{
+		{
 			"Price": 666.666,
 		},
 	}
 	pricesDto := []PriceDTO{
-		PriceDTO{
+		{
 			Price: 123.421,
 		},
-		PriceDTO{
+		{
 			Price: 666.666,
 		},
 	}

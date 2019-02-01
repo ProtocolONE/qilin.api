@@ -15,8 +15,8 @@ type VendorService struct {
 }
 
 const (
-	errVendorConflict = "Other vendor with the same name, domain3 or email already exists"
-	errVendorNotFound = "Vendor not found"
+	errVendorConflict  = "Other vendor with the same name, domain3 or email already exists"
+	errVendorNotFound  = "Vendor not found"
 	errVendorManagerId = "ManagerId is invalid"
 )
 
@@ -27,16 +27,16 @@ func NewVendorService(db *Database) (*VendorService, error) {
 
 func (p *VendorService) validate(item *model.Vendor) error {
 	if strings.Index(item.Email, "@") < 1 {
-		return NewServiceError(http.StatusBadRequest,"Invalid Email")
+		return NewServiceError(http.StatusBadRequest, "Invalid Email")
 	}
 	if len(item.Name) < 2 {
 		return NewServiceError(http.StatusBadRequest, "Name is too short")
 	}
 	if len(item.Domain3) < 2 {
-		return NewServiceError(http.StatusBadRequest,"Domain is too short")
+		return NewServiceError(http.StatusBadRequest, "Domain is too short")
 	}
 	if strings.Index("0123456789", string(item.Domain3[0])) > -1 {
-		return NewServiceError(http.StatusBadRequest,"Domain is invalid")
+		return NewServiceError(http.StatusBadRequest, "Domain is invalid")
 	}
 	if uuid.Equal(item.ManagerID, uuid.Nil) {
 		return NewServiceError(http.StatusBadRequest, errVendorManagerId)
@@ -73,17 +73,16 @@ func (p *VendorService) Update(item *model.Vendor) (vendor *model.Vendor, err er
 
 	err = p.db.Model(item).
 		Updates(map[string]interface{}{
-			"name": item.Name,
-			"domain3": item.Domain3,
-			"email": item.Email,
+			"name":            item.Name,
+			"domain3":         item.Domain3,
+			"email":           item.Email,
 			"howmanyproducts": item.HowManyProducts,
-			"manager_id": item.ManagerID,
+			"manager_id":      item.ManagerID,
 		}).Error
 
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
 		return nil, NewServiceError(http.StatusConflict, errVendorConflict)
-	} else
-	if err != nil {
+	} else if err != nil {
 		return nil, errors.Wrap(err, "Update vendor")
 	}
 

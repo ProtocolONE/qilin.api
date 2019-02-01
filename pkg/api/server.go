@@ -1,6 +1,9 @@
 package api
 
 import (
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
 	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/game"
@@ -8,9 +11,6 @@ import (
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
 	"strconv"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	"github.com/sirupsen/logrus"
 )
 
 type ServerOptions struct {
@@ -63,11 +63,11 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		ContextKey:     context.TokenKey,
-		AuthScheme:     "Bearer",
-		TokenLookup: 	"header:Authorization",
-		SigningKey:    	opts.Jwt.SignatureSecret,
-		SigningMethod: 	opts.Jwt.Algorithm,
+		ContextKey:    context.TokenKey,
+		AuthScheme:    "Bearer",
+		TokenLookup:   "header:Authorization",
+		SigningKey:    opts.Jwt.SignatureSecret,
+		SigningMethod: opts.Jwt.Algorithm,
 	}))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
