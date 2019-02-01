@@ -1,6 +1,9 @@
 package api
 
 import (
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
 	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/game"
@@ -8,9 +11,6 @@ import (
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
 	"strconv"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	"github.com/sirupsen/logrus"
 )
 
 type ServerOptions struct {
@@ -63,11 +63,11 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.Router = server.echo.Group("/api/v1")
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		ContextKey:     context.TokenKey,
-		AuthScheme:     "Bearer",
-		TokenLookup: 	"header:Authorization",
-		SigningKey:    	opts.Jwt.SignatureSecret,
-		SigningMethod: 	opts.Jwt.Algorithm,
+		ContextKey:    context.TokenKey,
+		AuthScheme:    "Bearer",
+		TokenLookup:   "header:Authorization",
+		SigningKey:    opts.Jwt.SignatureSecret,
+		SigningMethod: opts.Jwt.Algorithm,
 	}))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
@@ -83,15 +83,6 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
-	gameService, err := orm.NewGameService(s.db)
-	if err != nil {
-		return err
-	}
-
-	if err := game.InitRoutes(s.Router, gameService); err != nil {
-		return err
-	}
-
 	userService, err := orm.NewUserService(s.db, jwtConf, mailer)
 	if err != nil {
 		return err
@@ -116,6 +107,15 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	}
 
 	if _, err := InitMediaRouter(s.Router, mediaService); err != nil {
+		return err
+	}
+
+	gameService, err := orm.NewGameService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
 

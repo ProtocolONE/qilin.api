@@ -47,6 +47,7 @@ func InitDiscountsRouter(group *echo.Group, service *orm.DiscountService) (*Disc
 }
 
 func (router *DiscountsRouter) post(ctx echo.Context) error {
+
 	id, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")

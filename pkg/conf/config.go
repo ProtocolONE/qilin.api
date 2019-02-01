@@ -16,10 +16,10 @@ const (
 )
 
 type ServerConfig struct {
-	Port 				int
-	AllowOrigins 		[]string
-	AllowCredentials 	bool
-	Debug	 			bool
+	Port             int
+	AllowOrigins     []string
+	AllowCredentials bool
+	Debug            bool
 }
 
 type Database struct {
@@ -42,13 +42,13 @@ type GeoIP struct {
 }
 
 type Mailer struct {
-	ReplyTo				string
-	From				string
-	Host 				string
-	Port 				int
-	Username 			string
-	Password 			string
-	InsecureSkipVerify 	bool
+	ReplyTo            string
+	From               string
+	Host               string
+	Port               int
+	Username           string
+	Password           string
+	InsecureSkipVerify bool
 }
 
 // Config the application's configuration
@@ -58,7 +58,7 @@ type Config struct {
 	Jwt       Jwt
 	GeoIP     GeoIP
 	LogConfig LoggingConfig
-	Mailer  Mailer
+	Mailer    Mailer
 }
 
 // LoadConfig loads the config from a file if specified, otherwise from the environment
@@ -99,12 +99,7 @@ func LoadConfig(configFile string) (*Config, error) {
 	return config, nil
 }
 
-// Config for testing the application jobs
-type TestConfig struct {
-	Database  Database
-}
-
-func LoadTestConfig() (*TestConfig, error) {
+func LoadTestConfig() (*Config, error) {
 	viper.SetEnvPrefix("QILIN")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
@@ -113,7 +108,7 @@ func LoadTestConfig() (*TestConfig, error) {
 	if configFile != "" {
 		viper.SetConfigFile(configFile)
 	} else {
-		viper.SetConfigName("test.config.yaml")
+		viper.SetConfigName("test.config")
 		_, moduleFile, _, _ := runtime.Caller(0)
 		viper.AddConfigPath(path.Dir(moduleFile) + "/../../etc")
 		viper.AddConfigPath("$HOME")
@@ -123,10 +118,20 @@ func LoadTestConfig() (*TestConfig, error) {
 		return nil, errors.Wrap(err, "Read test config file")
 	}
 
-	config := new(TestConfig)
+	config := new(Config)
 	if err := viper.Unmarshal(config); err != nil {
 		return nil, errors.Wrap(err, "Unmarshal test config file")
 	}
+
+	if config.Jwt.Algorithm == "" {
+		config.Jwt.Algorithm = DefaultJwtSignAlgorithm
+	}
+
+	pemKey, err := base64.StdEncoding.DecodeString(config.Jwt.SignatureSecretBase64)
+	if err != nil {
+		return nil, errors.Wrap(err, "Decode JWT")
+	}
+	config.Jwt.SignatureSecret = pemKey
 
 	return config, nil
 }

@@ -142,7 +142,7 @@ func (p *GameService) Create(userId uuid.UUID, vendorId uuid.UUID, internalName 
 	}
 
 	err = p.db.Create(&model.GameDescr{
-		Game: item,
+		Game:    item,
 		Reviews: []bto.GameReview{},
 	}).Error
 	if err != nil {
@@ -207,14 +207,22 @@ func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
 	orderBy = "created_at ASC"
 	if sort != "" {
 		switch sort {
-		case "-genre": orderBy = "created_at DESC"
-		case "+genre": orderBy = "genre ASC"
-		case "-releaseDate": orderBy = "release_date DESC"
-		case "+releaseDate": orderBy = "release_date ASC"
-		case "-price": orderBy = "game_prices.value DESC"
-		case "+price": orderBy = "game_prices.value ASC"
-		case "-name": orderBy = "internal_name DESC"
-		case "+name": orderBy = "internal_name ASC"
+		case "-genre":
+			orderBy = "created_at DESC"
+		case "+genre":
+			orderBy = "genre ASC"
+		case "-releaseDate":
+			orderBy = "release_date DESC"
+		case "+releaseDate":
+			orderBy = "release_date ASC"
+		case "-price":
+			orderBy = "game_prices.value DESC"
+		case "+price":
+			orderBy = "game_prices.value ASC"
+		case "-name":
+			orderBy = "internal_name DESC"
+		case "+name":
+			orderBy = "internal_name ASC"
 		}
 	}
 
@@ -262,7 +270,6 @@ func (p *GameService) Delete(userId uuid.UUID, gameId uuid.UUID) (err error) {
 	return nil
 }
 
-
 func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error) {
 
 	gameSrc, err := p.GetInfo(userId, game.ID)
@@ -275,14 +282,13 @@ func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error)
 	game.UpdatedAt = time.Now()
 	err = p.db.Save(game).Error
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
-		return  NewServiceError(http.StatusConflict, "Invalid internal_name")
+		return NewServiceError(http.StatusConflict, "Invalid internal_name")
 	} else if err != nil {
 		return errors.Wrap(err, "Update game")
 	}
 
 	return nil
 }
-
 
 func (p *GameService) GetDescr(userId uuid.UUID, gameId uuid.UUID) (descr *model.GameDescr, err error) {
 	game, err := p.GetInfo(userId, gameId)

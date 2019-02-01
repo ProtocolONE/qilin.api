@@ -6,8 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-
-
 func (p Platforms) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
 	return string(j), err
@@ -23,9 +21,6 @@ func (p *Platforms) Scan(src interface{}) error {
 	}
 	return nil
 }
-
-
-
 
 func (p GameRequirements) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
@@ -43,8 +38,6 @@ func (p *GameRequirements) Scan(src interface{}) error {
 	return nil
 }
 
-
-
 func (p GameLangs) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
 	return string(j), err
@@ -61,9 +54,6 @@ func (p *GameLangs) Scan(src interface{}) error {
 	return nil
 }
 
-
-
-
 func (p Socials) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
 	return string(j), err
@@ -79,9 +69,6 @@ func (p *Socials) Scan(src interface{}) error {
 	}
 	return nil
 }
-
-
-
 
 func (p GameReviews) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)

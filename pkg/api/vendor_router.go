@@ -18,12 +18,12 @@ type (
 	}
 
 	VendorDTO struct {
-		Id                  uuid.UUID       `json:"id"`
-		Name                string          `json:"name" validate:"required,min=2"`
-		Domain3             string          `json:"domain3" validate:"required,min=2"`
-		Email               string          `json:"email" validate:"required,email"`
-		ManagerId           uuid.UUID       `json:"manager_id"`
-		HowManyProducts     string          `json:"howmanyproducts"`
+		Id              uuid.UUID `json:"id"`
+		Name            string    `json:"name" validate:"required,min=2"`
+		Domain3         string    `json:"domain3" validate:"required,min=2"`
+		Email           string    `json:"email" validate:"required,email"`
+		ManagerId       uuid.UUID `json:"manager_id"`
+		HowManyProducts string    `json:"howmanyproducts"`
 	}
 )
 
@@ -58,11 +58,11 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 	dto := []VendorDTO{}
 	for _, v := range vendors {
 		dto = append(dto, VendorDTO{
-			Id: v.ID,
-			Name: v.Name,
-			Domain3: v.Domain3,
-			Email: v.Email,
-			ManagerId: v.ManagerID,
+			Id:              v.ID,
+			Name:            v.Name,
+			Domain3:         v.Domain3,
+			Email:           v.Email,
+			ManagerId:       v.ManagerID,
 			HowManyProducts: v.HowManyProducts,
 		})
 	}
@@ -80,11 +80,11 @@ func (api *VendorRouter) get(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusNotFound, "Vendor not found")
 	}
 	return ctx.JSON(http.StatusOK, VendorDTO{
-		Id: vendor.ID,
-		Name: vendor.Name,
-		Domain3: vendor.Domain3,
-		Email: vendor.Email,
-		ManagerId: vendor.ManagerID,
+		Id:              vendor.ID,
+		Name:            vendor.Name,
+		Domain3:         vendor.Domain3,
+		Email:           vendor.Email,
+		ManagerId:       vendor.ManagerID,
 		HowManyProducts: vendor.HowManyProducts,
 	})
 }
@@ -106,23 +106,23 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 	managerId, _ := uuid.FromBytes(data)
 
 	bto, err := api.vendorService.Create(&model.Vendor{
-		Name: dto.Name,
-		Domain3: dto.Domain3,
-		Email: dto.Email,
+		Name:            dto.Name,
+		Domain3:         dto.Domain3,
+		Email:           dto.Email,
 		HowManyProducts: dto.HowManyProducts,
-		ManagerID: managerId,
+		ManagerID:       managerId,
 	})
 	if err != nil {
 		return err
 	}
 
 	return ctx.JSON(http.StatusCreated, VendorDTO{
-		Id: bto.ID,
-		Name: bto.Name,
-		Domain3: bto.Domain3,
-		Email: bto.Email,
+		Id:              bto.ID,
+		Name:            bto.Name,
+		Domain3:         bto.Domain3,
+		Email:           bto.Email,
 		HowManyProducts: bto.HowManyProducts,
-		ManagerId: bto.ManagerID,
+		ManagerId:       bto.ManagerID,
 	})
 }
 
@@ -141,22 +141,23 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 	}
 
 	vendor, err := api.vendorService.Update(&model.Vendor{
-		ID: vendorId,
-		Name: dto.Name,
-		Domain3: dto.Domain3,
-		Email: dto.Email,
+		ID:              vendorId,
+		Name:            dto.Name,
+		Domain3:         dto.Domain3,
+		Email:           dto.Email,
 		HowManyProducts: dto.HowManyProducts,
+		ManagerID: dto.ManagerId,
 	})
 	if err != nil {
 		return err
 	}
 
 	return ctx.JSON(http.StatusOK, VendorDTO{
-		Id: vendor.ID,
-		Name: vendor.Name,
-		Domain3: vendor.Domain3,
-		Email: vendor.Email,
+		Id:              vendor.ID,
+		Name:            vendor.Name,
+		Domain3:         vendor.Domain3,
+		Email:           vendor.Email,
 		HowManyProducts: vendor.HowManyProducts,
-		ManagerId: vendor.ManagerID,
+		ManagerId:       vendor.ManagerID,
 	})
 }

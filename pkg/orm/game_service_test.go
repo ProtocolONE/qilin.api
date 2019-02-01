@@ -2,7 +2,6 @@ package orm_test
 
 import (
 	"encoding/base64"
-	"os"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
@@ -79,9 +78,6 @@ func (suite *GameServiceTestSuite) TearDownTest() {
 func (suite *GameServiceTestSuite) TestGames() {
 	require := require.New(suite.T())
 
-	// Go to project root directory
-	//_ = os.Chdir("../..")
-
 	gameService, err := orm.NewGameService(suite.db)
 	require.Nil(err, "Unable make game service")
 
@@ -115,15 +111,15 @@ func (suite *GameServiceTestSuite) TestGames() {
 
 	suite.T().Log("Makes more game-tags")
 	err = gameService.CreateTags([]model.GameTag{
-		model.GameTag{
+		{
 			ID:    "action",
 			Title: utils.LocalizedString{EN: "Action", RU: "Стрелялки"},
 		},
-		model.GameTag{
+		{
 			ID:    "test",
 			Title: utils.LocalizedString{EN: "Test", RU: "Тест"},
 		},
-		model.GameTag{
+		{
 			ID:    "tank",
 			Title: utils.LocalizedString{EN: "Tanks", RU: "Танки"},
 		},
@@ -175,7 +171,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Get game list with anther user")
 	games4, err := gameService.GetList(user2Id, vendor2.ID, 0, 20, "", "", "", "name+", 0)
 	require.NotNil(err, "Must be error")
-	require.Nil(games4, "Retrived games is null")
+	require.Nil(games4, "Retrieved games is null")
 
 	suite.T().Log("Delete first game")
 	err = gameService.Delete(userId, game.ID)

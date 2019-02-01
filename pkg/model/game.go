@@ -1,13 +1,12 @@
 package model
 
 import (
+	"github.com/jinzhu/gorm"
+	"github.com/lib/pq"
+	"github.com/satori/go.uuid"
 	"qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
 	"time"
-
-	"github.com/jinzhu/gorm"
-	"github.com/lib/pq"
-	uuid "github.com/satori/go.uuid"
 )
 
 type (
