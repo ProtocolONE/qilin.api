@@ -56,8 +56,9 @@ type (
 	GameTagsDTO []GameTagDTO
 
 	RatingDescriptorDTO struct {
-		Id    uint                  `json:"id" validate:"required"`
-		Title utils.LocalizedString `json:"title" validate:"dive"`
+		Id     uint                  `json:"id" validate:"required"`
+		Title  utils.LocalizedString `json:"title" validate:"dive"`
+		System string                `json:"system"`
 	}
 
 	GameFeaturesDTO struct {

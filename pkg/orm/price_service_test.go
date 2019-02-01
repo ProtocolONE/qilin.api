@@ -54,12 +54,10 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 }
 
 func (suite *PriceServiceTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Price{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
-	if err := suite.db.DB().DropTable(model.BasePrice{}).Error; err != nil {
-		panic(err)
-	}
+
 	if err := suite.db.Close(); err != nil {
 		panic(err)
 	}

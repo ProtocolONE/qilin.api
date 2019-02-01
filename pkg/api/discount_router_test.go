@@ -39,46 +39,42 @@ var (
 )
 
 func (suite *DiscountRouterTestSuite) SetupTest() {
+	should := require.New(suite.T())
 	config, err := conf.LoadTestConfig()
-	if err != nil {
-		suite.FailNow("Unable to load config", "%v", err)
-	}
+	should.Nil(err, "Unable to load config", "%v", err)
+
 	db, err := orm.NewDatabase(&config.Database)
-	if err != nil {
-		suite.FailNow("Unable to connect to database", "%v", err)
-	}
+	should.Nil(err, "Unable to connect to database", "%v", err)
 
 	db.Init()
 
 	id, _ := uuid.FromString(ID)
 	err = db.DB().Save(&model.Game{
-		ID:             id,
-		InternalName:   "Test_game_2",
-		ReleaseDate:    time.Now(),
-		Genre:          pq.StringArray{},
-		Tags:           pq.StringArray{},
+		ID: id,
+		InternalName: "Test_game_2",
+		ReleaseDate: time.Now(),
+		Genre: pq.StringArray{},
+		Tags: pq.StringArray{},
 		FeaturesCommon: pq.StringArray{},
 	}).Error
-	require.Nil(suite.T(), err, "Unable to make game")
+	should.Nil(err, "Unable to make game")
 
-	echoObj := echo.New()
+	e := echo.New()
 	service, err := orm.NewDiscountService(db)
-	router, err := InitDiscountsRouter(echoObj.Group("/api/v1"), service)
+	router, err := InitDiscountsRouter(e.Group("/api/v1"), service)
 
-	echoObj.Validator = &QilinValidator{validator: validator.New()}
+	e.Validator = &QilinValidator{validator: validator.New()}
 
 	suite.db = db
 	suite.router = router
-	suite.echo = echoObj
+	suite.echo = e
 }
 
 func (suite *DiscountRouterTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Discount{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
-	if err := suite.db.DB().DropTable(model.Game{}).Error; err != nil {
-		panic(err)
-	}
+
 	if err := suite.db.Close(); err != nil {
 		panic(err)
 	}

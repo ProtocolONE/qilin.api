@@ -2,15 +2,16 @@ package orm_test
 
 import (
 	"encoding/base64"
-	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"testing"
+
+	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 type GameServiceTestSuite struct {
@@ -23,7 +24,6 @@ func Test_GameService(t *testing.T) {
 }
 
 func (suite *GameServiceTestSuite) SetupTest() {
-
 	config, err := conf.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
@@ -36,10 +36,38 @@ func (suite *GameServiceTestSuite) SetupTest() {
 	db.Init()
 
 	suite.db = db
+
+	suite.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "PEGI",
+	}).Error)
+
+	suite.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "ESRB",
+	}).Error)
+
+	suite.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "USK",
+	}).Error)
+
+	suite.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "CERO",
+	}).Error)
 }
 
 func (suite *GameServiceTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Game{}, model.Vendor{}, model.User{}, model.GameTag{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {
@@ -223,4 +251,26 @@ func (suite *GameServiceTestSuite) TestGames() {
 	tags, err := gameService.FindTags(userId, "Стрелялки", 20, 0)
 	require.Equal(len(tags), 1, "Must be one match")
 	require.Equal(tags[0].ID, "action", "Same value")
+}
+
+func (suite *GameServiceTestSuite) TestDescriptors() {
+	testDescr := model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "CERO"}
+	require := require.New(suite.T())
+
+	gameService, err := orm.NewGameService(suite.db)
+	require.NoError(err)
+
+	descriptors, err := gameService.GetRatingDescriptors("")
+	require.NoError(err)
+	require.Equal(4, len(descriptors))
+
+	descriptors, err = gameService.GetRatingDescriptors("CERO")
+	require.NoError(err)
+	require.Equal(1, len(descriptors))
+	require.Equal(testDescr.System, descriptors[0].System)
+	require.Equal(testDescr.Title, descriptors[0].Title)
 }

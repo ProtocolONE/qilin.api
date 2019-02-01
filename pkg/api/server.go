@@ -51,7 +51,10 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.Logger = Logger{opts.Log.Logger}
 	server.echo.Use(LoggerHandler) // logs all http requests
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
-	server.echo.Validator = &QilinValidator{validator: validator.New()}
+
+	validate := validator.New()
+	validate.RegisterStructValidation(RatingStructLevelValidation, RatingsDTO{})
+	server.echo.Validator = &QilinValidator{validator: validate}
 
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -116,6 +119,24 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	}
 
 	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
+		return err
+	}
+
+	priceService, err := orm.NewPriceService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitPriceRouter(s.Router, priceService); err != nil {
+		return err
+	}
+
+	ratingService, err := orm.NewRatingService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitRatingsRouter(s.Router, ratingService); err != nil {
 		return err
 	}
 

@@ -35,7 +35,7 @@ func (suite *VendorServiceTestSuite) SetupTest() {
 }
 
 func (suite *VendorServiceTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Vendor{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {

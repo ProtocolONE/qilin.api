@@ -73,10 +73,7 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 }
 
 func (suite *PriceRouterTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Price{}).Error; err != nil {
-		panic(err)
-	}
-	if err := suite.db.DB().DropTable(model.BasePrice{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {

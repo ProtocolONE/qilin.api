@@ -19,9 +19,10 @@ type (
 		GameTag
 	}
 
-	RatingDescriptor struct {
-		ID    uint                  `gorm:"primary_key"`
-		Title utils.LocalizedString `gorm:"type:jsonb; not null; default:'{}'"`
+	Descriptor struct {
+		ID     uint                  `gorm:"primary_key"`
+		Title  utils.LocalizedString `gorm:"type:jsonb; not null; default:'{}'"`
+		System string                `gorm:"not null"`
 	}
 
 	Game struct {
@@ -70,7 +71,7 @@ type (
 
 		GetTags([]string) ([]GameTag, error)
 		GetGenres([]string) ([]GameGenre, error)
-		GetRatingDescriptors() ([]RatingDescriptor, error)
+		GetRatingDescriptors(system string) ([]Descriptor, error)
 		FindTags(userId uuid.UUID, title string, limit, offset int) ([]GameTag, error)
 		FindGenres(userId uuid.UUID, title string, limit, offset int) ([]GameGenre, error)
 

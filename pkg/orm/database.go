@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"flag"
 	"fmt"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
@@ -42,8 +43,29 @@ func (db *Database) Init() {
 		&model.GameTag{},
 		&model.GameGenre{},
 		&model.GameDescr{},
-		&model.RatingDescriptor{},
+		&model.Descriptor{},
+		&model.GameRating{},
 	)
+}
+
+//DropAllTables is method for clearing DB. WARNING: Use it only for testing purposes
+func (db *Database) DropAllTables() error {
+	if flag.Lookup("test.v") != nil {
+		return db.database.DropTableIfExists(
+			model.GameRating{},
+			model.Descriptor{},
+			model.GameDescr{},
+			model.GameGenre{},
+			model.GameTag{},
+			model.Discount{},
+			model.Price{},
+			model.Game{},
+			model.Vendor{},
+			model.User{},
+			"vendor_users",
+		).Error
+	}
+	return nil
 }
 
 func (db *Database) DB() *gorm.DB {
