@@ -261,9 +261,6 @@ func (suite *GameServiceTestSuite) TestDescriptors() {
 		System: "CERO"}
 	require := require.New(suite.T())
 
-	// Go to project root directory
-	_ = os.Chdir("../..")
-
 	gameService, err := orm.NewGameService(suite.db)
 	require.NoError(err)
 
