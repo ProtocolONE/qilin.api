@@ -52,24 +52,24 @@ func (suite *DiscountRouterTestSuite) SetupTest() {
 
 	id, _ := uuid.FromString(ID)
 	err = db.DB().Save(&model.Game{
-		ID: id,
-		InternalName: "Test_game_2",
-		ReleaseDate: time.Now(),
-		Genre: pq.StringArray{},
-		Tags: pq.StringArray{},
+		ID:             id,
+		InternalName:   "Test_game_2",
+		ReleaseDate:    time.Now(),
+		Genre:          pq.StringArray{},
+		Tags:           pq.StringArray{},
 		FeaturesCommon: pq.StringArray{},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 
-	echo := echo.New()
+	echoObj := echo.New()
 	service, err := orm.NewDiscountService(db)
-	router, err := InitDiscountsRouter(echo.Group("/api/v1"), service)
+	router, err := InitDiscountsRouter(echoObj.Group("/api/v1"), service)
 
-	echo.Validator = &QilinValidator{validator: validator.New()}
+	echoObj.Validator = &QilinValidator{validator: validator.New()}
 
 	suite.db = db
 	suite.router = router
-	suite.echo = echo
+	suite.echo = echoObj
 }
 
 func (suite *DiscountRouterTestSuite) TearDownTest() {

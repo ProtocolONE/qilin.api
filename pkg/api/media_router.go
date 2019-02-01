@@ -1,14 +1,14 @@
 package api
 
 import (
-	"qilin-api/pkg/model/utils"
-	"qilin-api/pkg/orm"
+	"github.com/labstack/echo"
 	"github.com/mitchellh/mapstructure"
+	"github.com/satori/go.uuid"
+	maper "gopkg.in/jeevatkm/go-model.v1"
 	"net/http"
 	"qilin-api/pkg/model"
-	"github.com/satori/go.uuid"
-	"github.com/labstack/echo"
-	 maper "gopkg.in/jeevatkm/go-model.v1"
+	"qilin-api/pkg/model/utils"
+	"qilin-api/pkg/orm"
 )
 
 type (
@@ -19,7 +19,7 @@ type (
 
 	//Media is DTO object with full information about media for game
 	Media struct {
-		
+
 		// localized cover image of game
 		CoverImage *utils.LocalizedString `json:"coverImage" validate:"required"`
 
@@ -83,19 +83,19 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 	if err := ctx.Bind(mediaDto); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	
+
 	if errs := ctx.Validate(mediaDto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
 	media := model.Media{}
 	input, err := maper.Map(mediaDto)
-	
+
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
- 	err = mapstructure.Decode(input, &media)
+	err = mapstructure.Decode(input, &media)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -121,14 +121,14 @@ func (api *MediaRouter) get(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
-	
+
 	media, err := api.mediaService.Get(id)
 
 	if err != nil {
 		return err
 	}
 
-	result := Media {}
+	result := Media{}
 	input, err := maper.Map(media)
 
 	if err != nil {
@@ -139,6 +139,6 @@ func (api *MediaRouter) get(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	
+
 	return ctx.JSON(http.StatusOK, result)
 }

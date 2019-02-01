@@ -102,11 +102,11 @@ func (p *UserService) Register(login, pass, lang string) (userId uuid.UUID, err 
 	}
 
 	user := model.User{
-		ID: uuid.NewV4(),
-		Login: login,
+		ID:       uuid.NewV4(),
+		Login:    login,
 		Password: pass,
 		Nickname: login,
-		Lang: lang,
+		Lang:     lang,
 	}
 
 	err = p.db.Create(&user).Error
@@ -118,8 +118,8 @@ func (p *UserService) Register(login, pass, lang string) (userId uuid.UUID, err 
 }
 
 type templ_ResetPasswd struct {
-	User		*model.User
-	ResetURL	string
+	User     *model.User
+	ResetURL string
 }
 
 func (p *UserService) ResetPassw(email string) (err error) {

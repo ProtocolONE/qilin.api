@@ -9,9 +9,9 @@ import (
 
 // LoggingConfig specifies all the parameters needed for logging
 type LoggingConfig struct {
-	Level 			string
-	File  			string
-	ReportCaller	bool
+	Level        string
+	File         string
+	ReportCaller bool
 }
 
 // ConfigureLogging will take the logging configuration and also adds
@@ -46,7 +46,7 @@ func ConfigureLogging(config *LoggingConfig) (*logrus.Entry, error) {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:    true,
 		DisableTimestamp: false,
-		ForceColors: true,
+		ForceColors:      true,
 	})
 
 	return logrus.StandardLogger().WithField("hostname", hostname), nil

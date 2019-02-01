@@ -28,10 +28,10 @@ func (cv *QilinValidator) Validate(i interface{}) error {
 
 type GamesRouterTestSuite struct {
 	suite.Suite
-	db          *orm.Database
-	echo        *echo.Echo
-	router      *Router
-	token       *jwt.Token
+	db     *orm.Database
+	echo   *echo.Echo
+	router *Router
+	token  *jwt.Token
 }
 
 func Test_GamesRouter(t *testing.T) {
@@ -39,9 +39,9 @@ func Test_GamesRouter(t *testing.T) {
 }
 
 var (
-	userId                  = `95a97684-9dad-11d1-80b4-00c04fd430c8`
-	vendorId                = `6ba97684-9dad-11d1-80b4-00c04fd430c8`
-	createGamesPayload      = `{"InternalName":"new_game", "vendorId": "` + vendorId + `"}`
+	userId             = `95a97684-9dad-11d1-80b4-00c04fd430c8`
+	vendorId           = `6ba97684-9dad-11d1-80b4-00c04fd430c8`
+	createGamesPayload = `{"InternalName":"new_game", "vendorId": "` + vendorId + `"}`
 )
 
 func (suite *GamesRouterTestSuite) SetupTest() {
@@ -57,29 +57,29 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 
 	userUuid, _ := uuid.FromString(userId)
 	err = db.DB().Save(&model.User{
-		ID: userUuid,
+		ID:       userUuid,
 		Nickname: "admin",
-		Login: "admin@protocol.one",
+		Login:    "admin@protocol.one",
 		Password: "123456",
-		Lang: "en",
+		Lang:     "en",
 		Currency: "usd",
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
 	vendorUuid, _ := uuid.FromString(vendorId)
 	err = db.DB().Save(&model.Vendor{
-		ID: vendorUuid,
-		Name: "domino",
-		Domain3: "domino",
-		Email: "domine@ya.ru",
+		ID:              vendorUuid,
+		Name:            "domino",
+		Domain3:         "domino",
+		Email:           "domine@ya.ru",
 		HowManyProducts: "+10",
-		ManagerID: userUuid,
-		Users: []model.User{{ID: userUuid}},
+		ManagerID:       userUuid,
+		Users:           []model.User{{ID: userUuid}},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
 
-	echo := echo.New()
-	echo.Validator = &QilinValidator{validator: validator.New()}
-	groupApi := echo.Group("/api/v1")
+	echoObj := echo.New()
+	echoObj.Validator = &QilinValidator{validator: validator.New()}
+	groupApi := echoObj.Group("/api/v1")
 	service, err := orm.NewGameService(db)
 	router, err := InitRoutes(groupApi, service)
 	if err != nil {
@@ -87,7 +87,7 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	}
 	suite.db = db
 	suite.router = router
-	suite.echo = echo
+	suite.echo = echoObj
 	token, _ := uuid.FromString(userId)
 	suite.token = jwt.NewWithClaims(jwt.GetSigningMethod(config.Jwt.Algorithm), jwt.MapClaims{"id": base64.StdEncoding.EncodeToString(token[:])})
 }
@@ -111,10 +111,9 @@ func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
 	c.Set(context.TokenKey, suite.token)
 
 	err := suite.router.Create(c)
-	require.Nil( suite.T(), err, "Error while create game")
+	require.Nil(suite.T(), err, "Error while create game")
 
 	game := model.Game{}
 	err = suite.db.DB().First(&game).Error
 	require.Equal(suite.T(), game.InternalName, "new_game", "Incorrect game creates")
 }
-
