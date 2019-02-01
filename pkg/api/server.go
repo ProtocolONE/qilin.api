@@ -51,7 +51,10 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.Logger = Logger{opts.Log.Logger}
 	server.echo.Use(LoggerHandler) // logs all http requests
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
-	server.echo.Validator = &QilinValidator{validator: validator.New()}
+
+	validate := validator.New()
+	validate.RegisterStructValidation(RatingStructLevelValidation, RatingsDTO{})
+	server.echo.Validator = &QilinValidator{validator: validate}
 
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
