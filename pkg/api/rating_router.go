@@ -3,9 +3,11 @@ package api
 import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
+	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 )
 
@@ -15,7 +17,7 @@ type (
 	}
 
 	RatingsDTO struct {
-		PEGI PEGI         `json:"PEGI"`
+		PEGI CommonRating `json:"PEGI"`
 		ESRB CommonRating `json:"ESRB"`
 		BBFC CommonRating `json:"BBFC"`
 		USK  CommonRating `json:"USK"`
@@ -28,14 +30,6 @@ type (
 		AgeRestrict         int8    `json:"ageRestrict"`
 		Descriptors         []int32 `json:"descriptors"`
 		Rating              string  `json:"rating"`
-	}
-
-	PEGI struct {
-		DisplayOnlineNotice bool    `json:"displayOnlineNotice"`
-		ShowAgeRestrict     bool    `json:"showAgeRestrict"`
-		AgeRestrict         int8    `json:"ageRestrict"`
-		Descriptors         []int32 `json:"descriptors"`
-		Rating              int8    `json:"rating"`
 	}
 )
 
@@ -104,4 +98,25 @@ func (router *RatingsRouter) postRatings(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, "")
+}
+
+//RatingStructLevelValidation is method for custom validation of game ratings
+func RatingStructLevelValidation(sl validator.StructLevel) {
+	rating := sl.Current().Interface().(RatingsDTO)
+
+	validateCommonRating(rating.BBFC.Rating, "Rating", utils.StringArray{"U", "PG", "12A", "12", "15", "18", "R18"}, sl)
+	validateCommonRating(rating.CERO.Rating, "Rating", utils.StringArray{"A", "B", "C", "D", "Z"}, sl)
+	validateCommonRating(rating.ESRB.Rating, "Rating", utils.StringArray{"E", "E10+", "T", "M", "A", "RP"}, sl)
+	validateCommonRating(rating.PEGI.Rating, "Rating", utils.StringArray{"3", "7", "12", "16", "18"}, sl)
+	validateCommonRating(rating.USK.Rating, "Rating", utils.StringArray{"USK", "0", "6", "12", "16", "18"}, sl)
+}
+
+func validateCommonRating(field interface{}, fieldName string, values utils.StringArray, sl validator.StructLevel) {
+	value := field.(string)
+	if len(value) > 0 {
+		exist := values.Contains(value)
+		if !exist {
+			sl.ReportError(field, fieldName, fieldName, "contains", "")
+		}
+	}
 }

@@ -51,7 +51,7 @@ func (db *Database) Init() {
 //DropAllTables is method for clearing DB. WARNING: Use it only for testing purposes
 func (db *Database) DropAllTables() error {
 	if flag.Lookup("test.v") != nil {
-		return db.database.DropTable(
+		return db.database.DropTableIfExists(
 			model.GameRating{},
 			model.Descriptor{},
 			model.GameDescr{},
@@ -62,6 +62,7 @@ func (db *Database) DropAllTables() error {
 			model.Game{},
 			model.Vendor{},
 			model.User{},
+			"vendor_users",
 		).Error
 	}
 	return nil

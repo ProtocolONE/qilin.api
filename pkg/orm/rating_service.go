@@ -22,7 +22,7 @@ func NewRatingService(db *Database) (*RatingService, error) {
 // GetRatingsForGame is method for getting ratings for game
 func (s *RatingService) GetRatingsForGame(id uuid.UUID) (*model.GameRating, error) {
 	rating := model.GameRating{}
-	game := &model.Game{ID: id}
+	game := model.Game{ID: id}
 	if s.db.NewRecord(&game) {
 		return &rating, NewServiceError(http.StatusNotFound, "Game not found")
 	}
@@ -39,6 +39,11 @@ func (s *RatingService) GetRatingsForGame(id uuid.UUID) (*model.GameRating, erro
 //SaveRatingsForGame is method for updating game ratings
 func (s *RatingService) SaveRatingsForGame(id uuid.UUID, newRating *model.GameRating) error {
 	rating := model.GameRating{}
+	game := model.Game{ID: id}
+	if s.db.NewRecord(&game) {
+		return NewServiceError(http.StatusNotFound, "Game not found")
+	}
+
 	err := s.db.Model(&model.Game{ID: id}).Related(&rating).Error
 
 	if err != gorm.ErrRecordNotFound {

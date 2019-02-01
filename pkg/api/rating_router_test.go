@@ -28,7 +28,12 @@ type RatingRouterTestSuite struct {
 
 var (
 	emptyRatings = `{"PEGI":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":0,"descriptors":null,"rating":0},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":0,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":0,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":0,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":0,"descriptors":null,"rating":""}}`
-	fullRatings  = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":0},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
+	fullRatings  = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
+	badPEGI      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"XXX"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
+	badUSK       = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":"XXX"},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
+	badESRB      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":"XXX"},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
+	badCERO      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":"XXX"}}`
+	badBBFC      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":"XXX"},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
 )
 
 func Test_RatingRouter(t *testing.T) {
@@ -62,7 +67,9 @@ func (suite *RatingRouterTestSuite) SetupTest() {
 	service, err := orm.NewRatingService(db)
 	router, err := InitRatingsRouter(e.Group("/api/v1"), service)
 
-	e.Validator = &QilinValidator{validator: validator.New()}
+	validate := validator.New()
+	validate.RegisterStructValidation(RatingStructLevelValidation, RatingsDTO{})
+	e.Validator = &QilinValidator{validator: validate}
 
 	suite.db = db
 	suite.router = router
@@ -75,6 +82,23 @@ func (suite *RatingRouterTestSuite) TearDownTest() {
 	}
 	if err := suite.db.Close(); err != nil {
 		panic(err)
+	}
+}
+
+func (suite *RatingRouterTestSuite) TestBadRatingsShouldReturnError() {
+	tests := []string{badBBFC, badCERO, badESRB, badESRB, badPEGI, badUSK}
+	for _, testCase := range tests {
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(testCase))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := suite.echo.NewContext(req, rec)
+		c.SetPath("/api/v1/games/:id/ratings")
+		c.SetParamNames("id")
+		c.SetParamValues(ID)
+
+		// Assertions
+		he := suite.router.postRatings(c).(*orm.ServiceError)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
 	}
 }
 
@@ -94,7 +118,6 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnEmptyObject() {
 	}
 }
 
-
 func (suite *RatingRouterTestSuite) TestPostRatingsShouldReturnOk() {
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(fullRatings))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -109,7 +132,6 @@ func (suite *RatingRouterTestSuite) TestPostRatingsShouldReturnOk() {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 	}
 }
-
 
 func (suite *RatingRouterTestSuite) TestPostBadObjectShouldReturnError() {
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("bad object"))
@@ -152,7 +174,6 @@ func (suite *RatingRouterTestSuite) TestPostRatingsShouldWithNilIdShouldReturnEr
 	he := suite.router.getRatings(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusNotFound, he.Code)
 }
-
 
 func (suite *RatingRouterTestSuite) TestGetRatingsShouldWithBadIdShouldReturnError() {
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyRatings))
