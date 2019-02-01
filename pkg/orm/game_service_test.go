@@ -5,7 +5,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"os"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
@@ -50,9 +49,6 @@ func (suite *GameServiceTestSuite) TearDownTest() {
 
 func (suite *GameServiceTestSuite) TestGames() {
 	require := require.New(suite.T())
-
-	// Go to project root directory
-	_ = os.Chdir("../..")
 
 	gameService, err := orm.NewGameService(suite.db)
 	require.Nil( err, "Unable make game service")

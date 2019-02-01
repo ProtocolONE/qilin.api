@@ -146,6 +146,7 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 		Domain3: dto.Domain3,
 		Email: dto.Email,
 		HowManyProducts: dto.HowManyProducts,
+		ManagerID: dto.ManagerId,
 	})
 	if err != nil {
 		return err
