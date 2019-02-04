@@ -9,6 +9,7 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
+	"time"
 )
 
 type (
@@ -99,6 +100,7 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
+	media.UpdatedAt = time.Now()
 
 	if err := api.mediaService.Update(id, &media); err != nil {
 		return err

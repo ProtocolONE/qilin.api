@@ -1,12 +1,11 @@
 package api
 
 import (
-	"encoding/base64"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"strconv"
@@ -100,10 +99,10 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 	}
 
 	// Assign to new vendor current user id as manager
-	user := ctx.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	data, _ := base64.StdEncoding.DecodeString(claims["id"].(string))
-	managerId, _ := uuid.FromBytes(data)
+	managerId, err := context.GetAuthUUID(ctx)
+	if err != nil {
+		return err
+	}
 
 	bto, err := api.vendorService.Create(&model.Vendor{
 		Name:            dto.Name,
