@@ -997,6 +997,10 @@ paths:
       responses:
         200:
           description: OK
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GetMerchantRequest'
         400:
           $ref: '#/components/responses/BadRequest'
         401:
@@ -1188,7 +1192,6 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-
   /admin/api/v1/vendors/reviews:
     get:
       tags:
@@ -1360,7 +1363,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminGetMerchantRequest'
+                $ref: '#/components/schemas/Notification'
         400:
           $ref: '#/components/responses/BadRequest'
         401:
