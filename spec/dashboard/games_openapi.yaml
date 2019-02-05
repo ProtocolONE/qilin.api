@@ -5,9 +5,9 @@ info:
   title: "Qilin games dashboard API"
   contact:
     email: "roman.golenok@protocol.one"
-tags: 
-- name: "game"
-  description: "About game info"
+tags:
+  - name: "game"
+    description: "About game info"
 
 servers:
   - url: https://qilinapi.tst.protocol.one
@@ -16,8 +16,8 @@ servers:
 paths:
   /api/v1/genre:
     get:
-      tags: 
-      - "common"
+      tags:
+        - "common"
       summary: "Get list of genre"
       parameters:
         - name: title
@@ -44,8 +44,8 @@ paths:
 
   /api/v1/tags:
     get:
-      tags: 
-      - "common"
+      tags:
+        - "common"
       summary: "Get list of tags"
       parameters:
         - name: title
@@ -66,7 +66,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Tag"
         400:
-          $ref: '#/components/responses/BadRequest'                  
+          $ref: '#/components/responses/BadRequest'
         401:
           $ref: '#/components/responses/Unauthorized'
         500:
@@ -115,9 +115,9 @@ paths:
 
   /api/v1/vendor/:id/games:
     get:
-      tags: 
-      - "game"
-      - "vendor"
+      tags:
+        - "game"
+        - "vendor"
       summary: "Get list of games in vendor"
       operationId: "listGames"
       parameters:
@@ -168,14 +168,14 @@ paths:
             items:
               type: "string"
               enum:
-              - -genre
-              - +genre
-              - -releaseDate
-              - +releaseDate
-              - -price
-              - +price
-              - -name
-              - +name
+                - -genre
+                - +genre
+                - -releaseDate
+                - +releaseDate
+                - -price
+                - +price
+                - -name
+                - +name
           required: false
       responses:
         200:
@@ -183,31 +183,31 @@ paths:
           content:
             application/json:
               schema:
-                  type: "array"
-                  items:
-                    $ref: "#/components/schemas/ShortGameInfo"
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ShortGameInfo"
         400:
           $ref: '#/components/responses/BadRequest'
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         500:
           $ref: '#/components/responses/InternalError'
-  
+
   /api/v1/games/{id}:
     get:
-      tags: 
+      tags:
         - "game"
-      summary: "Get game info" 
+      summary: "Get game info"
       description: ""
-      parameters: 
-      - name: "id"
-        in: "path"
-        schema:
-          type: string
-        required: true
-        description: "Id of game"
+      parameters:
+        - name: "id"
+          in: "path"
+          schema:
+            type: string
+          required: true
+          description: "Id of game"
       responses:
-        200: 
+        200:
           description: OK
           content:
             application/json:
@@ -216,46 +216,46 @@ paths:
         400:
           $ref: '#/components/responses/BadRequest'
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/InternalError'
-          
+
 
     delete:
-      tags: 
-      - "game"
-      summary: "Delete game" 
+      tags:
+        - "game"
+      summary: "Delete game"
       description: ""
       operationId: "deleteGame"
-      parameters: 
-      - name: "id"
-        in: "path"
-        schema:
-          type: string
-        required: true
-        description: "Id of game to remove"
+      parameters:
+        - name: "id"
+          in: "path"
+          schema:
+            type: string
+          required: true
+          description: "Id of game to remove"
       responses:
-        200: 
+        200:
           description: OK
         400:
           $ref: '#/components/responses/BadRequest'
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/InternalError'
-        
+
     put:
-      tags: 
-      - "game"
-      summary: "Change game info" 
+      tags:
+        - "game"
+      summary: "Change game info"
       description: ""
       operationId: "changeGame"
       requestBody:
@@ -265,29 +265,29 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/ChangeGame"
-      parameters: 
-      - name: "id"
-        in: "path"
-        schema:
-          type: string
-          format: uuid
-        required: true
-        description: "Id of game to change"
-      - name: If-Unmodified-Since
-        in: header
-        schema: 
-          type: string
-          format: date-time
-        required: false
+      parameters:
+        - name: "id"
+          in: "path"
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: "Id of game to change"
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: false
       responses:
-        200: 
+        200:
           description: OK
         400:
           $ref: '#/components/responses/BadRequest'
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         409:
@@ -300,22 +300,22 @@ paths:
   /api/v1/games/{id}/descriptions:
     get:
       tags:
-      - game
+        - game
       summary: "Gets additional descriptions of game"
       parameters:
-      - name: "id"
-        in: "path"
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: If-Unmodified-Since
-        in: header
-        schema: 
-          type: string
-          format: date-time
-        required: true
-        example: "2019-01-11T17:32:28Z"      
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: true
+          example: "2019-01-11T17:32:28Z"
       responses:
         200:
           description: OK
@@ -326,9 +326,9 @@ paths:
         400:
           $ref: '#/components/responses/BadRequest'
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         500:
@@ -336,38 +336,38 @@ paths:
 
     put:
       tags:
-      - game
+        - game
       summary: "Change descriptions"
       parameters:
-      - name: "id"
-        in: "path"
-        required: true
-        schema:
-          type: string
-      - name: If-Unmodified-Since
-        in: header
-        schema: 
-          type: string
-          format: date-time
-        required: false      
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: string
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: false
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/Description"
       responses:
-        200: 
+        200:
           description: OK
         400:
           $ref: '#/components/responses/BadRequest'
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         409:
-          $ref: '#/components/responses/Conflict'          
+          $ref: '#/components/responses/Conflict'
         422:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
@@ -389,7 +389,7 @@ paths:
         200:
           description: OK
           content:
-            application/json:  
+            application/json:
               schema:
                 type: object
                 properties:
@@ -404,9 +404,9 @@ paths:
                   CERO:
                     $ref: '#/components/schemas/CommonRating'
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         500:
@@ -416,18 +416,18 @@ paths:
         - ratings
       summary: Change ratings for game
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: If-Unmodified-Since
-        in: header
-        schema: 
-          type: string
-          format: date-time
-        required: false        
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: false
       requestBody:
         content:
           application/json:
@@ -448,9 +448,9 @@ paths:
         200:
           description: OK
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         409:
@@ -459,7 +459,7 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'
-  
+
   /api/v1/descriptors:
     get:
       tags:
@@ -475,7 +475,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Descriptor'
         401:
-          $ref: '#/components/responses/Unauthorized'           
+          $ref: '#/components/responses/Unauthorized'
         500:
           $ref: '#/components/responses/InternalError'
 
@@ -490,39 +490,39 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid      
+            format: uuid
       responses:
         200:
           description: OK
           content:
-            application/json:  
+            application/json:
               schema:
                 $ref: '#/components/schemas/Media'
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         500:
-          $ref: '#/components/responses/InternalError'            
+          $ref: '#/components/responses/InternalError'
     put:
       tags:
         - media
       summary: "Change media for game"
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: If-Unmodified-Since
-        in: header
-        schema: 
-          type: string
-          format: date-time
-        required: false      
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: false
       requestBody:
         content:
           application/json:
@@ -532,9 +532,9 @@ paths:
         200:
           description: OK
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         409:
@@ -542,8 +542,8 @@ paths:
         422:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
-          $ref: '#/components/responses/InternalError'                    
-  
+          $ref: '#/components/responses/InternalError'
+
   /api/v1/games/{id}/prices/{currency}:
     put:
       tags:
@@ -566,27 +566,27 @@ paths:
             schema:
               type: object
               properties:
-                currency: 
-                    type: string
-                vat: 
+                currency:
+                  type: string
+                vat:
                   type: number
                 price:
                   type: number
-                  format: float  
+                  format: float
       responses:
         200:
           description: OK
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         422:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'
-          
+
     delete:
       tags:
         - price
@@ -607,9 +607,9 @@ paths:
         200:
           description: OK
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         422:
@@ -617,7 +617,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/games/{id}/prices:  
+  /api/v1/games/{id}/prices:
     get:
       tags:
         - price
@@ -628,41 +628,41 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid      
+            format: uuid
       responses:
         200:
           description: OK
           content:
-            application/json:  
+            application/json:
               schema:
                 $ref: '#/components/schemas/Prices'
-                    
+
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         500:
-          $ref: '#/components/responses/InternalError'     
-    
+          $ref: '#/components/responses/InternalError'
+
     put:
       tags:
         - price
       summary: "Change prices for game"
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid     
-      - name: If-Unmodified-Since
-        in: header
-        schema: 
-          type: string
-          format: date-time
-        required: false      
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: false
       requestBody:
         content:
           application/json:
@@ -672,9 +672,9 @@ paths:
         200:
           description: OK
         401:
-          $ref: '#/components/responses/Unauthorized'                
+          $ref: '#/components/responses/Unauthorized'
         403:
-          $ref: '#/components/responses/Forbidden'                
+          $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
         409:
@@ -682,7 +682,7 @@ paths:
         422:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
-          $ref: '#/components/responses/InternalError'      
+          $ref: '#/components/responses/InternalError'
 
   /api/v1/games/{id}/discounts:
     get:
@@ -807,7 +807,6 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-
   /api/v1/games/{id}/achievment:
     post:
       tags:
@@ -912,9 +911,498 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/vendors/{id}/documents/reviews:
+    post:
+      tags:
+        - vendor
+        - onboarding
+      summary: "Send documents about vendor to review"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: false
+      responses:
+        201:
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/documents:
+    get:
+      tags:
+        - vendor
+        - onboarding
+      summary: "Get documents about vendor"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMerchantRequest'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - vendor
+        - onboarding
+      summary: "Change documents about vendor"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeMerchantRequest'
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+          description: "Documents can be on review and have not to be changed"
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/notifications/short:
+    get:
+      tags:
+        - vendor
+        - onboarding
+        - notifications
+      summary: "Get last notifications with short info"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShortNotification'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/notifications:
+    get:
+      summary: "Get list of notifications"
+      tags:
+        - vendor
+        - onboarding
+        - notifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: "Limit for query"
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+        - name: offset
+          in: query
+          description: "Offset for query"
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Notifications requests sorting"
+          example: -createdAt,+title
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              enum:
+                - -title
+                - +title
+                - -createdAt
+                - +createdAt
+                - -isUnread
+                - +isUnread
+        - name: query
+          in: query
+          example: "Error"
+          description: "Notifications requests name filter"
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          headers:
+            - name: X-Items-Count
+              type: number
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/notifications/{notificationId}:
+    patch:
+      tags:
+        - vendor
+        - onboarding
+        - notifications
+      summary: "Sets status 'unread' to false"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - vendor
+        - onboarding
+        - notifications
+      summary: "Get full notification object"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+
+  /admin/api/v1/vendors/reviews:
+    get:
+      tags:
+        - admin
+        - vendor
+        - onboarding
+      parameters:
+        - name: limit
+          in: query
+          description: "Limit for query"
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+        - name: offset
+          in: query
+          description: "Offset for query"
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Vendors requests sorting"
+          example: -updatedAt,+name
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              enum:
+                - -name
+                - +name
+                - -updatedAt
+                - +updatedAt
+                - -status
+                - +status
+        - name: name
+          in: query
+          example: "Rog"
+          description: "Vendors requests name filter"
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: "Vendors requests status filter"
+          schema:
+            type: string
+            enum:
+              - new
+              - checking
+              - returned
+              - approved
+              - archive
+      responses:
+        200:
+          description: OK
+          headers:
+            - name: X-Items-Count
+              type: number
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    country:
+                      type: string
+                    person:
+                      type: string
+                    updatedAt:
+                      type: string
+                      format: 'date-time'
+                    status:
+                      type: string
+                      enum:
+                        - new
+                        - checking
+                        - returned
+                        - approved
+                        - archive
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /admin/api/v1/vendors/{id}/documents/status:
+    put:
+      tags:
+        - admin
+        - vendor
+        - onboarding
+      summary: "Change document status"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: "Optional message for vendor"
+                status:
+                  type: string
+                  enum:
+                    - checking
+                    - returned
+                    - approved
+                    - archive
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          required: false
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /admin/api/v1/vendors/{id}/messages:
+    post:
+      tags:
+        - admin
+        - vendor
+        - onboarding
+      summary: "Creates new message for vendor"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminGetMerchantRequest'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /admin/api/v1/vendors/{id}/documents:
+    get:
+      tags:
+        - admin
+        - vendor
+        - onboarding
+      summary: "Get documents about vendor"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminGetMerchantRequest'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalError'
+
 components:
   securitySchemes:
-    bearerAuth:            
+    bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
@@ -966,7 +1454,7 @@ components:
             $ref: '#/components/schemas/Error'
 
   parameters:
-    Offset:  
+    Offset:
       in: query
       name: offset
       required: false
@@ -985,6 +1473,155 @@ components:
       description: The numbers of items to return.
 
   schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: 'date-time'
+        isUnread:
+          type: boolean
+
+    ShortNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: 'date-time'
+        isUnread:
+          type: boolean
+
+    AdminGetMerchantRequest:
+      allOf:
+        - $ref: '#/components/schemas/ChangeMerchantRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - new
+                - checking
+                - returned
+                - approved
+                - archive
+
+    GetMerchantRequest:
+      allOf:
+        - $ref: '#/components/schemas/ChangeMerchantRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - draft
+                - on_review
+                - approved
+                - declined
+
+    ChangeMerchantRequest:
+      type: object
+      properties:
+        company:
+          type: object
+          properties:
+            name:
+              description: "company name"
+              type: string
+            alternativeName:
+              type: string
+              description: "Doing business as (alternative name)"
+            country:
+              type: string
+              enum:
+                - russia
+                - germany
+                - usa
+                - etc.
+              description: "Country (enum in lowercase)"
+            region:
+              description: "State / Province / Region"
+              type: string
+            zip:
+              type: string
+              pattern: "^[0-9]{5}(?:-[0-9]{4})?$"
+              description: "Zip code."
+            city:
+              type: string
+            address:
+              type: string
+            additionalAddress:
+              type: string
+              description: "Address line 2"
+            registrationNumber:
+              type: number
+            taxId:
+              type: number
+              description: "Tax ID / EIN / TIN"
+        contact:
+          type: object
+          properties:
+            authorized:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  description: "Authorized person full name"
+                position:
+                  type: string
+                  description: "Authorized person position"
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+            technical:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  description: "technical person full name"
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+        banking:
+          type: object
+          properties:
+            currency:
+              type: string
+              description: "payout currency"
+              enum:
+                - USD
+                - EUR
+                - RUR
+            name:
+              description: "Name of bank"
+              type: string
+              example: "Bank of Baroda"
+            address:
+              type: string
+
+            accountNumber:
+              type: number
+            swift:
+              type: string
+            details:
+              type: string
+              description: "Corresponding bank details"
+
     BasePrices:
       type: object
       properties:
@@ -993,10 +1630,10 @@ components:
           properties:
             currency:
               type: string
-              enum: 
-              - USD
-              - EUR
-              - RUR
+              enum:
+                - USD
+                - EUR
+                - RUR
             notifyRateJumps:
               type: boolean
         preOrder:
@@ -1011,22 +1648,22 @@ components:
 
     Prices:
       allOf:
-      - $ref: '#/components/schemas/BasePrices'
-      - type: object
-        properties:
-          prices:
-            type: array
-            items:
-              type: object
-              properties:
-                currency: 
-                  type: string
-                vat: 
-                  type: number
-                price:
-                  type: number
-                  format: float
-        
+        - $ref: '#/components/schemas/BasePrices'
+        - type: object
+          properties:
+            prices:
+              type: array
+              items:
+                type: object
+                properties:
+                  currency:
+                    type: string
+                  vat:
+                    type: number
+                  price:
+                    type: number
+                    format: float
+
     Discount:
       type: object
       properties:
@@ -1094,7 +1731,7 @@ components:
             en:
               - http://www.example.com/video/ce05bce1-48bf-4c01-ae14-046af4d1ca94
               - http://www.example.com/video/30083025-fe0c-4a22-b0a7-569ab6cee50b
-            ru: 
+            ru:
               - http://www.example.com/video/ce05bce1-48bf-4c01-ae14-046af4d1ca94
               - http://www.example.com/video/30083025-fe0c-4a22-b0a7-569ab6cee50b
         store:
@@ -1137,11 +1774,11 @@ components:
     Descriptor:
       type: object
       properties:
-        id: 
+        id:
           type: integer
         title:
           type: object
-          additionalProperties: 
+          additionalProperties:
             type: string
           example:
             en: Blood
@@ -1150,7 +1787,7 @@ components:
     CommonRating:
       type: object
       properties:
-        displayOnlineNotice: 
+        displayOnlineNotice:
           type: boolean
           default: false
         showAgeRestrict:
@@ -1158,101 +1795,101 @@ components:
           default: false
         ageRestrict:
           type: integer
-          
-    
-    PostRating: 
+
+
+    PostRating:
       allOf:
-      - $ref: '#/components/schemas/CommonRating'
-      - type: object
-        properties:
-          descriptiors:
-            type: array
-            items:
-              type: integer
-    
+        - $ref: '#/components/schemas/CommonRating'
+        - type: object
+          properties:
+            descriptiors:
+              type: array
+              items:
+                type: integer
+
     ESRB:
       allOf:
-      - $ref: '#/components/schemas/PostRating'
-      - type: object
-        properties:
-          rating:
-            type: string
-            enum:
-              - EC
-              - E
-              - E10+
-              - T
-              - M
-              - AO
-              - RP
-    
+        - $ref: '#/components/schemas/PostRating'
+        - type: object
+          properties:
+            rating:
+              type: string
+              enum:
+                - EC
+                - E
+                - E10+
+                - T
+                - M
+                - AO
+                - RP
+
     PEGI:
       allOf:
-      - $ref: '#/components/schemas/PostRating'
-      - type: object
-        properties:
-          rating:
-            type: string
-            enum:
-              - 3
-              - 7
-              - 12
-              - 16
-              - 18
+        - $ref: '#/components/schemas/PostRating'
+        - type: object
+          properties:
+            rating:
+              type: string
+              enum:
+                - 3
+                - 7
+                - 12
+                - 16
+                - 18
 
     BBFC:
       allOf:
-      - $ref: '#/components/schemas/PostRating'
-      - type: object
-        properties:
-          rating:
-            type: string
-            enum:
-              - U
-              - PG
-              - 12
-              - 15
-              - 18
-              - R18
+        - $ref: '#/components/schemas/PostRating'
+        - type: object
+          properties:
+            rating:
+              type: string
+              enum:
+                - U
+                - PG
+                - 12
+                - 15
+                - 18
+                - R18
 
     USK:
       allOf:
-      - $ref: '#/components/schemas/PostRating'
-      - type: object
-        properties:
-          rating:
-            type: string
-            enum:
-              - USK
-              - 0
-              - 6
-              - 12
-              - 16
-              - 18
+        - $ref: '#/components/schemas/PostRating'
+        - type: object
+          properties:
+            rating:
+              type: string
+              enum:
+                - USK
+                - 0
+                - 6
+                - 12
+                - 16
+                - 18
 
     CERO:
       allOf:
-      - $ref: '#/components/schemas/PostRating'
-      - type: object
-        properties:
-          rating:
-            type: string
-            enum:
-              - A
-              - B
-              - C
-              - D
-              - Z
+        - $ref: '#/components/schemas/PostRating'
+        - type: object
+          properties:
+            rating:
+              type: string
+              enum:
+                - A
+                - B
+                - C
+                - D
+                - Z
 
     Rating:
       allOf:
-      - $ref: '#/components/schemas/CommonRating'
-      - type: object
-        properties:
-          descriptiors:
-            type: array
-            items:
-              $ref: '#/components/schemas/Descriptor'
+        - $ref: '#/components/schemas/CommonRating'
+        - type: object
+          properties:
+            descriptiors:
+              type: array
+              items:
+                $ref: '#/components/schemas/Descriptor'
 
     Error:
       type: object
@@ -1269,14 +1906,14 @@ components:
       properties:
         tagline:
           type: object
-          additionalProperties: 
+          additionalProperties:
             type: string
           example:
             en: "Short description"
             ru: "Короткое описание"
         description:
           type: object
-          additionalProperties: 
+          additionalProperties:
             type: string
           example:
             en: "Full Description"
@@ -1301,7 +1938,7 @@ components:
     Review:
       type: object
       properties:
-        pressName: 
+        pressName:
           type: string
           example: "IGN"
         link:
@@ -1315,8 +1952,8 @@ components:
 
     LanguageSupport:
       type: object
-      properties: 
-        voice: 
+      properties:
+        voice:
           type: "boolean"
           default: false
         interface:
@@ -1331,7 +1968,7 @@ components:
       additionalProperties:
         $ref: "#/components/schemas/LanguageSupport"
       example:
-        en: 
+        en:
           voice: true
           interface: true
           subtitles: true
@@ -1346,14 +1983,14 @@ components:
 
     Tag:
       type: object
-      properties: 
-        id: 
+      properties:
+        id:
           type: "string"
           readOnly: true
         title:
           type: object
           additionalProperties:
-              type: string
+            type: string
           readOnly: true
           example:
             en: multiplayer
@@ -1361,14 +1998,14 @@ components:
 
     Genre:
       type: object
-      properties: 
-        id: 
+      properties:
+        id:
           type: "string"
           readOnly: true
         title:
           type: object
           additionalProperties:
-              type: string
+            type: string
           example:
             en: Action
             ru: Экшен
@@ -1379,33 +2016,33 @@ components:
       properties:
         common:
           type: array
-          items: 
+          items:
             type: string
             enum:
-            - singlePlayer
-            - multiPlayer
-            - onlineMultiplayerPlayer
-            - localMultiplayerPlayer
-            - splitScreen
-            - mmo
-            - cooperative
-            - onlineCooperative
-            - localCooperative
-            - crossPlatform
-            - achievements
-            - cloudSaves
+              - singlePlayer
+              - multiPlayer
+              - onlineMultiplayerPlayer
+              - localMultiplayerPlayer
+              - splitScreen
+              - mmo
+              - cooperative
+              - onlineCooperative
+              - localCooperative
+              - crossPlatform
+              - achievements
+              - cloudSaves
         controllers:
           type: "string"
-          enum: 
-          - "not_supported"
-          - "partially_supported"
-          - "full_supported"
+          enum:
+            - "not_supported"
+            - "partially_supported"
+            - "full_supported"
           default: "not_supported"
-    
+
     SupportPlatform:
       type: object
-      properties: 
-        windows: 
+      properties:
+        windows:
           type: "boolean"
           default: true
         macOs:
@@ -1414,11 +2051,11 @@ components:
         linux:
           type: "boolean"
           default: false
-    
+
     MachineRequirements:
       type: object
-      properties: 
-        system: 
+      properties:
+        system:
           type: "string"
           example: "Windows"
         processor:
@@ -1429,7 +2066,7 @@ components:
           example: "NVIDIA GeForce RTX2080Ti or similar"
         sound:
           type: "string"
-        ram: 
+        ram:
           type: "integer"
           example: 4
         ramDimension:
@@ -1449,11 +2086,11 @@ components:
 
     ShortGameInfo:
       type: object
-      properties: 
-        id: 
+      properties:
+        id:
           type: string
           readOnly: true
-        technicalName: 
+        technicalName:
           type: "string"
           readOnly: true
         icon:
@@ -1468,7 +2105,7 @@ components:
           type: "string"
           format: "date-time"
           readOnly: true
-        prices: 
+        prices:
           $ref: "#/components/schemas/Price"
 
     Price:
@@ -1486,17 +2123,17 @@ components:
     BaseGame:
       type: object
       properties:
-        internalName: 
+        internalName:
           type: "string"
           readOnly: true
-        # non-localized title of game for end user 
-        title: 
+        # non-localized title of game for end user
+        title:
           type: "string"
         # comma separated list of developers
         developers:
           type: "string"
         # comma separated list of publishers
-        publishers: 
+        publishers:
           type: "string"
         releaseDate:
           type: "string"
@@ -1514,24 +2151,24 @@ components:
             macOs:
               type: object
               properties:
-                minimal: 
+                minimal:
                   $ref: "#/components/schemas/MachineRequirements"
-                recommended: 
+                recommended:
                   $ref: "#/components/schemas/MachineRequirements"
             linux:
               type: object
               properties:
-                minimal: 
+                minimal:
                   $ref: "#/components/schemas/MachineRequirements"
-                recommended: 
+                recommended:
                   $ref: "#/components/schemas/MachineRequirements"
             windows:
               type: object
               properties:
-                minimal: 
+                minimal:
                   $ref: "#/components/schemas/MachineRequirements"
-                recommended: 
-                  $ref: "#/components/schemas/MachineRequirements"                  
+                recommended:
+                  $ref: "#/components/schemas/MachineRequirements"
         languages:
           $ref: "#/components/schemas/Languages"
         achievementOnProd:
@@ -1548,9 +2185,9 @@ components:
               type: "array"
               items:
                 $ref: "#/components/schemas/Genre"
-            tags: 
+            tags:
               type: "array"
-              items: 
+              items:
                 $ref: "#/components/schemas/Tag"
 
     ChangeGame:
@@ -1560,11 +2197,11 @@ components:
           properties:
             genre:
               type: "array"
-              items: 
+              items:
                 type: string
-            tags: 
+            tags:
               type: "array"
-              items: 
+              items:
                 type: string
 
     Score:
