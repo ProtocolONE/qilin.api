@@ -1194,6 +1194,7 @@ paths:
 
   /admin/api/v1/vendors/reviews:
     get:
+      summary: "Get list of vendor requests"
       tags:
         - admin
         - vendor
