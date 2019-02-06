@@ -1,0 +1,2 @@
+CREATE EXTENSION pgcrypto;
+CREATE DATABASE qilin;

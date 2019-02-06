@@ -13,7 +13,7 @@ import (
 func main() {
 	config := &conf.Config{}
 
-	if err := envconfig.Process("QILIN_API", config); err != nil {
+	if err := envconfig.Process("QILINAPI", config); err != nil {
 		log.Fatalf("Config init failed with error: %s\n", err)
 	}
 

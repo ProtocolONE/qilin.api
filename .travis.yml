@@ -9,10 +9,10 @@ addons:
 env:
   global:
     - GO111MODULE=on
-    - QILIN_API_DATABASE_DSL=postgres://travistest:travistest@localhost:5432/qilin?sslmode=disable
-    - QILIN_API_DATABASE_DEBUG=true
-    - QILIN_API_JWT_SECRET=hlF0swObPsKN+0n3FVZd9ocfhjOmcS9A8QB7aZK5cDLPmK/QSXvksgkuBTErPfMEIPBKUtD28QjQqBVD9t/nVJ92qr1tlYq7e6F+mN/lYWNYdAApbR50BNY2+GPm/Tv8w1fwaMu7z08OU0+KBxHFxq+TbRusgOeeggovS4BnQ1FhoZv5So+Tf+bSCPQcWcbdPnw4IoM055qoFwvCz4AFi5ty7eCc1GvMVqU+6N/pPA4Q1LpB9+mG8rYbwoTuy31MF6lbhKlxRHRBUdkiJRhyeRskFI6neJ0rhNd62QzU82tyyYMKZ/s4/tBTk/YxvF7QP8cWBe9/kWu/DmUdecFq6w==
-    - QILIN_API_JWT_ALGORITHM=HS256
+    - QILINAPI_DATABASE_DSL=postgres://travistest:travistest@localhost:5432/qilin?sslmode=disable
+    - QILINAPI_DATABASE_DEBUG=true
+    - QILINAPI_JWT_SECRET=hlF0swObPsKN+0n3FVZd9ocfhjOmcS9A8QB7aZK5cDLPmK/QSXvksgkuBTErPfMEIPBKUtD28QjQqBVD9t/nVJ92qr1tlYq7e6F+mN/lYWNYdAApbR50BNY2+GPm/Tv8w1fwaMu7z08OU0+KBxHFxq+TbRusgOeeggovS4BnQ1FhoZv5So+Tf+bSCPQcWcbdPnw4IoM055qoFwvCz4AFi5ty7eCc1GvMVqU+6N/pPA4Q1LpB9+mG8rYbwoTuy31MF6lbhKlxRHRBUdkiJRhyeRskFI6neJ0rhNd62QzU82tyyYMKZ/s4/tBTk/YxvF7QP8cWBe9/kWu/DmUdecFq6w==
+    - QILINAPI_JWT_ALGORITHM=HS256
 
 install: true
 

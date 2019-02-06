@@ -1,28 +1,15 @@
 version: "3.6"
 
 services:
-  mongo:
-    image: mongo:4.1.3
-    container_name: mongo
-    restart: always
-    networks:
-      - p1devnet
-    volumes:
-      - mongo:/var/lib/mongodb
-    ports:
-      - "3010:27017"
-
   postgres9:
     image: postgres:9.4
     container_name: postgres9
     restart: always
     hostname: "postgres9"
-    networks:
-      - p1devnet
     ports:
       - "5432:5432"
     volumes:
-      - data:/var/lib/postgresql/data
+      - ./etc/init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       POSTGRES_PASSWORD: postgres
 
@@ -30,8 +17,6 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin4
     restart: always
-    networks:
-      - p1devnet
     ports:
       - "4050:80"
     depends_on:
@@ -42,12 +27,19 @@ services:
     logging:
       driver: none
 
-volumes:
-  data:
-    external: true
-  mongo:
-    external: true
-
-networks:
-  p1devnet:
-    external: true
+  qilin-api:
+    image: golang:1.11.5-stretch
+    volumes:
+      - .:/go/src/qilin-api
+      - $GOPATH/pkg/mod:/go/pkg/mod
+    working_dir: /go/src/qilin-api
+    command: go run main.go
+    links:
+      - postgres9
+      - pgadmin4
+    environment:
+      - GO111MODULE=on
+      - QILINAPI_DATABASE_DSL=postgres://postgres:postgres@postgres9:5432/qilin?sslmode=disable
+      - QILINAPI_DATABASE_DEBUG=true
+      - QILINAPI_JWT_SECRET=hlF0swObPsKN+0n3FVZd9ocfhjOmcS9A8QB7aZK5cDLPmK/QSXvksgkuBTErPfMEIPBKUtD28QjQqBVD9t/nVJ92qr1tlYq7e6F+mN/lYWNYdAApbR50BNY2+GPm/Tv8w1fwaMu7z08OU0+KBxHFxq+TbRusgOeeggovS4BnQ1FhoZv5So+Tf+bSCPQcWcbdPnw4IoM055qoFwvCz4AFi5ty7eCc1GvMVqU+6N/pPA4Q1LpB9+mG8rYbwoTuy31MF6lbhKlxRHRBUdkiJRhyeRskFI6neJ0rhNd62QzU82tyyYMKZ/s4/tBTk/YxvF7QP8cWBe9/kWu/DmUdecFq6w==
+      - QILINAPI_JWT_ALGORITHM=HS256
