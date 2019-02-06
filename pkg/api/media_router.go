@@ -2,10 +2,9 @@ package api
 
 import (
 	"github.com/labstack/echo"
-	"github.com/mitchellh/mapstructure"
 	"github.com/satori/go.uuid"
-	maper "gopkg.in/jeevatkm/go-model.v1"
 	"net/http"
+	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
@@ -93,16 +92,12 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 	}
 
 	media := model.Media{}
-	input, err := maper.Map(mediaDto)
+	err = mapper.Map(mediaDto, &media)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	err = mapstructure.Decode(input, &media)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
 	media.UpdatedAt = time.Now()
 
 	if err := api.mediaService.Update(id, &media); err != nil {
@@ -134,13 +129,8 @@ func (api *MediaRouter) get(ctx echo.Context) error {
 	}
 
 	result := Media{}
-	input, err := maper.Map(media)
+	err = mapper.Map(media, &result)
 
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	err = mapstructure.Decode(input, &result)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
