@@ -16,9 +16,12 @@ type Media struct {
 	// localized cover image of game
 	CoverImage JSONB `gorm:"type:jsonb"`
 	CoverVideo JSONB `gorm:"type:jsonb"`
-	// localized cover video of game
+	// localized trailers video of game
 	Trailers JSONB `gorm:"type:jsonb"`
-	// localized cover video of game
+	// localized screenshots video of game
+	Screenshots JSONB `gorm:"type:jsonb"`
+
+	// localized store of game
 	Store   JSONB `gorm:"type:jsonb"`
 	Capsule JSONB `gorm:"type:jsonb"`
 }

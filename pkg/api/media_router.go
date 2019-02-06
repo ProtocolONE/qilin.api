@@ -27,8 +27,11 @@ type (
 		// localized cover video of game
 		CoverVideo *utils.LocalizedString `json:"coverVideo" validate:"required"`
 
-		// localized cover video of game
-		Trailers *utils.LocalizedString `json:"trailers" validate:"required"`
+		// localized trailer video of game
+		Trailers *utils.LocalizedStringArray `json:"trailers" validate:"required"`
+
+		// localized screenshots video of game
+		Screenshots *utils.LocalizedStringArray `json:"screenshots" validate:"required"`
 
 		// localized cover video of game
 		Store *Store `json:"store" validate:"required,dive"`

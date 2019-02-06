@@ -32,8 +32,8 @@ func Test_MediaRouter(t *testing.T) {
 
 var (
 	ID = "029ce039-888a-481a-a831-cde7ff4e50b8"
-	emptyObject = `{"coverImage":null,"coverVideo":null,"trailers":null,"store":null,"capsule":null}`
-	partialObject = `{"coverImage":{"en":"123", "ru":"321"},"coverVideo":{"en":"123", "ru":"321"},"trailers":{"en":"123", "ru":"321"},"store":null,"capsule":null}`
+	emptyObject = `{"coverImage":null,"coverVideo":null,"trailers":null,"screenshots":null,"store":null,"capsule":null}`
+	partialObject = `{"coverImage":{"en":"123", "ru":"321"},"coverVideo":{"en":"123", "ru":"321"},"trailers":{"en":["123"], "ru":["321"]},"screenshots":{"en":["123"], "ru":["321"]},"store":null,"capsule":null}`
 )
 
 func (suite *MediaRouterTestSuite) SetupTest() {
