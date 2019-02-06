@@ -1,137 +1,47 @@
 package conf
 
-import (
-	"encoding/base64"
-	"github.com/pkg/errors"
-	"os"
-	"path"
-	"runtime"
-	"strings"
-
-	"github.com/spf13/viper"
-)
-
-const (
-	DefaultJwtSignAlgorithm = "RS256"
-)
-
-type ServerConfig struct {
-	Port             int
-	AllowOrigins     []string
-	AllowCredentials bool
-	Debug            bool
-}
-
-type Database struct {
-	Host     string
-	Port     string
-	Database string
-	User     string
-	Password string
-	LogMode  bool
-}
-
-type Jwt struct {
-	SignatureSecret       []byte
-	SignatureSecretBase64 string
-	Algorithm             string
-}
-
-type GeoIP struct {
-	DBPath string
-}
-
-type Mailer struct {
-	ReplyTo            string
-	From               string
-	Host               string
-	Port               int
-	Username           string
-	Password           string
-	InsecureSkipVerify bool
-}
-
 // Config the application's configuration
 type Config struct {
-	Server    ServerConfig
-	Database  Database
-	Jwt       Jwt
-	GeoIP     GeoIP
-	LogConfig LoggingConfig
-	Mailer    Mailer
+	Server   ServerConfig
+	Database Database
+	Jwt      Jwt
+	Log      LoggingConfig
+	Mailer   Mailer
 }
 
-// LoadConfig loads the config from a file if specified, otherwise from the environment
-func LoadConfig(configFile string) (*Config, error) {
-	viper.SetEnvPrefix("QILIN")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-
-	if configFile != "" {
-		viper.SetConfigFile(configFile)
-	} else {
-		viper.SetConfigName("config")
-		viper.AddConfigPath("./")
-		viper.AddConfigPath("$HOME")
-		viper.AddConfigPath("./etc")
-	}
-
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, errors.Wrap(err, "Read config file")
-	}
-
-	config := new(Config)
-	if err := viper.Unmarshal(config); err != nil {
-		return nil, errors.Wrap(err, "Unmarshal config file")
-	}
-
-	if config.Jwt.Algorithm == "" {
-		config.Jwt.Algorithm = DefaultJwtSignAlgorithm
-	}
-
-	pemKey, err := base64.StdEncoding.DecodeString(config.Jwt.SignatureSecretBase64)
-	if err != nil {
-		return nil, errors.Wrap(err, "Decode JWT")
-	}
-
-	config.Jwt.SignatureSecret = pemKey
-
-	return config, nil
+// ServerConfig specifies all the parameters needed for http server
+type ServerConfig struct {
+	Port             int      `envconfig:"PORT" required:"false" default:"8080"`
+	AllowOrigins     []string `envconfig:"ALLOW_ORIGINS" required:"false" default:"*"`
+	AllowCredentials bool     `envconfig:"ALLOW_CREDENTIALS" required:"false" default:"false"`
+	Debug            bool     `envconfig:"DEBUG" required:"false" default:"false"`
 }
 
-func LoadTestConfig() (*Config, error) {
-	viper.SetEnvPrefix("QILIN")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
+// Database specifies all the parameters needed for GORM connection
+type Database struct {
+	DSL     string `envconfig:"DSL" required:"false" default:"postgres://postgres:postgres@localhost:5432/qilin?sslmode=disable"`
+	LogMode bool   `envconfig:"DEBUG" required:"false" default:"false"`
+}
 
-	configFile := os.Getenv("TEST_CONFIG")
-	if configFile != "" {
-		viper.SetConfigFile(configFile)
-	} else {
-		viper.SetConfigName("test.config")
-		_, moduleFile, _, _ := runtime.Caller(0)
-		viper.AddConfigPath(path.Dir(moduleFile) + "/../../etc")
-		viper.AddConfigPath("$HOME")
-	}
+// Jwt specifies all the parameters needed for Jwt middleware
+type Jwt struct {
+	SignatureSecret string `envconfig:"SECRET" required:"true"`
+	Algorithm       string `envconfig:"ALGORITHM" required:"false" default:"HS256"`
+}
 
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, errors.Wrap(err, "Read test config file")
-	}
+// LoggingConfig specifies all the parameters needed for logging
+type LoggingConfig struct {
+	Level        string `envconfig:"LEVEL" required:"false" default:"debug"`
+	ReportCaller bool   `envconfig:"REPORT_CALLER" required:"false" default:"false"`
+}
 
-	config := new(Config)
-	if err := viper.Unmarshal(config); err != nil {
-		return nil, errors.Wrap(err, "Unmarshal test config file")
-	}
-
-	if config.Jwt.Algorithm == "" {
-		config.Jwt.Algorithm = DefaultJwtSignAlgorithm
-	}
-
-	pemKey, err := base64.StdEncoding.DecodeString(config.Jwt.SignatureSecretBase64)
-	if err != nil {
-		return nil, errors.Wrap(err, "Decode JWT")
-	}
-	config.Jwt.SignatureSecret = pemKey
-
-	return config, nil
+// Mailer specifies all the parameters needed for dump mail sender
+type Mailer struct {
+	Host               string `envconfig:"HOST" required:"false" default:"localhost"`
+	Port               int    `envconfig:"PORT" required:"false" default:"25"`
+	Username           string `envconfig:"USERNAME" required:"false" default:""`
+	Password           string `envconfig:"PASSWORD" required:"false" default:""`
+	ReplyTo            string `envconfig:"REPLY_TO" required:"false" default:""`
+	From               string `envconfig:"FROM" required:"false" default:""`
+	InsecureSkipVerify bool   `envconfig:"SKIP_VERIFY" required:"false" default:"true"`
 }

@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/ProtocolONE/qilin.api.svg?branch=master)](https://travis-ci.org/ProtocolONE/qilin.api) [![codecov](https://codecov.io/gh/ProtocolONE/qilin.api/branch/master/graph/badge.svg)](https://codecov.io/gh/ProtocolONE/qilin.api)[![Go Report Card](https://goreportcard.com/badge/github.com/ProtocolONE/qilin.api)](https://goreportcard.com/report/github.com/ProtocolONE/qilin.api)
 
-# Qilin - DRM Platform
+# Qilin Management API
 
 Qilin is an open source tool facilitating creation, distribution and activation of licenses for game content. 
 
@@ -14,8 +14,34 @@ hardware or cloud platform.
 
 ## Get started
 
-UNDONE
+Qilin management API designed to be launched with Kubernetes and handle all configuration from env variables:
 
+| Variable                      | Default                                                           | Description                                                                                                                                |
+|-------------------------------|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| QAPI_SERVER_PORT              | 8080                                                              | HTTP port to listed API requests.                                                                                                          |
+| QAPI_SERVER_ALLOW_ORIGINS     | *                                                                 | Comma separated list of [CORS domains](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin).             |
+| QAPI_SERVER_ALLOW_CREDENTIALS | false                                                             | Look at [CORS documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials) about this value. |
+| QAPI_SERVER_DEBUG             | false                                                             | Enable debug mode for [echo based](https://echo.labstack.com/) server.                                                                     |
+| QAPI_DATABASE_DSL             | postgres://postgres:postgres@localhost:5432/qilin?sslmode=disable | [GORM Postgres DSL](http://doc.gorm.io/database.html#connecting-to-a-database) string                                                      |
+| QAPI_DATABASE_DEBUG           | false                                                             | Enable logmode for Postgress.                                                                                                              |
+| QAPI_JWT_SECRET               |                                                                   | BASE64 encoded JWT secret key. Here is no default value, it should be provided.                                                            |
+| QAPI_JWT_ALGORITHM            | HS256                                                             | JWT Algorithm.                                                                                                                             |
+| QAPI_LOG_LEVEL                | debug                                                             | Default logging level in application.                                                                                                      |
+| QAPI_LOG_REPORT_CALLER        | false                                                             | Loggin stack trace enable.                                                                                                                 |
+
+This version of server use dump mail sender in current implementation. You may also configure it with env variables
+
+
+| Variable                | Default   | Description                                                             |
+|-------------------------|-----------|-------------------------------------------------------------------------|
+| QAPI_MAILER_HOST        | localhost | Email server host.                                                      |
+| QAPI_MAILER_PORT        | 25        | Email server port.                                                      |
+| QAPI_MAILER_USERNAME    |           | Email server username. Here is no default value, it should be provided. |
+| QAPI_MAILER_PASSWORD    |           | Email server password. Here is no default value, it should be provided. |
+| QAPI_MAILER_REPLY_TO    |           | Reply-to value. Here is no default value, it may be provided.           |
+| QAPI_MAILER_FROM        |           | From value. Here is no default value, it may be provided.               |
+| QAPI_MAILER_SKIP_VERIFY | true      | Skip validate TLS on mail server connection.                            |
+ 
 ## Features
 
  * Sales Growth. ​Individual pricing, cross-platform and cross-shop data create an

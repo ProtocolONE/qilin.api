@@ -1,8 +1,10 @@
 package api
 
 import (
+	"encoding/base64"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
 	"qilin-api/pkg/api/context"
@@ -65,11 +67,17 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.Pre(middleware.RemoveTrailingSlash())
 
 	server.Router = server.echo.Group("/api/v1")
+
+	pemKey, err := base64.StdEncoding.DecodeString(opts.Jwt.SignatureSecret)
+	if err != nil {
+		return nil, errors.Wrap(err, "Decode JWT failed")
+	}
+
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		ContextKey:    context.TokenKey,
 		AuthScheme:    "Bearer",
 		TokenLookup:   "header:Authorization",
-		SigningKey:    opts.Jwt.SignatureSecret,
+		SigningKey:    pemKey,
 		SigningMethod: opts.Jwt.Algorithm,
 	}))
 	server.AuthRouter = server.echo.Group("/auth-api")

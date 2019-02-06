@@ -5,18 +5,18 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/labstack/echo"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	validator "gopkg.in/go-playground/validator.v9"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 type PriceRouterTestSuite struct {
@@ -39,7 +39,7 @@ var (
 )
 
 func (suite *PriceRouterTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}

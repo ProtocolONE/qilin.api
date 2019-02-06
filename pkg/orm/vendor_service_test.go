@@ -4,9 +4,9 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"testing"
 )
 
@@ -20,7 +20,7 @@ func Test_VendorService(t *testing.T) {
 }
 
 func (suite *VendorServiceTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}

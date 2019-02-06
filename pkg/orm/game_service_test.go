@@ -7,6 +7,7 @@ import (
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -24,7 +25,7 @@ func Test_GameService(t *testing.T) {
 }
 
 func (suite *GameServiceTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}

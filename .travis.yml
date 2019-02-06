@@ -9,7 +9,11 @@ addons:
 env:
   global:
     - GO111MODULE=on
-    - TEST_CONFIG=${TRAVIS_BUILD_DIR}/etc/config.yaml
+    - QAPI_DATABASE_DSL=postgres://travistest:travistest@localhost:5432/qilin?sslmode=disable
+    - QAPI_DATABASE_DEBUG=true
+    - QAPI_JWT_SECRET=hlF0swObPsKN+0n3FVZd9ocfhjOmcS9A8QB7aZK5cDLPmK/QSXvksgkuBTErPfMEIPBKUtD28QjQqBVD9t/nVJ92qr1tlYq7e6F+mN/lYWNYdAApbR50BNY2+GPm/Tv8w1fwaMu7z08OU0+KBxHFxq+TbRusgOeeggovS4BnQ1FhoZv5So+Tf+bSCPQcWcbdPnw4IoM055qoFwvCz4AFi5ty7eCc1GvMVqU+6N/pPA4Q1LpB9+mG8rYbwoTuy31MF6lbhKlxRHRBUdkiJRhyeRskFI6neJ0rhNd62QzU82tyyYMKZ/s4/tBTk/YxvF7QP8cWBe9/kWu/DmUdecFq6w==
+    - QAPI_JWT_ALGORITHM=HS256
+
 install: true
 
 before_script:
@@ -17,7 +21,6 @@ before_script:
   - psql -c "CREATE USER travistest WITH PASSWORD 'travistest';" -U postgres
   - psql -c "ALTER USER travistest WITH SUPERUSER;" -U postgres
   - psql -d qilin -c "CREATE EXTENSION pgcrypto;" -U postgres
-  - sed -i -e 's/postgres/travistest/g' ./etc/config.yaml
 
 script:
 - go test ./... -coverprofile=coverage.out -covermode=atomic -p=1
