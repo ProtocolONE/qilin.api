@@ -19,7 +19,7 @@ type ServerConfig struct {
 
 // Database specifies all the parameters needed for GORM connection
 type Database struct {
-	DSL     string `envconfig:"DSL" required:"false" default:"postgres://postgres:postgres@localhost:5432/qilin?sslmode=disable"`
+	DSN     string `envconfig:"DSN" required:"false" default:"postgres://postgres:postgres@localhost:5432/qilin?sslmode=disable"`
 	LogMode bool   `envconfig:"DEBUG" required:"false" default:"false"`
 }
 

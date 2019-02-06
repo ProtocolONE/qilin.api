@@ -21,6 +21,24 @@ frontend:
     type: ClusterIP
     port: 80
     protocol: TCP
+  env:
+    - QILIN_API_SERVER_PORT
+    - QILIN_API_SERVER_ALLOW_CREDENTIALS
+    - QILIN_API_SERVER_DEBUG
+    - QILIN_API_DATABASE_DSN
+    - QILIN_API_DATABASE_DEBUG
+    - QILIN_API_JWT_SECRET
+    - QILIN_API_JWT_ALGORITHM
+    - QILIN_API_LOG_LEVEL
+    - QILIN_API_LOG_REPORT_CALLER
+    - QILIN_API_MAILER_HOST
+    - QILIN_API_MAILER_PORT
+    - QILIN_API_MAILER_USERNAME
+    - QILIN_API_MAILER_PASSWORD
+    - QILIN_API_MAILER_REPLY_TO
+    - QILIN_API_MAILER_FROM
+    - QILIN_API_MAILER_SKIP_VERIFY
+
   
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
