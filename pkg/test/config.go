@@ -7,7 +7,7 @@ import (
 
 func LoadTestConfig() (*conf.Config, error) {
 	config := &conf.Config{}
-	err := envconfig.Process("QAPI", config)
+	err := envconfig.Process("QILINAPI", config)
 
 	return config, err
 }
