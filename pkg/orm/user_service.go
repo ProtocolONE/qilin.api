@@ -2,6 +2,7 @@ package orm
 
 import (
 	"bytes"
+	"encoding/base64"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -41,9 +42,15 @@ func NewUserService(db *Database, jwtConf *conf.Jwt, mailer sys.Mailer) (*UserSe
 		return nil, errors.Wrap(err, "loading templates")
 	}
 
+	// UNDONE this code should be removed with AuthOne integration before March 2019 by Roman Golenok
+	pemKey, err := base64.StdEncoding.DecodeString(jwtConf.SignatureSecret)
+	if err != nil {
+		return nil, errors.Wrap(err, "Decode JWT failed")
+	}
+
 	return &UserService{db.database,
 		jwt.GetSigningMethod(jwtConf.Algorithm),
-		jwtConf.SignatureSecret,
+		pemKey,
 		templates,
 		mailer,
 		langMap}, nil
