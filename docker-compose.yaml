@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./etc/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./etc/init.sql:/docker-entrypoint-initdb.d/10-init.sql
     environment:
       POSTGRES_PASSWORD: postgres
 
@@ -36,7 +36,6 @@ services:
     command: go run main.go
     links:
       - postgres9
-      - pgadmin4
     environment:
       - GO111MODULE=on
       - QILINAPI_DATABASE_DSL=postgres://postgres:postgres@postgres9:5432/qilin?sslmode=disable
