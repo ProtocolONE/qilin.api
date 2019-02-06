@@ -118,10 +118,6 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
-		return err
-	}
-
 	priceService, err := orm.NewPriceService(s.db)
 	if err != nil {
 		return err
@@ -137,6 +133,10 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	}
 
 	if _, err := InitRatingsRouter(s.Router, ratingService); err != nil {
+		return err
+	}
+
+	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
 
