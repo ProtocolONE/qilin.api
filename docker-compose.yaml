@@ -25,7 +25,7 @@ services:
     depends_on:
       - qilinapi-postgres
     environment:
-      PGADMIN_DEFAULT_EMAIL: maksim.blinenkov@protocol.one
+      PGADMIN_DEFAULT_EMAIL: pgadmin@test.local
       PGADMIN_DEFAULT_PASSWORD: 123
     logging:
       driver: none
