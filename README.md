@@ -18,16 +18,16 @@ Qilin management API designed to be launched with Kubernetes and handle all conf
 
 | Variable                      | Default                                                           | Description                                                                                                                                |
 |-------------------------------|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| QILIN_API_SERVER_PORT              | 8080                                                              | HTTP port to listed API requests.                                                                                                          |
-| QILIN_API_SERVER_ALLOW_ORIGINS     | *                                                                 | Comma separated list of [CORS domains](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin).             |
-| QILIN_API_SERVER_ALLOW_CREDENTIALS | false                                                             | Look at [CORS documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials) about this value. |
-| QILIN_API_SERVER_DEBUG             | false                                                             | Enable debug mode for [echo based](https://echo.labstack.com/) server.                                                                     |
-| QILIN_API_DATABASE_DSN             | See below                                                         | [GORM Postgres DSN](http://doc.gorm.io/database.html#connecting-to-a-database) string                                                      |
-| QILIN_API_DATABASE_DEBUG           | false                                                             | Enable logmode for Postgress.                                                                                                              |
-| QILIN_API_JWT_SECRET               |                                                                   | BASE64 encoded JWT secret key. Here is no default value, it should be provided.                                                            |
-| QILIN_API_JWT_ALGORITHM            | HS256                                                             | JWT Algorithm.                                                                                                                             |
-| QILIN_API_LOG_LEVEL                | debug                                                             | Default logging level in application.                                                                                                      |
-| QILIN_API_LOG_REPORT_CALLER        | false                                                             | Loggin stack trace enable.                                                                                                                 |
+| QILINAPI_SERVER_PORT              | 8080                                                              | HTTP port to listed API requests.                                                                                                          |
+| QILINAPI_SERVER_ALLOW_ORIGINS     | *                                                                 | Comma separated list of [CORS domains](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin).             |
+| QILINAPI_SERVER_ALLOW_CREDENTIALS | false                                                             | Look at [CORS documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials) about this value. |
+| QILINAPI_SERVER_DEBUG             | false                                                             | Enable debug mode for [echo based](https://echo.labstack.com/) server.                                                                     |
+| QILINAPI_DATABASE_DSN             | See below                                                         | [GORM Postgres DSN](http://doc.gorm.io/database.html#connecting-to-a-database) string                                                      |
+| QILINAPI_DATABASE_DEBUG           | false                                                             | Enable logmode for Postgress.                                                                                                              |
+| QILINAPI_JWT_SECRET               |                                                                   | BASE64 encoded JWT secret key. Here is no default value, it should be provided.                                                            |
+| QILINAPI_JWT_ALGORITHM            | HS256                                                             | JWT Algorithm.                                                                                                                             |
+| QILINAPI_LOG_LEVEL                | debug                                                             | Default logging level in application.                                                                                                      |
+| QILINAPI_LOG_REPORT_CALLER        | false                                                             | Loggin stack trace enable.                                                                                                                 |
 
 Default database DSN is `postgres://postgres:postgres@localhost:5432/qilin?sslmode=disable`. 
 
@@ -36,13 +36,13 @@ This version of server use dump mail sender in current implementation. You may a
 
 | Variable                | Default   | Description                                                             |
 |-------------------------|-----------|-------------------------------------------------------------------------|
-| QILIN_API_MAILER_HOST        | localhost | Email server host.                                                      |
-| QILIN_API_MAILER_PORT        | 25        | Email server port.                                                      |
-| QILIN_API_MAILER_USERNAME    |           | Email server username. Here is no default value, it should be provided. |
-| QILIN_API_MAILER_PASSWORD    |           | Email server password. Here is no default value, it should be provided. |
-| QILIN_API_MAILER_REPLY_TO    |           | Reply-to value. Here is no default value, it may be provided.           |
-| QILIN_API_MAILER_FROM        |           | From value. Here is no default value, it may be provided.               |
-| QILIN_API_MAILER_SKIP_VERIFY | true      | Skip validate TLS on mail server connection.                            |
+| QILINAPI_MAILER_HOST        | localhost | Email server host.                                                      |
+| QILINAPI_MAILER_PORT        | 25        | Email server port.                                                      |
+| QILINAPI_MAILER_USERNAME    |           | Email server username. Here is no default value, it should be provided. |
+| QILINAPI_MAILER_PASSWORD    |           | Email server password. Here is no default value, it should be provided. |
+| QILINAPI_MAILER_REPLY_TO    |           | Reply-to value. Here is no default value, it may be provided.           |
+| QILINAPI_MAILER_FROM        |           | From value. Here is no default value, it may be provided.               |
+| QILINAPI_MAILER_SKIP_VERIFY | true      | Skip validate TLS on mail server connection.                            |
  
 ## Features
 
