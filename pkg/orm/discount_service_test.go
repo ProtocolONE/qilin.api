@@ -1,16 +1,16 @@
 package orm_test
 
 import (
-	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -30,7 +30,7 @@ var (
 )
 
 func (suite *DiscountServiceTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}

@@ -4,9 +4,9 @@ import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"math/rand"
-	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"testing"
 	"time"
 
@@ -28,7 +28,7 @@ func Test_MediaService(t *testing.T) {
 }
 
 func (suite *MediaServiceTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}
@@ -74,8 +74,12 @@ func (suite *MediaServiceTestSuite) TestCreateMediaShouldChangeGameInDB() {
 			"en": RandStringRunes(10),
 		},
 		Trailers: model.JSONB{
-			"ru": RandStringRunes(10),
-			"en": RandStringRunes(10),
+			"ru": []string{RandStringRunes(10), RandStringRunes(10)},
+			"en": []string{RandStringRunes(10), RandStringRunes(10)},
+		},
+		Screenshots: model.JSONB{
+			"ru": []string{RandStringRunes(10), RandStringRunes(10)},
+			"en": []string{RandStringRunes(10), RandStringRunes(10)},
 		},
 		Store: model.JSONB{
 			"ru": RandStringRunes(10),
@@ -108,7 +112,6 @@ func (suite *MediaServiceTestSuite) TestCreateMediaShouldChangeGameInDB() {
 	assert.Equal(suite.T(), game.CoverImage, gameFromDb.CoverImage, "Incorrect CoverImage from DB")
 	assert.Equal(suite.T(), game.CoverVideo, gameFromDb.CoverVideo, "Incorrect CoverVideo from DB")
 	assert.Equal(suite.T(), game.Store, gameFromDb.Store, "Incorrect Store from DB")
-	assert.Equal(suite.T(), game.Trailers, gameFromDb.Trailers, "Incorrect Trailers from DB")
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

@@ -1,12 +1,12 @@
 package orm_test
 
 import (
-	"encoding/base64"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -24,7 +24,7 @@ func Test_GameService(t *testing.T) {
 }
 
 func (suite *GameServiceTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}
@@ -84,8 +84,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	vendorService, err := orm.NewVendorService(suite.db)
 	require.Nil(err, "Unable make vendor service")
 
-	pemKey, err := base64.StdEncoding.DecodeString("hlF0swObPsKN+0n3FVZd9ocfhjOmcS9A8QB7aZK5cDLPmK/QSXvksgkuBTErPfMEIPBKUtD28QjQqBVD9t/nVJ92qr1tlYq7e6F+mN/lYWNYdAApbR50BNY2+GPm/Tv8w1fwaMu7z08OU0+KBxHFxq+TbRusgOeeggovS4BnQ1FhoZv5So+Tf+bSCPQcWcbdPnw4IoM055qoFwvCz4AFi5ty7eCc1GvMVqU+6N/pPA4Q1LpB9+mG8rYbwoTuy31MF6lbhKlxRHRBUdkiJRhyeRskFI6neJ0rhNd62QzU82tyyYMKZ/s4/tBTk/YxvF7QP8cWBe9/kWu/DmUdecFq6w==")
-	require.Nil(err, "Unable to decode base64 secret key")
+	pemKey := "hlF0swObPsKN+0n3FVZd9ocfhjOmcS9A8QB7aZK5cDLPmK/QSXvksgkuBTErPfMEIPBKUtD28QjQqBVD9t/nVJ92qr1tlYq7e6F+mN/lYWNYdAApbR50BNY2+GPm/Tv8w1fwaMu7z08OU0+KBxHFxq+TbRusgOeeggovS4BnQ1FhoZv5So+Tf+bSCPQcWcbdPnw4IoM055qoFwvCz4AFi5ty7eCc1GvMVqU+6N/pPA4Q1LpB9+mG8rYbwoTuy31MF6lbhKlxRHRBUdkiJRhyeRskFI6neJ0rhNd62QzU82tyyYMKZ/s4/tBTk/YxvF7QP8cWBe9/kWu/DmUdecFq6w=="
 
 	userService, err := orm.NewUserService(suite.db, &conf.Jwt{SignatureSecret: pemKey, Algorithm: "HS256"}, nil)
 	require.Nil(err, "Unable make user service")

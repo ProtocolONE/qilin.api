@@ -2,7 +2,6 @@ package orm
 
 import (
 	"flag"
-	"fmt"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 
@@ -15,11 +14,7 @@ type Database struct {
 }
 
 func NewDatabase(config *conf.Database) (*Database, error) {
-	dsl := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		config.User, config.Password, config.Host, config.Port, config.Database)
-
-	db, err := gorm.Open("postgres", dsl)
+	db, err := gorm.Open("postgres", config.DSN)
 	if err != nil {
 		return nil, err
 	}

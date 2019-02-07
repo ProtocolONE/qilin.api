@@ -5,18 +5,18 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/labstack/echo"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	validator "gopkg.in/go-playground/validator.v9"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 type DiscountRouterTestSuite struct {
@@ -40,7 +40,7 @@ var (
 
 func (suite *DiscountRouterTestSuite) SetupTest() {
 	should := require.New(suite.T())
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	should.Nil(err, "Unable to load config", "%v", err)
 
 	db, err := orm.NewDatabase(&config.Database)
@@ -50,11 +50,11 @@ func (suite *DiscountRouterTestSuite) SetupTest() {
 
 	id, _ := uuid.FromString(ID)
 	err = db.DB().Save(&model.Game{
-		ID: id,
-		InternalName: "Test_game_2",
-		ReleaseDate: time.Now(),
-		Genre: pq.StringArray{},
-		Tags: pq.StringArray{},
+		ID:             id,
+		InternalName:   "Test_game_2",
+		ReleaseDate:    time.Now(),
+		Genre:          pq.StringArray{},
+		Tags:           pq.StringArray{},
 		FeaturesCommon: pq.StringArray{},
 	}).Error
 	should.Nil(err, "Unable to make game")

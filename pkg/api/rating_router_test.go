@@ -3,20 +3,20 @@ package api
 import (
 	"net/http"
 	"net/http/httptest"
-	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/labstack/echo"
 	"github.com/lib/pq"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	validator "gopkg.in/go-playground/validator.v9"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 type RatingRouterTestSuite struct {
@@ -41,7 +41,7 @@ func Test_RatingRouter(t *testing.T) {
 }
 
 func (suite *RatingRouterTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}

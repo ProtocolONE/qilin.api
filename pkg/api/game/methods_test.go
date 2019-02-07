@@ -11,9 +11,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/api/context"
-	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/test"
 	"strings"
 	"testing"
 )
@@ -45,7 +45,7 @@ var (
 )
 
 func (suite *GamesRouterTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}

@@ -51,7 +51,11 @@ spec:
         #  initialDelaySeconds: 5
         #  timeoutSeconds: 3
         #  failureThreshold: 2
-        volumeMounts:
-        - name: {{ $deploymentName }}-config
-          mountPath: /application/etc/
-          readOnly: true
+        env:
+          {{- range .Values.frontend.env }}
+          - name: {{ . }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $deploymentName }}-env
+                key: {{ . }}
+          {{- end }}

@@ -1,13 +1,13 @@
 package orm
 
 import (
-	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/test"
 	"testing"
 	"time"
 
 	"github.com/lib/pq"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +28,7 @@ func Test_PriceService(t *testing.T) {
 }
 
 func (suite *PriceServiceTestSuite) SetupTest() {
-	config, err := conf.LoadTestConfig()
+	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
 		suite.FailNow("Unable to load config", "%v", err)
 	}
