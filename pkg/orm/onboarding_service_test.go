@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"qilin-api/pkg/model"
-	"qilin-api/pkg/model/onboarding"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"testing"
@@ -71,13 +70,70 @@ func (suite *OnbardingServiceTestSuite) TearDownTest() {
 	}
 }
 
-func (suite *OnbardingServiceTestSuite) TestGetById() {
+func (suite *OnbardingServiceTestSuite) TestServiceMethodsWithErrors() {
+	should := require.New(suite.T())
+	_, err := suite.service.GetById(uuid.NewV4())
+	should.NotNil(err)
+	should.Equal(404, err.(*orm.ServiceError).Code)
+
+	_, err = suite.service.GetForVendor(uuid.NewV4())
+	should.NotNil(err)
+	should.Equal(404, err.(*orm.ServiceError).Code)
+
+	doc := &model.DocumentsInfo{}
+	doc.ID = uuid.NewV4()
+	doc.VendorID = uuid.NewV4()
+
+	err = suite.service.ChangeDocument(doc)
+	should.NotNil(err)
+	should.Equal(404, err.(*orm.ServiceError).Code)
+
+	id, _ := uuid.FromString(Id)
+	doc = &model.DocumentsInfo{}
+	doc.ID = id
+	doc.VendorID = uuid.NewV4()
+	err = suite.service.ChangeDocument(doc)
+	should.NotNil(err)
+	should.Equal(404, err.(*orm.ServiceError).Code)
+}
+
+func (suite *OnbardingServiceTestSuite) TestServiceMethods() {
 	should := require.New(suite.T())
 
 	id, _ := uuid.FromString(Id)
-	docs, err := suite.service.GetById(id)
+	_, err := suite.service.GetById(id)
+	should.Equal(404, err.(*orm.ServiceError).Code)
+
+	docs, err := suite.service.GetForVendor(id)
 	should.Nil(err)
-	should.Equal(onboarding.DocumentsInfo{}, docs)
+	should.NotNil(docs)
+	docs = &model.DocumentsInfo{
+		VendorID: id,
+		Status: model.StatusDraft,
+		ReviewStatus: model.ReviewNew,
+		Contact: model.JSONB{"name": "TEST"},
+	}
+	docs.ID = uuid.NewV4()
+
+	err = suite.service.ChangeDocument(docs)
+	should.Nil(err)
+	dbDoc, err := suite.service.GetForVendor(id)
+
+	should.Nil(err)
+	should.Equal(docs.ID, dbDoc.ID)
+	should.Equal(docs.VendorID, dbDoc.VendorID)
+	should.Equal(docs.Contact, dbDoc.Contact)
+	should.Equal(docs.ReviewStatus, dbDoc.ReviewStatus)
+	should.Equal(docs.Status, dbDoc.Status)
+
+	dbDoc2, err := suite.service.GetById(docs.ID)
+
+	should.Nil(err)
+	should.Equal(docs.ID, dbDoc2.ID)
+	should.Equal(docs.VendorID, dbDoc2.VendorID)
+	should.Equal(docs.Contact, dbDoc2.Contact)
+	should.Equal(docs.ReviewStatus, dbDoc2.ReviewStatus)
+	should.Equal(docs.Status, dbDoc2.Status)
 }
 
 
