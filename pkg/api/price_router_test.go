@@ -50,7 +50,7 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 
 	db.Init()
 
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	err = db.DB().Save(&model.Game{
 		ID:             id,
 		InternalName:   "Test_game_2",
@@ -88,7 +88,7 @@ func (suite *PriceRouterTestSuite) TestGetBasePriceShouldReturnEmptyObject() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/prices")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getBase(c)) {
@@ -104,7 +104,7 @@ func (suite *PriceRouterTestSuite) TestPutBasePriceShouldReturnOk() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/prices")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.putBase(c)) {
@@ -120,7 +120,7 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnOk() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/prices/:currency")
 	c.SetParamNames("id", "currency")
-	c.SetParamValues(ID, "USD")
+	c.SetParamValues(TestID, "USD")
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.updatePrice(c)) {
@@ -136,7 +136,7 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnBadRequest() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/prices/:currency")
 	c.SetParamNames("id", "currency")
-	c.SetParamValues(ID, "USD")
+	c.SetParamValues(TestID, "USD")
 
 	he := suite.router.updatePrice(c).(*echo.HTTPError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
@@ -149,7 +149,7 @@ func (suite *PriceRouterTestSuite) TestPutWithIncorrectCurrencyPriceShouldReturn
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/prices/:currency")
 	c.SetParamNames("id", "currency")
-	c.SetParamValues(ID, "EUR")
+	c.SetParamValues(TestID, "EUR")
 
 	he := suite.router.putBase(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
@@ -162,7 +162,7 @@ func (suite *PriceRouterTestSuite) TestPutBadModelShouldReturn422() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/prices")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	he := suite.router.putBase(c).(*orm.ServiceError)

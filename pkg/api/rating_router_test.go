@@ -52,7 +52,7 @@ func (suite *RatingRouterTestSuite) SetupTest() {
 
 	db.Init()
 
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	err = db.DB().Save(&model.Game{
 		ID:             id,
 		InternalName:   "Test_game_2",
@@ -94,7 +94,7 @@ func (suite *RatingRouterTestSuite) TestBadRatingsShouldReturnError() {
 		c := suite.echo.NewContext(req, rec)
 		c.SetPath("/api/v1/games/:id/ratings")
 		c.SetParamNames("id")
-		c.SetParamValues(ID)
+		c.SetParamValues(TestID)
 
 		// Assertions
 		he := suite.router.postRatings(c).(*orm.ServiceError)
@@ -109,7 +109,7 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnEmptyObject() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/ratings")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getRatings(c)) {
@@ -125,7 +125,7 @@ func (suite *RatingRouterTestSuite) TestPostRatingsShouldReturnOk() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/ratings")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.postRatings(c)) {
@@ -140,7 +140,7 @@ func (suite *RatingRouterTestSuite) TestPostBadObjectShouldReturnError() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/ratings")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	he := suite.router.postRatings(c).(*echo.HTTPError)
@@ -204,7 +204,7 @@ func (suite *RatingRouterTestSuite) TestPostRatingsShouldWithBadIdShouldReturnEr
 }
 
 func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnRightObject() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	testModel := &model.GameRating{
 		BBFC: model.JSONB{
 			"displayOnlineNotice": true,
@@ -241,7 +241,7 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnRightObject() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/ratings")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getRatings(c)) {

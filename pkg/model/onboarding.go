@@ -21,12 +21,40 @@ const (
 
 type DocumentsInfo struct {
 	Model
-	Company      JSONB                `gorm:"type:jsonb;"`
-	Contact      JSONB                `gorm:"type:jsonb;"`
-	Banking      JSONB                `gorm:"type:jsonb;"`
+	Company      JSONB                `gorm:"type:jsonb;not null"`
+	Contact      JSONB                `gorm:"type:jsonb;not null"`
+	Banking      JSONB                `gorm:"type:jsonb;not null"`
 	Status       ClientDocumentStatus `gorm:"not null"`
 	ReviewStatus ReviewStatus         `gorm:"not null"`
 	VendorID     uuid.UUID            `gorm:"type:uuid;not null"`
+}
+
+func (status ClientDocumentStatus) ToString() string {
+	if status == StatusDraft {
+		return "draft"
+	}
+
+	if status == StatusApproved {
+		return "approved"
+	}
+
+	if status == StatusDeclined {
+		return "declined"
+	}
+
+	if status == StatusOnReview {
+		return "on_review"
+	}
+
+	return ""
+}
+
+func (d DocumentsInfo) CanBeChanged() bool {
+	return d.Status == StatusDraft || d.Status == StatusDeclined
+}
+
+func (d DocumentsInfo) CanBeSendToReview() bool {
+	return d.Status == StatusDraft
 }
 
 func (DocumentsInfo) TableName() string {

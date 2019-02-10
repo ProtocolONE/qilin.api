@@ -9,6 +9,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/game"
+	"qilin-api/pkg/utils"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
@@ -55,7 +56,11 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
 
 	validate := validator.New()
+	if err := utils.RegisterCustomValidations(validate); err != nil {
+		return nil, err
+	}
 	validate.RegisterStructValidation(RatingStructLevelValidation, RatingsDTO{})
+
 	server.echo.Validator = &QilinValidator{validator: validate}
 
 	server.echo.Use(middleware.Recover())
