@@ -104,11 +104,11 @@ func (router *RatingsRouter) put(ctx echo.Context) error {
 func RatingStructLevelValidation(sl validator.StructLevel) {
 	rating := sl.Current().Interface().(RatingsDTO)
 
-	validateCommonRating(rating.BBFC.Rating, "Rating", utils.StringArray{"U", "PG", "12A", "12", "15", "18", "R18"}, sl)
-	validateCommonRating(rating.CERO.Rating, "Rating", utils.StringArray{"A", "B", "C", "D", "Z"}, sl)
-	validateCommonRating(rating.ESRB.Rating, "Rating", utils.StringArray{"E", "E10+", "T", "M", "A", "RP"}, sl)
-	validateCommonRating(rating.PEGI.Rating, "Rating", utils.StringArray{"3", "7", "12", "16", "18"}, sl)
-	validateCommonRating(rating.USK.Rating, "Rating", utils.StringArray{"USK", "0", "6", "12", "16", "18"}, sl)
+	validateCommonRating(rating.BBFC.Rating, "BBFC", utils.StringArray{"U", "PG", "12A", "12", "15", "18", "R18"}, sl)
+	validateCommonRating(rating.CERO.Rating, "CERO", utils.StringArray{"A", "B", "C", "D", "Z"}, sl)
+	validateCommonRating(rating.ESRB.Rating, "ESRB", utils.StringArray{"E", "E10+", "T", "M", "A", "RP"}, sl)
+	validateCommonRating(rating.PEGI.Rating, "PEGI", utils.StringArray{"3", "7", "12", "16", "18"}, sl)
+	validateCommonRating(rating.USK.Rating, "USK", utils.StringArray{"USK", "0", "6", "12", "16", "18"}, sl)
 }
 
 func validateCommonRating(field interface{}, fieldName string, values utils.StringArray, sl validator.StructLevel) {
@@ -116,7 +116,7 @@ func validateCommonRating(field interface{}, fieldName string, values utils.Stri
 	if len(value) > 0 {
 		exist := values.Contains(value)
 		if !exist {
-			sl.ReportError(field, fieldName, fieldName, "contains", "")
+			sl.ReportError(field, "Rating", fieldName, "contains", values.String())
 		}
 	}
 }
