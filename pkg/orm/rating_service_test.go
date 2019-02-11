@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/test"
@@ -211,4 +212,15 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsForGameShouldReturnChangeI
 	assert.Equal(suite.T(), testModel.BBFC["ageRestrict"], ratings.BBFC["ageRestrict"], "BBFC not equal")
 	assert.Equal(suite.T(), testModel.BBFC["displayOnlineNotice"], ratings.BBFC["displayOnlineNotice"], "BBFC not equal")
 	assert.Equal(suite.T(), testModel.BBFC["showAgeRestrict"], ratings.BBFC["showAgeRestrict"], "BBFC not equal")
+}
+
+func (suite *RatingServiceTestSuite) TestGetRatingsForGameShouldReturnNotFound() {
+	res, err := suite.service.GetRatingsForGame(uuid.NewV4())
+	assert.Nil(suite.T(), res)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*ServiceError)
+		assert.Equal(suite.T(), http.StatusNotFound, he.Code)
+		assert.NotNil(suite.T(), he.Message)
+	}
 }

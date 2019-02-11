@@ -64,7 +64,7 @@ func (router *RatingsRouter) get(ctx echo.Context) error {
 	err = mapper.Map(gameRating, &result)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Can't decode gameRating from domain to DTO. Error: "+err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "Can't decode gameRating from domain to DTO. Error: "+err.Error())
 	}
 
 	return ctx.JSON(http.StatusOK, result)

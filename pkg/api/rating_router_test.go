@@ -203,6 +203,25 @@ func (suite *RatingRouterTestSuite) TestPutRatingsShouldWithBadIdShouldReturnErr
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
+func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnNotFound() {
+	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(fullRatings))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/games/:id/ratings")
+	c.SetParamNames("id")
+	c.SetParamValues(uuid.NewV4().String())
+
+	// Assertions
+	err := suite.router.get(c)
+	assert.NotNil(suite.T(), err)
+
+	if err != nil {
+		he := err.(*orm.ServiceError)
+		assert.Equal(suite.T(), http.StatusNotFound, he.Code)
+	}
+}
+
 func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnRightObject() {
 	id, _ := uuid.FromString(ID)
 	testModel := &model.GameRating{
