@@ -88,7 +88,7 @@ func (suite *RatingRouterTestSuite) TearDownTest() {
 func (suite *RatingRouterTestSuite) TestBadRatingsShouldReturnError() {
 	tests := []string{badBBFC, badCERO, badESRB, badESRB, badPEGI, badUSK}
 	for _, testCase := range tests {
-		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(testCase))
+		req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(testCase))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := suite.echo.NewContext(req, rec)
@@ -97,7 +97,7 @@ func (suite *RatingRouterTestSuite) TestBadRatingsShouldReturnError() {
 		c.SetParamValues(ID)
 
 		// Assertions
-		he := suite.router.postRatings(c).(*orm.ServiceError)
+		he := suite.router.put(c).(*orm.ServiceError)
 		assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
 	}
 }
@@ -112,14 +112,14 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnEmptyObject() {
 	c.SetParamValues(ID)
 
 	// Assertions
-	if assert.NoError(suite.T(), suite.router.getRatings(c)) {
+	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 		assert.Equal(suite.T(), emptyRatings, rec.Body.String())
 	}
 }
 
-func (suite *RatingRouterTestSuite) TestPostRatingsShouldReturnOk() {
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(fullRatings))
+func (suite *RatingRouterTestSuite) TestPutRatingsShouldReturnOk() {
+	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(fullRatings))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
@@ -128,13 +128,13 @@ func (suite *RatingRouterTestSuite) TestPostRatingsShouldReturnOk() {
 	c.SetParamValues(ID)
 
 	// Assertions
-	if assert.NoError(suite.T(), suite.router.postRatings(c)) {
+	if assert.NoError(suite.T(), suite.router.put(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 	}
 }
 
-func (suite *RatingRouterTestSuite) TestPostBadObjectShouldReturnError() {
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("bad object"))
+func (suite *RatingRouterTestSuite) TestPutBadObjectShouldReturnError() {
+	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader("bad object"))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
@@ -143,7 +143,7 @@ func (suite *RatingRouterTestSuite) TestPostBadObjectShouldReturnError() {
 	c.SetParamValues(ID)
 
 	// Assertions
-	he := suite.router.postRatings(c).(*echo.HTTPError)
+	he := suite.router.put(c).(*echo.HTTPError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
@@ -157,12 +157,12 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldWithNilIdShouldReturnErr
 	c.SetParamValues(uuid.Nil.String())
 
 	// Assertions
-	he := suite.router.getRatings(c).(*orm.ServiceError)
+	he := suite.router.get(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusNotFound, he.Code)
 }
 
-func (suite *RatingRouterTestSuite) TestPostRatingsShouldWithNilIdShouldReturnError() {
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(emptyRatings))
+func (suite *RatingRouterTestSuite) TestPutRatingsShouldWithNilIdShouldReturnError() {
+	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(emptyRatings))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
@@ -171,7 +171,7 @@ func (suite *RatingRouterTestSuite) TestPostRatingsShouldWithNilIdShouldReturnEr
 	c.SetParamValues(uuid.Nil.String())
 
 	// Assertions
-	he := suite.router.getRatings(c).(*orm.ServiceError)
+	he := suite.router.get(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusNotFound, he.Code)
 }
 
@@ -185,12 +185,12 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldWithBadIdShouldReturnErr
 	c.SetParamValues("XXX")
 
 	// Assertions
-	he := suite.router.getRatings(c).(*echo.HTTPError)
+	he := suite.router.get(c).(*echo.HTTPError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
-func (suite *RatingRouterTestSuite) TestPostRatingsShouldWithBadIdShouldReturnError() {
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(emptyRatings))
+func (suite *RatingRouterTestSuite) TestPutRatingsShouldWithBadIdShouldReturnError() {
+	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(emptyRatings))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
@@ -199,7 +199,7 @@ func (suite *RatingRouterTestSuite) TestPostRatingsShouldWithBadIdShouldReturnEr
 	c.SetParamValues("XXX")
 
 	// Assertions
-	he := suite.router.postRatings(c).(*echo.HTTPError)
+	he := suite.router.put(c).(*echo.HTTPError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
@@ -244,7 +244,7 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnRightObject() {
 	c.SetParamValues(ID)
 
 	// Assertions
-	if assert.NoError(suite.T(), suite.router.getRatings(c)) {
+	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 		assert.Equal(suite.T(), fullRatings, rec.Body.String())
 	}
