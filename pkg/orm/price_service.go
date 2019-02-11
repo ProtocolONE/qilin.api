@@ -80,10 +80,8 @@ func (p *PriceService) Delete(id uuid.UUID, price *model.Price) error {
 	var prices []model.Price
 	err := p.db.Model(domain).Association("Prices").Find(&prices).Error
 
-	if err == gorm.ErrRecordNotFound {
-		return NewServiceError(http.StatusNotFound, "Game not found")
-	} else if err != nil {
-		return errors.Wrap(err, "search game by id")
+	if err != nil {
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search prices for game"))
 	}
 
 	found := false
@@ -117,9 +115,7 @@ func (p *PriceService) Update(id uuid.UUID, price *model.Price) error {
 	}
 
 	err := p.db.Model(domain).Association("Prices").Find(&prices).Error
-	if err == gorm.ErrRecordNotFound {
-		return NewServiceError(http.StatusNotFound, "Game not found")
-	} else if err != nil {
+	if err != nil {
 		return errors.Wrap(err, "search game by id")
 	}
 
