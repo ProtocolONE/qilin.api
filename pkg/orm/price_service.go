@@ -3,6 +3,7 @@ package orm
 import (
 	"net/http"
 	"qilin-api/pkg/model"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -47,6 +48,8 @@ func (p *PriceService) UpdateBase(id uuid.UUID, price *model.BasePrice) error {
 	}
 
 	price.ID = domain.ID
+	now := time.Now()
+	price.UpdatedAt = &now
 
 	err = p.db.Set("gorm:association_autoupdate", false).Set("gorm:association_autocreate", false).Save(price).Error
 

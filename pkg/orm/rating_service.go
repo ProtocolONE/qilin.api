@@ -3,10 +3,11 @@ package orm
 import (
 	"net/http"
 	"qilin-api/pkg/model"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 // RatingService is service to interact with database and Rating object.
@@ -29,7 +30,7 @@ func (s *RatingService) GetRatingsForGame(id uuid.UUID) (*model.GameRating, erro
 
 	err := s.db.Model(&game).Related(&rating).Error
 
-	if err != gorm.ErrRecordNotFound {
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return &rating, errors.Wrap(err, "Search related ratings")
 	}
 
@@ -46,15 +47,16 @@ func (s *RatingService) SaveRatingsForGame(id uuid.UUID, newRating *model.GameRa
 
 	err := s.db.Model(&model.Game{ID: id}).Related(&rating).Error
 
-	if err != gorm.ErrRecordNotFound {
+	if err == gorm.ErrRecordNotFound {
+		rating.CreatedAt = time.Now()
+	} else if err != nil {
 		return errors.Wrap(err, "search game by id")
 	}
 
-	if rating.ID != 0 {
-		newRating.ID = rating.ID
-	}
-
+	newRating.ID = rating.ID
 	newRating.GameID = id
+	newRating.UpdatedAt = time.Now()
+	newRating.CreatedAt = rating.CreatedAt
 
 	err = s.db.Save(newRating).Error
 	if err != nil {
