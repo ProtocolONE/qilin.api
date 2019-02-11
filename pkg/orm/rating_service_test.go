@@ -37,6 +37,7 @@ func (suite *RatingServiceTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
+	_ = db.DropAllTables()
 	db.Init()
 
 	id, _ := uuid.FromString(ID)

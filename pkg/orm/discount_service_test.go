@@ -40,6 +40,7 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 		suite.Fail("Unable to connect to database:", "%v", err)
 	}
 
+	_ = db.DropAllTables()
 	db.Init()
 
 	suite.db = db

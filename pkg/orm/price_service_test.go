@@ -36,7 +36,7 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 	if err != nil {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
-
+	_ = db.DropAllTables()
 	db.Init()
 
 	id, _ := uuid.FromString(ID)

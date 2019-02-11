@@ -25,7 +25,7 @@ func (s *RatingService) GetRatingsForGame(id uuid.UUID) (*model.GameRating, erro
 	game := model.Game{ID: id}
 	count := 0
 
-	if err := s.db.Model(&game).Count(&count).Error; err != nil {
+	if err := s.db.Model(&game).Where("ID = ?", id).Limit(1).Count(&count).Error; err != nil {
 		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Search game with id %s", id))
 	}
 
