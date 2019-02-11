@@ -546,6 +546,7 @@ paths:
   
   /api/v1/games/{id}/prices/{currency}:
     put:
+      summary: Change price in currency for game
       tags:
         - price
       parameters:
@@ -588,6 +589,7 @@ paths:
           $ref: '#/components/responses/InternalError'
           
     delete:
+      summary: Remove price in currency for game
       tags:
         - price
       parameters:
