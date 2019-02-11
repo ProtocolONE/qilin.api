@@ -49,9 +49,9 @@ func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *Pric
 	r := group.Group("/games/:id")
 
 	r.GET("/prices", priceRouter.getBase)
-	r.GET("/prices", priceRouter.putBase)
-	r.GET("/prices/:currency", priceRouter.updatePrice)
-	r.GET("/prices/:currency", priceRouter.deletePrice)
+	r.PUT("/prices", priceRouter.putBase)
+	r.PUT("/prices/:currency", priceRouter.updatePrice)
+	r.DELETE("/prices/:currency", priceRouter.deletePrice)
 
 	return &priceRouter, nil
 }
