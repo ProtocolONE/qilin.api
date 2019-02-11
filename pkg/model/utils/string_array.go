@@ -14,6 +14,7 @@ func (arr StringArray) Contains(search string) bool {
 	return false
 }
 
+//String is method for getting string representation of array
 func (arr StringArray) String() string {
 	return strings.Join(arr, ", ")
 }
