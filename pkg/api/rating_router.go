@@ -41,13 +41,13 @@ func InitRatingsRouter(group *echo.Group, service *orm.RatingService) (*RatingsR
 
 	r := group.Group("/games/:id")
 
-	r.GET("/ratings", ratingRouter.getRatings)
-	r.POST("/ratings", ratingRouter.postRatings)
+	r.GET("/ratings", ratingRouter.get)
+	r.PUT("/ratings", ratingRouter.put)
 
 	return &ratingRouter, nil
 }
 
-func (router *RatingsRouter) getRatings(ctx echo.Context) error {
+func (router *RatingsRouter) get(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {
@@ -70,7 +70,7 @@ func (router *RatingsRouter) getRatings(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, result)
 }
 
-func (router *RatingsRouter) postRatings(ctx echo.Context) error {
+func (router *RatingsRouter) put(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {

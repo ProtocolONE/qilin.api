@@ -13,19 +13,19 @@ func (api *Router) GetList(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
 	}
-	offset, err := strconv.Atoi(ctx.FormValue("offset"))
+	offset, err := strconv.Atoi(ctx.QueryParam("offset"))
 	if err != nil {
 		offset = 0
 	}
-	limit, err := strconv.Atoi(ctx.FormValue("offset"))
+	limit, err := strconv.Atoi(ctx.QueryParam("offset"))
 	if err != nil {
 		limit = 20
 	}
-	internalName := ctx.FormValue("technicalName")
-	genre := ctx.FormValue("genre")
-	price, _ := strconv.ParseFloat(ctx.FormValue("price"), 64)
-	releaseDate := ctx.FormValue("releaseDate")
-	sort := ctx.FormValue("sort")
+	internalName := ctx.QueryParam("technicalName")
+	genre := ctx.QueryParam("genre")
+	price, _ := strconv.ParseFloat(ctx.QueryParam("price"), 64)
+	releaseDate := ctx.QueryParam("releaseDate")
+	sort := ctx.QueryParam("sort")
 
 	userId, err := context.GetAuthUUID(ctx)
 	if err != nil {
