@@ -1207,11 +1207,11 @@ components:
           rating:
             type: string
             enum:
-              - 3
-              - 7
-              - 12
-              - 16
-              - 18
+              - "3"
+              - "7"
+              - "12"
+              - "16"
+              - "18"
 
     BBFC:
       allOf:

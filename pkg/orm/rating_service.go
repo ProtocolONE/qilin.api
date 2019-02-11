@@ -22,16 +22,22 @@ func NewRatingService(db *Database) (*RatingService, error) {
 
 // GetRatingsForGame is method for getting ratings for game
 func (s *RatingService) GetRatingsForGame(id uuid.UUID) (*model.GameRating, error) {
-	rating := model.GameRating{}
 	game := model.Game{ID: id}
-	if s.db.NewRecord(&game) {
-		return &rating, NewServiceError(http.StatusNotFound, "Game not found")
+	count := 0
+
+	if err := s.db.Model(&game).Where("ID = ?", id).Limit(1).Count(&count).Error; err != nil {
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Search game with id %s", id))
 	}
 
+	if count == 0 {
+		return nil, NewServiceError(http.StatusNotFound, "Game not found")
+	}
+
+	rating := model.GameRating{}
 	err := s.db.Model(&game).Related(&rating).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return &rating, errors.Wrap(err, "Search related ratings")
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Search related ratings with game id %s", id))
 	}
 
 	return &rating, nil

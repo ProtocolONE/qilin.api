@@ -33,6 +33,7 @@ func (suite *GameServiceTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
+	_ = db.DropAllTables()
 	db.Init()
 
 	suite.db = db
