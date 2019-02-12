@@ -1821,7 +1821,7 @@ components:
         - $ref: '#/components/schemas/CommonRating'
         - type: object
           properties:
-            descriptiors:
+            descriptors:
               type: array
               items:
                 type: integer
@@ -1905,7 +1905,7 @@ components:
         - $ref: '#/components/schemas/CommonRating'
         - type: object
           properties:
-            descriptiors:
+            descriptors:
               type: array
               items:
                 $ref: '#/components/schemas/Descriptor'

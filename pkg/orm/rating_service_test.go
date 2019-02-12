@@ -21,12 +21,26 @@ type RatingServiceTestSuite struct {
 	service *RatingService
 }
 
+var (
+	ESRBDescriptors []uint
+	PEGIDescriptors []uint
+	USKDescriptors  []uint
+	CERODescriptors []uint
+	BBFCDescriptors []uint
+)
+
 func Test_RatingService(t *testing.T) {
 	suite.Run(t, new(RatingServiceTestSuite))
 }
 
 func (suite *RatingServiceTestSuite) SetupTest() {
 	require := require.New(suite.T())
+
+	ESRBDescriptors = []uint{}
+	PEGIDescriptors = []uint{}
+	USKDescriptors = []uint{}
+	CERODescriptors = []uint{}
+	BBFCDescriptors = []uint{}
 
 	config, err := qilin_test.LoadTestConfig()
 	if err != nil {
@@ -41,7 +55,7 @@ func (suite *RatingServiceTestSuite) SetupTest() {
 	db.Init()
 
 	id, _ := uuid.FromString(ID)
-	err = db.DB().Save(&model.Game{
+	err = db.DB().Create(&model.Game{
 		ID:             id,
 		InternalName:   "Test_game_2",
 		ReleaseDate:    time.Now(),
@@ -54,33 +68,50 @@ func (suite *RatingServiceTestSuite) SetupTest() {
 
 	suite.db = db
 
-	require.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
-		EN: "Blood",
-		RU: "Кровь",
-	},
-		System: "PEGI",
-	}).Error)
-
-	require.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
-		EN: "Blood",
-		RU: "Кровь",
-	},
-		System: "ESRB",
-	}).Error)
-
-	require.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+	res := db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
 		EN: "Blood",
 		RU: "Кровь",
 	},
 		System: "USK",
-	}).Error)
+	})
+	require.NoError(res.Error)
+	USKDescriptors = append(USKDescriptors, res.Value.(*model.Descriptor).ID)
 
-	require.NoError(db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+	res = db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "BBFC",
+	})
+	require.NoError(res.Error)
+	BBFCDescriptors = append(BBFCDescriptors, res.Value.(*model.Descriptor).ID)
+
+	res = db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
 		EN: "Blood",
 		RU: "Кровь",
 	},
 		System: "CERO",
-	}).Error)
+	})
+	require.NoError(res.Error)
+	CERODescriptors = append(CERODescriptors, res.Value.(*model.Descriptor).ID)
+
+	res = db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "ESRB",
+	})
+	require.NoError(res.Error)
+	ESRBDescriptors = append(ESRBDescriptors, res.Value.(*model.Descriptor).ID)
+
+	res = db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "PEGI",
+	})
+	require.NoError(res.Error)
+	PEGIDescriptors = append(PEGIDescriptors, res.Value.(*model.Descriptor).ID)
 
 	service, err := NewRatingService(db)
 
@@ -213,6 +244,153 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsForGameShouldReturnChangeI
 	assert.Equal(suite.T(), testModel.BBFC["ageRestrict"], ratings.BBFC["ageRestrict"], "BBFC not equal")
 	assert.Equal(suite.T(), testModel.BBFC["displayOnlineNotice"], ratings.BBFC["displayOnlineNotice"], "BBFC not equal")
 	assert.Equal(suite.T(), testModel.BBFC["showAgeRestrict"], ratings.BBFC["showAgeRestrict"], "BBFC not equal")
+}
+
+func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadIdShouldReturnError() {
+	testModel2 := &model.GameRating{
+		BBFC: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating":              "U",
+			"descriptors": []int{
+				666, 667,
+			},
+		},
+	}
+
+	err := suite.service.SaveRatingsForGame(uuid.NewV4(), testModel2)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*ServiceError)
+		assert.Equal(suite.T(), http.StatusNotFound, he.Code, he.Message)
+	}
+
+	err = suite.service.SaveRatingsForGame(uuid.Nil, testModel2)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*ServiceError)
+		assert.Equal(suite.T(), http.StatusNotFound, he.Code, he.Message)
+	}
+}
+
+func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldReturnError()  {
+	id, _ := uuid.FromString(ID)
+	testModel := &model.GameRating{
+		BBFC: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : []uint {
+				666, 667,
+			},
+		},
+		PEGI: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : []uint {
+				666, 667,
+			},
+		},
+		USK: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : []uint {
+				666, 667,
+			},
+		},
+		ESRB: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : []uint {
+				666, 667,
+			},
+		},
+		CERO: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : []uint {
+				666, 667,
+			},
+		},
+	}
+	err := suite.service.SaveRatingsForGame(id, testModel)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*ServiceError)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code, he.Message)
+	}
+
+	testModel2 := &model.GameRating{
+		BBFC: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating":              "U",
+			model.DescriptorsField: []uint{
+				666, 667,
+			},
+		},
+	}
+
+	err = suite.service.SaveRatingsForGame(id, testModel2)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*ServiceError)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code, he.Message)
+	}
+}
+
+func (suite *RatingServiceTestSuite) TestChangeRatingsShouldReturnOk() {
+	id, _ := uuid.FromString(ID)
+	testModel := &model.GameRating{
+		BBFC: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : BBFCDescriptors,
+		},
+		PEGI: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : PEGIDescriptors,
+		},
+		USK: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : USKDescriptors,
+		},
+		ESRB: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : ESRBDescriptors,
+		},
+		CERO: model.JSONB{
+			"displayOnlineNotice": true,
+			"showAgeRestrict":     true,
+			"ageRestrict":         10,
+			"rating": "U",
+			model.DescriptorsField : CERODescriptors,
+		},
+	}
+	err := suite.service.SaveRatingsForGame(id, testModel)
+	assert.Nil(suite.T(), err)
 }
 
 func (suite *RatingServiceTestSuite) TestGetRatingsForGameShouldReturnNotFound() {

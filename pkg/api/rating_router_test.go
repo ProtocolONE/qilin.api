@@ -1,9 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"strings"
@@ -34,6 +36,8 @@ var (
 	badESRB      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":"XXX"},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
 	badCERO      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":"XXX"}}`
 	badBBFC      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":"XXX"},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
+
+	ratingsWithWrongDescriptors  = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":[666],"rating":"3"}}`
 )
 
 func Test_RatingRouter(t *testing.T) {
@@ -118,11 +122,51 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnEmptyObject() {
 	}
 }
 
+func (suite *RatingRouterTestSuite) TestPutRatingsShouldReturnError ()  {
+	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(ratingsWithWrongDescriptors))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/games/:id/ratings")
+	c.SetParamNames("id")
+	c.SetParamValues(TestID)
+
+	// Assertions
+	err := suite.router.put(c)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*orm.ServiceError)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
+	}
+}
+
 func (suite *RatingRouterTestSuite) TestPutRatingsShouldReturnOk() {
+	res := suite.db.DB().Create(&model.Descriptor{Title: utils.LocalizedString{
+		EN: "Blood",
+		RU: "Кровь",
+	},
+		System: "PEGI",
+	})
+	assert.Nil(suite.T(), res.Error)
+	descriptor := res.Value.(*model.Descriptor).ID
+
 	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(fullRatings))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/games/:id/ratings")
+	c.SetParamNames("id")
+	c.SetParamValues(TestID)
+
+	// Assertions
+	if assert.NoError(suite.T(), suite.router.put(c)) {
+		assert.Equal(suite.T(), http.StatusOK, rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPut, "/", strings.NewReader(fmt.Sprintf(`{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":[%d],"rating":"3"}}`, descriptor)))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/ratings")
 	c.SetParamNames("id")
 	c.SetParamValues(TestID)
@@ -221,6 +265,7 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnNotFound() {
 		assert.Equal(suite.T(), http.StatusNotFound, he.Code)
 	}
 }
+
 
 func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnRightObject() {
 	id, _ := uuid.FromString(TestID)
