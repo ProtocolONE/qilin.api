@@ -22,6 +22,5 @@ type (
 )
 
 const (
-	DescriptorsField = "descriptors"
-	AgeField = "ageRestrictions"
+	DescriptorsField = "Descriptors"
 )

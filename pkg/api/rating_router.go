@@ -25,11 +25,11 @@ type (
 	}
 
 	CommonRating struct {
-		DisplayOnlineNotice bool    `json:"displayOnlineNotice"`
-		ShowAgeRestrict     bool    `json:"showAgeRestrict"`
-		AgeRestrict         int8    `json:"ageRestrict"`
-		Descriptors         []int32 `json:"descriptors"`
-		Rating              string  `json:"rating"`
+		DisplayOnlineNotice bool   `json:"displayOnlineNotice"`
+		ShowAgeRestrict     bool   `json:"showAgeRestrict"`
+		AgeRestrict         int8   `json:"ageRestrict"`
+		Descriptors         []uint `json:"descriptors"`
+		Rating              string `json:"rating"`
 	}
 )
 
@@ -90,7 +90,7 @@ func (router *RatingsRouter) put(ctx echo.Context) error {
 	err = mapper.Map(dto, &result)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	if err := router.service.SaveRatingsForGame(id, &result); err != nil {

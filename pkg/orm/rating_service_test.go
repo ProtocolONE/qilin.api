@@ -282,7 +282,7 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : []uint {
+			model.DescriptorsField : []uint {
 				666, 667,
 			},
 		},
@@ -291,7 +291,7 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : []uint {
+			model.DescriptorsField : []uint {
 				666, 667,
 			},
 		},
@@ -300,7 +300,7 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : []uint {
+			model.DescriptorsField : []uint {
 				666, 667,
 			},
 		},
@@ -309,7 +309,7 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : []uint {
+			model.DescriptorsField : []uint {
 				666, 667,
 			},
 		},
@@ -318,7 +318,7 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : []uint {
+			model.DescriptorsField : []uint {
 				666, 667,
 			},
 		},
@@ -336,7 +336,7 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating":              "U",
-			"descriptors": []uint{
+			model.DescriptorsField: []uint{
 				666, 667,
 			},
 		},
@@ -358,35 +358,35 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsShouldReturnOk() {
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : BBFCDescriptors,
+			model.DescriptorsField : BBFCDescriptors,
 		},
 		PEGI: model.JSONB{
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : PEGIDescriptors,
+			model.DescriptorsField : PEGIDescriptors,
 		},
 		USK: model.JSONB{
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : USKDescriptors,
+			model.DescriptorsField : USKDescriptors,
 		},
 		ESRB: model.JSONB{
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : ESRBDescriptors,
+			model.DescriptorsField : ESRBDescriptors,
 		},
 		CERO: model.JSONB{
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
 			"rating": "U",
-			"descriptors" : CERODescriptors,
+			model.DescriptorsField : CERODescriptors,
 		},
 	}
 	err := suite.service.SaveRatingsForGame(id, testModel)
