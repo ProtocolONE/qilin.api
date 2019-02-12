@@ -40,6 +40,7 @@ func (db *Database) Init() {
 		&model.GameDescr{},
 		&model.Descriptor{},
 		&model.GameRating{},
+		&model.DocumentsInfo{},
 	)
 }
 
@@ -58,6 +59,7 @@ func (db *Database) DropAllTables() error {
 			model.Vendor{},
 			model.User{},
 			"vendor_users",
+			model.DocumentsInfo{},
 		).Error
 	}
 	return nil

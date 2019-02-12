@@ -31,7 +31,7 @@ func Test_MediaRouter(t *testing.T) {
 }
 
 var (
-	ID            = "029ce039-888a-481a-a831-cde7ff4e50b8"
+	TestID        = "029ce039-888a-481a-a831-cde7ff4e50b8"
 	emptyObject   = `{"coverImage":null,"coverVideo":null,"trailers":null,"screenshots":null,"store":null,"capsule":null}`
 	partialObject = `{"coverImage":{"en":"123", "ru":"321"},"coverVideo":{"en":"123", "ru":"321"},"trailers":{"en":["123"], "ru":["321"]},"screenshots":{"en":["123"], "ru":["321"]},"store":null,"capsule":null}`
 )
@@ -48,7 +48,7 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 
 	db.Init()
 
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	err = db.DB().Save(&model.Game{
 		ID:             id,
 		InternalName:   "Test_game_1",
@@ -87,7 +87,7 @@ func (suite *MediaRouterTestSuite) TestGetMediaShouldReturnEmptyObject() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/media")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
@@ -118,7 +118,7 @@ func (suite *MediaRouterTestSuite) TestPutMediaShouldUpdateGame() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/media")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {

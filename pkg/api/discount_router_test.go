@@ -49,7 +49,7 @@ func (suite *DiscountRouterTestSuite) SetupTest() {
 	_ = db.DropAllTables()
 	db.Init()
 
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	err = db.DB().Save(&model.Game{
 		ID:             id,
 		InternalName:   "Test_game_2",
@@ -88,7 +88,7 @@ func (suite *DiscountRouterTestSuite) TestGetDiscountsShouldReturnEmptyArray() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
@@ -104,7 +104,7 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountShouldReturnId() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.post(c)) {
@@ -120,7 +120,7 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountWithIncorrectIdShouldRetur
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts")
 	c.SetParamNames("id")
-	c.SetParamValues("BAD-ID")
+	c.SetParamValues("BAD-TestID")
 
 	// Assertions
 	he := suite.router.post(c).(*echo.HTTPError)
@@ -134,7 +134,7 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountWithIncorrectObjectShouldR
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	he := suite.router.post(c).(*orm.ServiceError)
@@ -148,7 +148,7 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountWithEmptyObjectShouldRetur
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts")
 	c.SetParamNames("id")
-	c.SetParamValues(ID)
+	c.SetParamValues(TestID)
 
 	// Assertions
 	he := suite.router.post(c).(*orm.ServiceError)
@@ -162,7 +162,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithIncorrectIdShouldReturn
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id")
-	c.SetParamValues("BAD-ID", uuid.NewV4().String())
+	c.SetParamValues("BAD-TestID", uuid.NewV4().String())
 
 	// Assertions
 	he := suite.router.put(c).(*echo.HTTPError)
@@ -170,7 +170,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithIncorrectIdShouldReturn
 }
 
 func (suite *DiscountRouterTestSuite) TestPutDiscountWithCorrectObjectShouldReturnOk() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	discount := model.Discount{
 		Title: model.JSONB{
 			"en": "asd",
@@ -189,7 +189,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithCorrectObjectShouldRetu
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id", "discountId")
-	c.SetParamValues(ID, discount.ID.String())
+	c.SetParamValues(TestID, discount.ID.String())
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.put(c)) {
@@ -198,7 +198,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithCorrectObjectShouldRetu
 }
 
 func (suite *DiscountRouterTestSuite) TestPutDiscountWithIncorrectObjectShouldReturnError() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	discount := model.Discount{
 		Title: model.JSONB{
 			"en": "asd",
@@ -217,7 +217,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithIncorrectObjectShouldRe
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id", "discountId")
-	c.SetParamValues(ID, discount.ID.String())
+	c.SetParamValues(TestID, discount.ID.String())
 
 	// Assertions
 	he := suite.router.put(c).(*orm.ServiceError)
@@ -225,7 +225,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithIncorrectObjectShouldRe
 }
 
 func (suite *DiscountRouterTestSuite) TestPutDiscountWithEmptyObjectShouldReturnError() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	discount := model.Discount{
 		Title: model.JSONB{
 			"en": "asd",
@@ -244,7 +244,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithEmptyObjectShouldReturn
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id", "discountId")
-	c.SetParamValues(ID, discount.ID.String())
+	c.SetParamValues(TestID, discount.ID.String())
 
 	// Assertions
 	he := suite.router.put(c).(*orm.ServiceError)
@@ -258,7 +258,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithUnknownDiscountIdShould
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id", "discountId")
-	c.SetParamValues(ID, "00000000-0000-0000-0000-000000000000")
+	c.SetParamValues(TestID, "00000000-0000-0000-0000-000000000000")
 
 	// Assertions
 	he := suite.router.put(c).(*orm.ServiceError)
@@ -272,7 +272,7 @@ func (suite *DiscountRouterTestSuite) TestGetDiscountsWithInvalidIdShouldReturnE
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts")
 	c.SetParamNames("id")
-	c.SetParamValues("BAD-ID")
+	c.SetParamValues("BAD-TestID")
 
 	// Assertions
 	he := suite.router.get(c).(*echo.HTTPError)
@@ -300,7 +300,7 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithIncorrectIdShouldRet
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id", "discountId")
-	c.SetParamValues("BAD-ID", uuid.NewV4().String())
+	c.SetParamValues("BAD-TestID", uuid.NewV4().String())
 
 	// Assertions
 	he := suite.router.delete(c).(*echo.HTTPError)
@@ -314,7 +314,7 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithUnknownDiscountIDSho
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id", "discountId")
-	c.SetParamValues(ID, uuid.NewV4().String())
+	c.SetParamValues(TestID, uuid.NewV4().String())
 
 	// Assertions
 	he := suite.router.delete(c).(*orm.ServiceError)
@@ -328,7 +328,7 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithIncorrectDiscountIDS
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id", "discountId")
-	c.SetParamValues(ID, "BAD-ID")
+	c.SetParamValues(TestID, "BAD-TestID")
 
 	// Assertions
 	he := suite.router.delete(c).(*echo.HTTPError)
@@ -336,7 +336,7 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithIncorrectDiscountIDS
 }
 
 func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithCorrectIdShouldReturnOk() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(TestID)
 	discount := model.Discount{
 		Title: model.JSONB{
 			"en": "asd",
@@ -355,7 +355,7 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithCorrectIdShouldRetur
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games/:id/discounts/:discountId")
 	c.SetParamNames("id", "discountId")
-	c.SetParamValues(ID, discount.ID.String())
+	c.SetParamValues(TestID, discount.ID.String())
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.delete(c)) {
