@@ -11,12 +11,14 @@ const (
 	Ruble    Currency = "RUR"
 	Euro     Currency = "EUR"
 	UsDollar Currency = "USD"
+	PoundSterling Currency = "GBP"
 )
 
 var currencyList = []Currency {
 	Ruble,
 	Euro,
 	UsDollar,
+	PoundSterling,
 }
 
 //RegisterCustomValidations is function for adding validation for fields and struct
