@@ -1,6 +1,8 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestStringArray_Contains(t *testing.T) {
 	type args struct {
@@ -20,6 +22,23 @@ func TestStringArray_Contains(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.arr.Contains(tt.args.search); got != tt.want {
 				t.Errorf("StringArray.Contains() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStringArray_String(t *testing.T) {
+	tests := []struct {
+		name string
+		arr  StringArray
+		want string
+	}{
+		{name: "1", arr: StringArray{"1", "2", "3", "4", "5"}, want: "1, 2, 3, 4, 5"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.arr.String(); got != tt.want {
+				t.Errorf("StringArray.String() = %v, want %v", got, tt.want)
 			}
 		})
 	}

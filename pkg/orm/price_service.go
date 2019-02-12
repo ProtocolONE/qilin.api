@@ -3,6 +3,7 @@ package orm
 import (
 	"net/http"
 	"qilin-api/pkg/model"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -47,6 +48,8 @@ func (p *PriceService) UpdateBase(id uuid.UUID, price *model.BasePrice) error {
 	}
 
 	price.ID = domain.ID
+	now := time.Now()
+	price.UpdatedAt = &now
 
 	err = p.db.Set("gorm:association_autoupdate", false).Set("gorm:association_autocreate", false).Save(price).Error
 
@@ -64,13 +67,21 @@ func (p *PriceService) UpdateBase(id uuid.UUID, price *model.BasePrice) error {
 //Delete is method for removing price with currency for game
 func (p *PriceService) Delete(id uuid.UUID, price *model.Price) error {
 	domain := &model.BasePrice{ID: id}
+
+	count := 0
+	if err := p.db.Model(domain).Where("ID = ?", id).Limit(1).Count(&count).Error; err != nil {
+		return NewServiceError(http.StatusInternalServerError, "Game search")
+	}
+
+	if count == 0 {
+		return NewServiceError(http.StatusNotFound, "Game not found")
+	}
+
 	var prices []model.Price
 	err := p.db.Model(domain).Association("Prices").Find(&prices).Error
 
-	if err == gorm.ErrRecordNotFound {
-		return NewServiceError(http.StatusNotFound, "Game not found")
-	} else if err != nil {
-		return errors.Wrap(err, "search game by id")
+	if err != nil {
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search prices for game"))
 	}
 
 	found := false
@@ -93,10 +104,18 @@ func (p *PriceService) Delete(id uuid.UUID, price *model.Price) error {
 func (p *PriceService) Update(id uuid.UUID, price *model.Price) error {
 	domain := &model.BasePrice{ID: id}
 	var prices []model.Price
-	err := p.db.Model(domain).Association("Prices").Find(&prices).Error
-	if err == gorm.ErrRecordNotFound {
+
+	count := 0
+	if err := p.db.Model(domain).Where("ID = ?", id).Limit(1).Count(&count).Error; err != nil {
+		return NewServiceError(http.StatusInternalServerError, "Game search")
+	}
+
+	if count == 0 {
 		return NewServiceError(http.StatusNotFound, "Game not found")
-	} else if err != nil {
+	}
+
+	err := p.db.Model(domain).Association("Prices").Find(&prices).Error
+	if err != nil {
 		return errors.Wrap(err, "search game by id")
 	}
 

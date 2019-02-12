@@ -411,7 +411,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/InternalError'
-    post:
+    put:
       tags:
         - ratings
       summary: Change ratings for game
@@ -546,6 +546,7 @@ paths:
 
   /api/v1/games/{id}/prices/{currency}:
     put:
+      summary: Change price in currency for game
       tags:
         - price
       parameters:
@@ -588,6 +589,7 @@ paths:
           $ref: '#/components/responses/InternalError'
 
     delete:
+      summary: Remove price in currency for game
       tags:
         - price
       parameters:
@@ -876,8 +878,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/InternalError'
-
-    post:
+    put:
       tags:
         - achievments
       summary: "Change achievement for game"
@@ -1843,17 +1844,17 @@ components:
 
     PEGI:
       allOf:
-        - $ref: '#/components/schemas/PostRating'
-        - type: object
-          properties:
-            rating:
-              type: string
-              enum:
-                - 3
-                - 7
-                - 12
-                - 16
-                - 18
+      - $ref: '#/components/schemas/PostRating'
+      - type: object
+        properties:
+          rating:
+            type: string
+            enum:
+              - "3"
+              - "7"
+              - "12"
+              - "16"
+              - "18"
 
     BBFC:
       allOf:

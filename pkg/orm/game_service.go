@@ -314,7 +314,7 @@ func (p *GameService) UpdateDescr(userId uuid.UUID, descr *model.GameDescr) (err
 	if update.ID == 0 {
 		found := model.GameDescr{}
 		err = p.db.Model(game).Related(&found).Error
-		if err != nil && err == gorm.ErrRecordNotFound {
+		if err == gorm.ErrRecordNotFound {
 			update.CreatedAt = time.Now()
 		} else if err != nil {
 			return errors.Wrap(err, "Get game descr")

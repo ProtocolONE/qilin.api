@@ -46,6 +46,7 @@ func (suite *DiscountRouterTestSuite) SetupTest() {
 	db, err := orm.NewDatabase(&config.Database)
 	should.Nil(err, "Unable to connect to database", "%v", err)
 
+	_ = db.DropAllTables()
 	db.Init()
 
 	id, _ := uuid.FromString(TestID)

@@ -3,6 +3,7 @@ package orm
 import (
 	"net/http"
 	"qilin-api/pkg/model"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -58,6 +59,8 @@ func (s *DiscountService) AddDiscountForGame(id uuid.UUID, discount *model.Disco
 
 	discount.GameID = id
 	discount.ID = uuid.NewV4()
+	discount.CreatedAt = time.Now()
+	discount.UpdatedAt = discount.CreatedAt
 
 	err = s.db.Create(discount).Error
 	if err != nil {
@@ -85,6 +88,7 @@ func (s *DiscountService) UpdateDiscountForGame(discount *model.Discount) error 
 	}
 
 	discount.GameID = discountInDb.GameID
+	discount.UpdatedAt = time.Now()
 
 	err = s.db.Model(&discountInDb).Update(discount).Error
 	if err != nil {

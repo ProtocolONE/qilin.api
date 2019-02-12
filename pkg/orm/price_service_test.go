@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/test"
 	"testing"
@@ -36,7 +37,7 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 	if err != nil {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
-
+	_ = db.DropAllTables()
 	db.Init()
 
 	id, _ := uuid.FromString(ID)
@@ -96,6 +97,38 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 	assert.Equal(suite.T(), game.Common["currency"], gameFromDb.Common["currency"], "Incorrect Common from DB")
 	assert.Equal(suite.T(), game.Common["price"], gameFromDb.Common["price"], "Incorrect Common from DB")
 	assert.Equal(suite.T(), game.PreOrder, gameFromDb.PreOrder, "Incorrect PreOrder from DB")
+}
+
+func (suite *PriceServiceTestSuite) TestPriceServiceShouldReturnError() {
+	service, err := NewPriceService(suite.db)
+	assert.Nil(suite.T(), err, "Unable to media service")
+	price1 := model.Price{
+		Currency: "USD",
+		Price:    123.32,
+		Vat:      10,
+	}
+
+	res, err := service.GetBase(uuid.NewV4())
+	assert.NotNil(suite.T(), err)
+	assert.Nil(suite.T(), res)
+	if err != nil {
+		he := err.(*ServiceError)
+		assert.Equal(suite.T(), http.StatusNotFound, he.Code)
+	}
+
+	err = service.Update(uuid.NewV4(), &price1)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*ServiceError)
+		assert.Equal(suite.T(), http.StatusNotFound, he.Code)
+	}
+
+	err = service.Delete(uuid.NewV4(), &price1)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*ServiceError)
+		assert.Equal(suite.T(), http.StatusNotFound, he.Code)
+	}
 }
 
 func (suite *PriceServiceTestSuite) TestChangePrices() {
