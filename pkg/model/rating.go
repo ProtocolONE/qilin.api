@@ -20,3 +20,8 @@ type (
 		GameID uuid.UUID `gorm:"type:uuid"`
 	}
 )
+
+const (
+	DescriptorsField = "descriptors"
+	AgeField = "ageRestrictions"
+)
