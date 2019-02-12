@@ -106,7 +106,7 @@ func RatingStructLevelValidation(sl validator.StructLevel) {
 
 	validateCommonRating(rating.BBFC.Rating, "BBFC", utils.StringArray{"U", "PG", "12A", "12", "15", "18", "R18"}, sl)
 	validateCommonRating(rating.CERO.Rating, "CERO", utils.StringArray{"A", "B", "C", "D", "Z"}, sl)
-	validateCommonRating(rating.ESRB.Rating, "ESRB", utils.StringArray{"E", "E10+", "T", "M", "A", "RP"}, sl)
+	validateCommonRating(rating.ESRB.Rating, "ESRB", utils.StringArray{"EC", "E", "E10+", "T", "M", "A", "RP"}, sl)
 	validateCommonRating(rating.PEGI.Rating, "PEGI", utils.StringArray{"3", "7", "12", "16", "18"}, sl)
 	validateCommonRating(rating.USK.Rating, "USK", utils.StringArray{"USK", "0", "6", "12", "16", "18"}, sl)
 }
