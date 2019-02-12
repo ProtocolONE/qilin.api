@@ -1,9 +1,10 @@
-package utils
+package utils_test
 
 import (
 	"github.com/satori/go.uuid"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/orm/utils"
 	"qilin-api/pkg/test"
 	"testing"
 )
@@ -40,7 +41,7 @@ func TestCheckExists(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := CheckExists(db.DB(), tt.object, tt.id)
+			got, err := utils.CheckExists(db.DB(), tt.object, tt.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CheckExists() error = %v, wantErr %v", err, tt.wantErr)
 				return
