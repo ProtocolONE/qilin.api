@@ -5,7 +5,6 @@ type Config struct {
 	Server   ServerConfig
 	Database Database
 	Jwt      Jwt
-	Log      LoggingConfig
 	Mailer   Mailer
 }
 
@@ -27,12 +26,6 @@ type Database struct {
 type Jwt struct {
 	SignatureSecret string `envconfig:"SECRET" required:"true"`
 	Algorithm       string `envconfig:"ALGORITHM" required:"false" default:"HS256"`
-}
-
-// LoggingConfig specifies all the parameters needed for logging
-type LoggingConfig struct {
-	Level        string `envconfig:"LEVEL" required:"false" default:"debug"`
-	ReportCaller bool   `envconfig:"REPORT_CALLER" required:"false" default:"false"`
 }
 
 // Mailer specifies all the parameters needed for dump mail sender
