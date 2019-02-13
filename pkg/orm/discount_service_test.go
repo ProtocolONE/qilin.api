@@ -1,6 +1,8 @@
 package orm_test
 
 import (
+	"github.com/stretchr/testify/require"
+	"net/http"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/orm"
@@ -109,6 +111,78 @@ func (suite *DiscountServiceTestSuite) TearDownTest() {
 	if err := suite.db.Close(); err != nil {
 		panic(err)
 	}
+}
+
+func (suite  *DiscountServiceTestSuite) TestGetDiscountShouldReturnObject() {
+	should := require.New(suite.T())
+	id, _ := uuid.FromString(GameID)
+
+	discounts, err := suite.service.GetDiscountsForGame(id)
+	should.Nil(err)
+	should.Equal([]model.Discount{}, discounts)
+
+	discount := model.Discount{
+		Rate: 33,
+		Title: model.JSONB{
+			"en": "TEST WINTER SALE",
+			"ru": "ТЕСТ САЛО",
+		},
+		Description: model.JSONB{
+			"en": "TEST WINTER SALE",
+			"ru": "ТЕСТ САЛО",
+		},
+	}
+
+	end, err := time.Parse(time.RFC3339, "2019-09-22T07:53:16Z")
+	start, err := time.Parse(time.RFC3339, "2019-01-22T07:53:16Z")
+
+	discount.DateEnd = end
+	discount.DateStart = start
+	discount.ID = uuid.NewV4()
+	discount.GameID = id
+
+	should.Nil(suite.db.DB().Create(&discount).Error)
+
+	discounts, err = suite.service.GetDiscountsForGame(id)
+	should.Nil(err)
+	should.Equal(1, len(discounts))
+	should.Equal(discount.Title, discounts[0].Title )
+	should.Equal(id, discounts[0].GameID )
+	should.True(discount.DateStart.Equal(discounts[0].DateStart))
+	should.True(discount.DateEnd.Equal(discounts[0].DateEnd))
+	should.Equal(discount.Rate, discounts[0].Rate )
+}
+
+func (suite  *DiscountServiceTestSuite) TestDiscountShouldReturnNotFoundError() {
+	should := require.New(suite.T())
+
+	discounts, err := suite.service.GetDiscountsForGame(uuid.NewV4())
+	should.Nil(discounts)
+	should.NotNil(err)
+
+	he := err.(*orm.ServiceError)
+	should.Equal(http.StatusNotFound, he.Code)
+
+	newId, err := suite.service.AddDiscountForGame(uuid.NewV4(), &model.Discount{})
+	should.Equal(uuid.Nil, newId)
+	should.NotNil(err)
+
+	he = err.(*orm.ServiceError)
+	should.Equal(http.StatusNotFound, he.Code)
+
+	err = suite.service.RemoveDiscountForGame(uuid.NewV4())
+	should.NotNil(err)
+
+	he = err.(*orm.ServiceError)
+	should.Equal(http.StatusNotFound, he.Code)
+
+	discount := model.Discount{}
+	discount.ID = uuid.NewV4()
+	err = suite.service.UpdateDiscountForGame(&discount)
+	should.NotNil(err)
+
+	he = err.(*orm.ServiceError)
+	should.Equal(http.StatusNotFound, he.Code)
 }
 
 func (suite *DiscountServiceTestSuite) TestCreateDiscountShouldInsertIntoDB() {
@@ -223,14 +297,14 @@ func (suite *DiscountServiceTestSuite) TestRemoveDiscountShouldDeleteIntoDB() {
 	newId, err := suite.service.AddDiscountForGame(id, &discount)
 	inDb := model.Discount{}
 	inDb.ID = newId
-	err = suite.db.DB().Model(&inDb).First(&inDb).Error
+	err = suite.db.DB().Model(&inDb).Where("game_id = ?", id).First(&inDb).Error
 	assert.Nil(suite.T(), err, "Unable to get discount for game")
 
 	err = suite.service.RemoveDiscountForGame(newId)
 	assert.Nil(suite.T(), err, "Unable to remove discount for game")
 
 	count := 1
-	err = suite.db.DB().Model(&inDb).Count(&count).Error
+	err = suite.db.DB().Model(&inDb).Where("game_id = ?", id).Count(&count).Error
 	assert.Nil(suite.T(), err, "Unable to get discount for game")
 	assert.Equal(suite.T(), 0, count, "Count not equal")
 }

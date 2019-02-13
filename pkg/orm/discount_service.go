@@ -3,6 +3,7 @@ package orm
 import (
 	"net/http"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/orm/utils"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -23,10 +24,9 @@ func NewDiscountService(db *Database) (*DiscountService, error) {
 
 //GetDiscountsForGame is method for getting all discounts for game
 func (s *DiscountService) GetDiscountsForGame(id uuid.UUID) ([]model.Discount, error) {
-
 	var result []model.Discount
 	game := model.Game{ID: id}
-	err := s.db.Where("id = ?", id).First(&game).Related(&result).Error
+	err := s.db.First(&game).Related(&result).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return nil, NewServiceError(http.StatusNotFound, "Game not found")
@@ -43,14 +43,11 @@ func (s *DiscountService) GetDiscountsForGame(id uuid.UUID) ([]model.Discount, e
 
 //AddDiscountForGame is method for creating new discount for game
 func (s *DiscountService) AddDiscountForGame(id uuid.UUID, discount *model.Discount) (uuid.UUID, error) {
-	game := model.Game{ID: id}
-	count := 0
-	err := s.db.Model(&game).Count(&count).Error
-
-	if count == 0 {
+	if exists, err := utils.CheckExists(s.db, &model.Game{}, id); !(exists && err == nil) {
+		if err != nil {
+			return uuid.Nil, NewServiceError(http.StatusInternalServerError,  errors.Wrap(err, "search game by id"))
+		}
 		return uuid.Nil, NewServiceError(http.StatusNotFound, "Game not found")
-	} else if err != nil {
-		return uuid.Nil, errors.Wrap(err, "search game by id")
 	}
 
 	if discount.Rate <= 0 {
@@ -62,7 +59,7 @@ func (s *DiscountService) AddDiscountForGame(id uuid.UUID, discount *model.Disco
 	discount.CreatedAt = time.Now()
 	discount.UpdatedAt = discount.CreatedAt
 
-	err = s.db.Create(discount).Error
+	err := s.db.Create(discount).Error
 	if err != nil {
 		return uuid.Nil, errors.Wrap(err, "Insert discount")
 	}
@@ -103,7 +100,7 @@ func (s *DiscountService) RemoveDiscountForGame(id uuid.UUID) error {
 	discountInDb := model.Discount{}
 	discountInDb.ID = id
 
-	res := s.db.Model(&discountInDb).Delete(&discountInDb)
+	res := s.db.Delete(&discountInDb)
 	if res.Error == gorm.ErrRecordNotFound || res.RowsAffected == 0 {
 		return NewServiceError(http.StatusNotFound, "Discount not found")
 	} else if res.Error != nil {
