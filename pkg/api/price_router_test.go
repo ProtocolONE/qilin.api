@@ -148,7 +148,7 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnBadRequest() {
 	c.SetParamValues(TestID, "USD")
 
 	he := suite.router.updatePrice(c).(*orm.ServiceError)
-	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
+	assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
 }
 
 func (suite *PriceRouterTestSuite) TestPutWithIncorrectCurrencyPriceShouldReturnBadRequest() {
