@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/utils"
 
 	"net/http"
 	"qilin-api/pkg/mapper"
@@ -25,8 +26,8 @@ type (
 
 	PricesInternal struct {
 		Currency string  `json:"currency" validate:"required"`
-		Price    float32 `json:"price" validate:"required"`
-		Vat      int32   `json:"vat" validate:"required"`
+		Price    float32 `json:"price" validate:"required,gte=0"`
+		Vat      int32   `json:"vat" validate:"required,gte=0"`
 	}
 
 	PreOrder struct {
@@ -60,7 +61,7 @@ func (router *PriceRouter) getBase(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	price, err := router.service.GetBase(id)
@@ -83,24 +84,28 @@ func (router *PriceRouter) putBase(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	dto := new(PricesDTO)
 
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	if errs := ctx.Validate(dto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
+	if utils.IsCurrency(dto.Common.Currency) == false {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, fmt.Sprintf("Wrong currency %s", dto.Common.Currency))
+	}
+
 	basePrice := model.BasePrice{}
 	err = mapper.Map(dto, &basePrice)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	if err := router.service.UpdateBase(id, &basePrice); err != nil {
@@ -114,31 +119,16 @@ func (router *PriceRouter) deletePrice(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	cur := ctx.Param("currency")
 
-	dto := new(PricesInternal)
-
-	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	if utils.IsCurrency(cur) == false {
+		return orm.NewServiceError(http.StatusBadRequest, fmt.Sprintf("Wrong currency %s", cur))
 	}
 
-	if cur != dto.Currency {
-		return echo.NewHTTPError(http.StatusBadRequest, "Currency not equal")
-	}
-
-	if errs := ctx.Validate(dto); errs != nil {
-		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
-	}
-
-	price := model.Price{}
-	err = mapper.Map(dto, &price)
-
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
+	price := model.Price{Currency: cur}
 
 	if err := router.service.Delete(id, &price); err != nil {
 		return err
@@ -151,25 +141,38 @@ func (router *PriceRouter) updatePrice(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	dto := new(PricesInternal)
 
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+
+	if err := ctx.Validate(dto); err != nil {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, err)
 	}
 
 	price := model.Price{}
 	err = mapper.Map(dto, &price)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusInternalServerError, err)
 	}
 
 	cur := ctx.Param("currency")
+
+	if cur == "" || dto.Currency == "" {
+		return orm.NewServiceError(http.StatusBadRequest, "Currency must be provided")
+	}
+
 	if cur != dto.Currency {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Currency not equal. param: %v in model: %v", cur, dto.Currency))
+		return orm.NewServiceError(http.StatusBadRequest, fmt.Sprintf("Currency not equal. param: %v in model: %v", cur, dto.Currency))
+	}
+
+	if utils.IsCurrency(cur) == false {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, fmt.Sprintf("Wrong currency %s", cur))
 	}
 
 	if err := router.service.Update(id, &price); err != nil {
