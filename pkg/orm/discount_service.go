@@ -24,14 +24,19 @@ func NewDiscountService(db *Database) (*DiscountService, error) {
 
 //GetDiscountsForGame is method for getting all discounts for game
 func (s *DiscountService) GetDiscountsForGame(id uuid.UUID) ([]model.Discount, error) {
+	if exists, err := utils.CheckExists(s.db, &model.Game{}, id); !(exists && err == nil) {
+		if err != nil {
+			return nil, NewServiceError(http.StatusInternalServerError,  errors.Wrap(err, "search game by id"))
+		}
+		return nil, NewServiceError(http.StatusNotFound, "Game not found")
+	}
+
 	var result []model.Discount
 	game := model.Game{ID: id}
 	err := s.db.First(&game).Related(&result).Error
 
-	if err == gorm.ErrRecordNotFound {
-		return nil, NewServiceError(http.StatusNotFound, "Game not found")
-	} else if err != nil {
-		return nil, errors.Wrap(err, "search game by id")
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, NewServiceError(http.StatusInternalServerError,  errors.Wrapf(err, "search discounts for game with id %s", id))
 	}
 
 	if result == nil {
@@ -70,7 +75,6 @@ func (s *DiscountService) AddDiscountForGame(id uuid.UUID, discount *model.Disco
 //UpdateDiscountForGame method for update existing discount
 func (s *DiscountService) UpdateDiscountForGame(discount *model.Discount) error {
 	discountInDb := model.Discount{}
-	discountInDb.ID = discount.ID
 
 	err := s.db.Model(&discountInDb).Where("id = ?", discount.ID).First(&discount).Error
 
