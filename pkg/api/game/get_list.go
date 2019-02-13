@@ -17,7 +17,7 @@ func (api *Router) GetList(ctx echo.Context) error {
 	if err != nil {
 		offset = 0
 	}
-	limit, err := strconv.Atoi(ctx.QueryParam("offset"))
+	limit, err := strconv.Atoi(ctx.QueryParam("limit"))
 	if err != nil {
 		limit = 20
 	}

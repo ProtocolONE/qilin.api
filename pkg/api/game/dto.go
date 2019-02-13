@@ -67,7 +67,7 @@ type (
 	}
 
 	BaseGameDTO struct {
-		InternalName         string              `json:"internalName" validate:"required"`
+		InternalName         string              `json:"internalName"`
 		Title                string              `json:"title"`
 		Developers           string              `json:"developers"`
 		Publishers           string              `json:"publishers"`
@@ -124,7 +124,7 @@ type (
 	GameDescrDTO struct {
 		Tagline               utils.LocalizedString `json:"tagline" validate:"dive"`
 		Description           utils.LocalizedString `json:"description" validate:"dive"`
-		Reviews               []DescrReview         `json:"reviews" validate:"required, dive"`
+		Reviews               []DescrReview         `json:"reviews" validate:"required,dive"`
 		AdditionalDescription string                `json:"additionalDescription"`
 		GameSite              string                `json:"gameSite"`
 		Socials               Socials               `json:"socials"`

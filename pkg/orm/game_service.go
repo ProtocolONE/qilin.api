@@ -117,6 +117,11 @@ func (p *GameService) Create(userId uuid.UUID, vendorId uuid.UUID, internalName 
 		return nil, err
 	}
 
+	internalName = strings.Trim(internalName, " \r\n\t")
+	internalName = strings.Replace(internalName, " ", "_", -1)
+	if len(internalName) < 2 {
+		return nil, NewServiceError(400, "Incorrect internalName")
+	}
 	item = &model.Game{}
 	errE := p.db.First(item, `internal_name ilike ?`, internalName).Error
 	if errE == nil {
@@ -170,7 +175,7 @@ func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
 
 	if internalName != "" {
 		conds = append(conds, `internal_name ilike ?`)
-		vals = append(vals, internalName)
+		vals = append(vals, "%" + internalName + "%")
 	}
 
 	if genre != "" {
@@ -187,7 +192,7 @@ func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
 	}
 
 	if releaseDate != "" {
-		rdate, err := time.Parse("2006-01-02", releaseDate)
+		rdate, err := time.Parse(time.RFC3339, releaseDate)
 		if err != nil {
 			return nil, NewServiceError(400, "Invalid date")
 		}
@@ -280,6 +285,7 @@ func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error)
 	game.VendorID = gameSrc.VendorID
 	game.CreatedAt = gameSrc.CreatedAt
 	game.UpdatedAt = time.Now()
+	game.InternalName = gameSrc.InternalName
 	err = p.db.Save(game).Error
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
 		return NewServiceError(http.StatusConflict, "Invalid internal_name")
