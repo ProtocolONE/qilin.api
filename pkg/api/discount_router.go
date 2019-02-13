@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 type Discount struct {
@@ -39,15 +39,14 @@ func InitDiscountsRouter(group *echo.Group, service *orm.DiscountService) (*Disc
 
 	r := group.Group("/games/:id")
 	r.GET("/discounts", router.get)
-	r.PUT("/discounts/:discountId", router.put)
 	r.POST("/discounts", router.post)
+	r.PUT("/discounts/:discountId", router.put)
 	r.DELETE("/discounts/:discountId", router.delete)
 
 	return &router, nil
 }
 
 func (router *DiscountsRouter) post(ctx echo.Context) error {
-
 	id, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
@@ -65,7 +64,7 @@ func (router *DiscountsRouter) post(ctx echo.Context) error {
 	domain := model.Discount{}
 	err = mapper.Map(dto, &domain)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	domain.DateStart = dto.Date.Start

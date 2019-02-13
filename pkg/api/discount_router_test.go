@@ -81,6 +81,8 @@ func (suite *DiscountRouterTestSuite) TearDownTest() {
 	}
 }
 
+
+
 func (suite *DiscountRouterTestSuite) TestGetDiscountsShouldReturnEmptyArray() {
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDiscounts))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

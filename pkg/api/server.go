@@ -149,6 +149,15 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
+	discountService, err := orm.NewDiscountService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitDiscountsRouter(s.Router, discountService); err != nil {
+		return err
+	}
+
 	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}

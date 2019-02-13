@@ -22,14 +22,13 @@ func NewPriceService(db *Database) (*PriceService, error) {
 
 //GetBase is method for retriving base information about game pricing
 func (p *PriceService) GetBase(id uuid.UUID) (*model.BasePrice, error) {
-
 	result := &model.BasePrice{}
 	err := p.db.Preload("Prices").Select(model.SelectFields(result)).Where("id = ?", id).First(result).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return nil, NewServiceError(http.StatusNotFound, "Game not found")
 	} else if err != nil {
-		return nil, errors.Wrap(err, "search game by id")
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search game by id"))
 	}
 
 	return result, err

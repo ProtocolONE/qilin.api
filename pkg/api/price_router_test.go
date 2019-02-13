@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -33,9 +34,16 @@ func Test_PriceRouter(t *testing.T) {
 var (
 	testObject     = `{"common":{"currency":"USD","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
 	testBadObject  = `{"common":{"NotifyRateJumps":true},"preOrder":{"enabled":false}}`
+	testBadObjectWithUnwknowsCurrency  = `{"common":{"currency":"XXX","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
 	emptyBasePrice = `{"common":{"currency":"","notifyRateJumps":false},"preOrder":{"date":"","enabled":false},"prices":null}`
 	testPrice      = `{"price":100,"currency":"USD","vat":10}`
 	testBadPrice   = `{"vat":10}`
+
+	testPriceWithUnknownCurrency = `{"price":100,"currency":"XXX","vat":10}`
+	testPriceWithBadPrice = `{"price":"1a","currency":"USD","vat":10}`
+	testPriceWithBadVat = `{"price":100,"currency":"USD","vat":"qwe"}`
+	testPriceWithPriceLowerZero = `{"price":-100,"currency":"USD","vat":10}`
+	testPriceWithVatLowerZero = `{"price":100,"currency":"USD","vat":-10}`
 )
 
 func (suite *PriceRouterTestSuite) SetupTest() {
@@ -48,6 +56,7 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
+	_ = db.DropAllTables()
 	db.Init()
 
 	id, _ := uuid.FromString(TestID)
@@ -138,8 +147,8 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnBadRequest() {
 	c.SetParamNames("id", "currency")
 	c.SetParamValues(TestID, "USD")
 
-	he := suite.router.updatePrice(c).(*echo.HTTPError)
-	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
+	he := suite.router.updatePrice(c).(*orm.ServiceError)
+	assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
 }
 
 func (suite *PriceRouterTestSuite) TestPutWithIncorrectCurrencyPriceShouldReturnBadRequest() {
@@ -193,6 +202,91 @@ func (suite *PriceRouterTestSuite) TestPutWithBadIdModelShouldReturnBadRequest()
 	c.SetParamValues("0000")
 
 	// Assertions
-	he := suite.router.updatePrice(c).(*echo.HTTPError)
+	he := suite.router.updatePrice(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
+}
+
+func (suite *PriceRouterTestSuite) TestDeleteUnknownCurrencyShouldReturnError () {
+	req := httptest.NewRequest(http.MethodDelete, "/", strings.NewReader(testPriceWithUnknownCurrency))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/games/:id/prices/:currency")
+	c.SetParamNames("id", "currency")
+	c.SetParamValues(TestID, "XXX")
+
+	// Assertions
+	err := suite.router.deletePrice(c)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*orm.ServiceError)
+		assert.Equal(suite.T(), http.StatusBadRequest, he.Code, he.Message)
+	}
+}
+
+func (suite *PriceRouterTestSuite) TestPutBasePriceWihhUnknownCurrencyShouldReturnError() {
+	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(testBadObjectWithUnwknowsCurrency))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/games/:id/prices/")
+	c.SetParamNames("id")
+	c.SetParamValues(TestID)
+
+	// Assertions
+	err := suite.router.putBase(c)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*orm.ServiceError)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code, he.Message)
+	}
+}
+
+func (suite *PriceRouterTestSuite) TestPutBadObjectsShouldReturnError () {
+	tests := []struct {
+		name string
+		body string
+		status int
+	}{
+		{name: "testPriceWithBadPrice", body: testPriceWithBadPrice, status: http.StatusBadRequest},
+		{name: "testPriceWithBadVat", body: testPriceWithBadVat, status: http.StatusBadRequest},
+		{name: "testPriceWithPriceLowerZero", body: testPriceWithPriceLowerZero, status: http.StatusUnprocessableEntity},
+		{name: "testPriceWithVatLowerZero", body: testPriceWithVatLowerZero, status: http.StatusUnprocessableEntity},
+	}
+
+	for _, tt := range tests {
+		req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(tt.body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := suite.echo.NewContext(req, rec)
+		c.SetPath("/api/v1/games/:id/prices/:currency")
+		c.SetParamNames("id", "currency")
+		c.SetParamValues(TestID, "USD")
+
+		// Assertions
+		err := suite.router.updatePrice(c)
+		assert.NotNil(suite.T(), err, tt.name)
+		if err != nil {
+			he := err.(*orm.ServiceError)
+			assert.Equal(suite.T(), tt.status, he.Code, fmt.Sprintf("Failed %s, message: %s", tt.name, he.Message))
+		}
+	}
+}
+
+func (suite *PriceRouterTestSuite) TestPutUnknownCurrencyShouldReturnError() {
+	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(testPriceWithUnknownCurrency))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/games/:id/prices/:currency")
+	c.SetParamNames("id", "currency")
+	c.SetParamValues(TestID, "XXX")
+
+	// Assertions
+	err := suite.router.updatePrice(c)
+	assert.NotNil(suite.T(), err)
+	if err != nil {
+		he := err.(*orm.ServiceError)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code, he.Message)
+	}
 }
