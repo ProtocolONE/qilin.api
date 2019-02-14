@@ -1,10 +1,10 @@
 package api
 
 import (
+	"github.com/labstack/echo"
+	"go.uber.org/zap"
 	"net/http"
 	"qilin-api/pkg/orm"
-
-	"github.com/labstack/echo"
 )
 
 func (s *Server) QilinErrorHandler(err error, c echo.Context) {
@@ -28,7 +28,7 @@ func (s *Server) QilinErrorHandler(err error, c echo.Context) {
 		msg = echo.Map{"message": msg}
 	}
 
-	s.echo.Logger.Error(err)
+	zap.L().Error("Http error handler", zap.Error(err))
 
 	// Send response
 	if !c.Response().Committed {
@@ -37,8 +37,9 @@ func (s *Server) QilinErrorHandler(err error, c echo.Context) {
 		} else {
 			err = c.JSON(code, msg)
 		}
+
 		if err != nil {
-			s.echo.Logger.Error(err)
+			zap.L().Error("Http error handler send response failed", zap.Error(err))
 		}
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -13,15 +12,6 @@ const (
 	TokenKey  = "app.token"
 	LoggerKey = "app.logger"
 )
-
-func getLogger(ctx echo.Context) *logrus.Entry {
-	obj := ctx.Get(LoggerKey)
-	if obj == nil {
-		return logrus.NewEntry(logrus.StandardLogger())
-	}
-
-	return obj.(*logrus.Entry)
-}
 
 func getToken(ctx echo.Context) *jwt.Token {
 	obj := ctx.Get(TokenKey)

@@ -5,27 +5,25 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/game"
-	"qilin-api/pkg/utils"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
+	"qilin-api/pkg/utils"
 	"strconv"
 )
 
 type ServerOptions struct {
 	ServerConfig *conf.ServerConfig
-	Log          *logrus.Entry
 	Jwt          *conf.Jwt
 	Database     *orm.Database
 	Mailer       sys.Mailer
 }
 
 type Server struct {
-	log          *logrus.Entry
 	db           *orm.Database
 	echo         *echo.Echo
 	serverConfig *conf.ServerConfig
@@ -44,15 +42,16 @@ func (cv *QilinValidator) Validate(i interface{}) error {
 
 func NewServer(opts *ServerOptions) (*Server, error) {
 	server := &Server{
-		log:          opts.Log,
 		echo:         echo.New(),
 		serverConfig: opts.ServerConfig,
 		db:           opts.Database,
 	}
 
+	server.echo.HideBanner = true
+	server.echo.HidePort = true
 	server.echo.Debug = opts.ServerConfig.Debug
-	server.echo.Logger = Logger{opts.Log.Logger}
-	server.echo.Use(LoggerHandler) // logs all http requests
+
+	server.echo.Use(ZapLogger(zap.L())) // logs all http requests
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
 
 	validate := validator.New()
@@ -88,13 +87,15 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.AuthRouter = server.echo.Group("/auth-api")
 
 	if err := server.setupRoutes(opts.Jwt, opts.Mailer); err != nil {
-		server.log.Fatal(err)
+		zap.L().Fatal("Fail to setup routes", zap.Error(err))
 	}
 
 	return server, nil
 }
 
 func (s *Server) Start() error {
+	zap.L().Info("Starting http server", zap.Int("port", s.serverConfig.Port))
+
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
