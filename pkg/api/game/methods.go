@@ -180,7 +180,7 @@ func (api *Router) UpdateDescr(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
-func (api *Router) GetGenre(ctx echo.Context) error {
+func (api *Router) GetGenres(ctx echo.Context) error {
 	title := ctx.QueryParam("title")
 	offset, _ := strconv.Atoi(ctx.QueryParam("offset"))
 	limit, err := strconv.Atoi(ctx.QueryParam("limit"))
