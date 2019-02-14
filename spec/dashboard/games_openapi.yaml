@@ -14,7 +14,7 @@ servers:
     description: Master test server
 
 paths:
-  /api/v1/genre:
+  /api/v1/genres:
     get:
       tags:
         - "common"

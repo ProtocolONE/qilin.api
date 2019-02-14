@@ -22,7 +22,8 @@ func InitRoutes(router *echo.Group, service model.GameService) (*Router, error) 
 	router.GET("/games/:id/descriptions", Router.GetDescr)
 	router.PUT("/games/:id/descriptions", Router.UpdateDescr)
 
-	router.GET("/genre", Router.GetGenre)
+	router.GET("/genre", Router.GetGenre) // TODO: Remove after some time
+	router.GET("/genres", Router.GetGenre)
 	router.GET("/tags", Router.GetTags)
 	router.GET("/descriptors", Router.GetRatingDescriptors)
 
