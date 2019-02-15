@@ -64,7 +64,7 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 		ID:             id,
 		InternalName:   "Test_game_2",
 		ReleaseDate:    time.Now(),
-		Genre:          pq.StringArray{},
+		GenreAddition:  pq.StringArray{},
 		Tags:           pq.StringArray{},
 		FeaturesCommon: pq.StringArray{},
 	}).Error
