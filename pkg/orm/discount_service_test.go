@@ -91,7 +91,8 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 	game.Requirements = bto.GameRequirements{}
 	game.Languages = bto.GameLangs{}
 	game.FeaturesCommon = []string{}
-	game.Genre = []string{}
+	game.GenreMain = ""
+	game.GenreAddition = []string{}
 	game.Tags = []string{}
 	game.VendorID = vendor.ID
 	game.CreatorID = userId

@@ -45,15 +45,19 @@ type (
 	}
 
 	GameLangsDTO struct {
-		EN LangsDTO `json:"en" validate:"required,dive"`
-		RU LangsDTO `json:"ru" validate:"required,dive"`
+		EN LangsDTO `json:"en" validate:"dive"`
+		RU LangsDTO `json:"ru" validate:"dive"`
+		FR LangsDTO `json:"fr" validate:"dive"`
+		ES LangsDTO `json:"es" validate:"dive"`
+		DE LangsDTO `json:"de" validate:"dive"`
+		IT LangsDTO `json:"it" validate:"dive"`
+		PT LangsDTO `json:"pt" validate:"dive"`
 	}
 
 	GameTagDTO struct {
 		Id    string                `json:"id" validate:"required"`
 		Title utils.LocalizedString `json:"title" validate:"dive"`
 	}
-	GameTagsDTO []GameTagDTO
 
 	RatingDescriptorDTO struct {
 		Id     uint                  `json:"id" validate:"required"`
@@ -80,17 +84,22 @@ type (
 		Languages            GameLangsDTO        `json:"languages" validate:"required,dive"`
 	}
 
+	GameGenreDTO struct {
+		Main        string          `json:"main"`
+		Addition    []string        `json:"addition" validate:"required"`
+	}
+
 	GameDTO struct {
 		ID uuid.UUID `json:"id"`
 		BaseGameDTO
-		Genre GameTagsDTO `json:"genre" validate:"dive"`
-		Tags  GameTagsDTO `json:"tags" validate:"dive"`
+		Genres GameGenreDTO `json:"genres" validate:"required,dive"`
+		Tags   []string     `json:"tags" validate:"required"`
 	}
 
 	UpdateGameDTO struct {
 		BaseGameDTO
-		Genre []string `json:"genre" validate:"required"`
-		Tags  []string `json:"tags" validate:"required"`
+		Genres GameGenreDTO `json:"genres" validate:"required,dive"`
+		Tags   []string     `json:"tags" validate:"required"`
 	}
 
 	GamePriceDTO struct {
@@ -104,7 +113,7 @@ type (
 		ID           uuid.UUID     `json:"id"`
 		InternalName string        `json:"internalName"`
 		Icon         string        `json:"icon"`
-		Genre        GameTagsDTO   `json:"genre"`
+		Genres       GameGenreDTO  `json:"genres"`
 		ReleaseDate  time.Time     `json:"releaseDate"`
 		Prices       GamePricesDTO `json:"prices"`
 	}
@@ -160,22 +169,6 @@ func mapReqsBTO(r *MachineRequirementsDTO) bto.MachineRequirements {
 }
 
 func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err error) {
-	tags, err := service.GetTags(game.Tags)
-	if err != nil {
-		return nil, err
-	}
-	genres, err := service.GetGenres(game.Genre)
-	if err != nil {
-		return nil, err
-	}
-	genresDto := GameTagsDTO{}
-	for _, v := range genres {
-		genresDto = append(genresDto, GameTagDTO{Id: v.ID, Title: v.Title})
-	}
-	tagsDto := GameTagsDTO{}
-	for _, v := range tags {
-		tagsDto = append(tagsDto, GameTagDTO{Id: v.ID, Title: v.Title})
-	}
 	return &GameDTO{
 		ID: game.ID,
 		BaseGameDTO: BaseGameDTO{
@@ -208,8 +201,11 @@ func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err
 				RU: LangsDTO{game.Languages.RU.Voice, game.Languages.RU.Interface, game.Languages.RU.Subtitles},
 			},
 		},
-		Genre: genresDto,
-		Tags:  tagsDto,
+		Genres: GameGenreDTO{
+			Main: game.GenreMain,
+			Addition: game.GenreAddition,
+		},
+		Tags:  game.Tags,
 	}, nil
 }
 
@@ -244,7 +240,8 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 			EN: bto.Langs{game.Languages.EN.Voice, game.Languages.EN.Interface, game.Languages.EN.Subtitles},
 			RU: bto.Langs{game.Languages.RU.Voice, game.Languages.RU.Interface, game.Languages.RU.Subtitles},
 		},
-		Genre: game.Genre,
+		GenreMain: game.Genres.Main,
+		GenreAddition: game.Genres.Addition,
 		Tags:  game.Tags,
 	}
 }

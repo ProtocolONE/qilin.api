@@ -34,13 +34,14 @@ type (
 		ReleaseDate          time.Time             `gorm:"type:timestamp; not null; default:now()"`
 		DisplayRemainingTime bool                  `gorm:"type:boolean; not null"`
 		AchievementOnProd    bool                  `gorm:"type:boolean; not null"`
-		FeaturesCommon       pq.StringArray        `gorm:"type:text[]; not null"`
+		FeaturesCommon       pq.StringArray        `gorm:"type:text[]; not null; default:array[]::text[]"`
 		FeaturesCtrl         string                `gorm:"type:text; not null"`
 		Platforms            game.Platforms        `gorm:"type:jsonb; not null; default:'{}'"`
 		Requirements         game.GameRequirements `gorm:"type:jsonb; not null; default:'{}'"`
 		Languages            game.GameLangs        `gorm:"type:jsonb; not null; default:'{}'"`
-		Genre                pq.StringArray        `gorm:"type:text[]; not null"`
-		Tags                 pq.StringArray        `gorm:"type:text[]; not null"`
+		GenreMain            string                `gorm:"type:text; not null; default:''"`
+		GenreAddition        pq.StringArray        `gorm:"type:text[]; not null; default:array[]::text[]"`
+		Tags                 pq.StringArray        `gorm:"type:text[]; not null; default:array[]::text[]"`
 
 		Vendor    *Vendor   /// VendorID is foreignKey for Vendor
 		VendorID  uuid.UUID `gorm:"type:uuid"`

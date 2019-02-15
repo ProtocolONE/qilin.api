@@ -136,7 +136,8 @@ func (p *GameService) Create(userId uuid.UUID, vendorId uuid.UUID, internalName 
 	item.Requirements = bto.GameRequirements{}
 	item.Languages = bto.GameLangs{}
 	item.FeaturesCommon = []string{}
-	item.Genre = []string{}
+	item.GenreMain = ""
+	item.GenreAddition = []string{}
 	item.Tags = []string{}
 	item.VendorID = vendorId
 	item.CreatorID = userId
@@ -275,7 +276,35 @@ func (p *GameService) Delete(userId uuid.UUID, gameId uuid.UUID) (err error) {
 	return nil
 }
 
+func GenreExist(genre string, all []model.GameGenre) bool {
+	for _, exist := range all {
+		if exist.ID == genre {
+			return true
+		}
+	}
+	return false
+}
+
+func TagExist(tag string, all []model.GameTag) bool {
+	for _, exist := range all {
+		if exist.ID == tag {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error) {
+
+	all_tags, err := p.FindTags(userId, "", 1000, 0)
+	if err != nil {
+		return err
+	}
+
+	all_genres, err := p.FindGenres(userId, "", 1000, 0)
+	if err != nil {
+		return err
+	}
 
 	gameSrc, err := p.GetInfo(userId, game.ID)
 	if err != nil {
@@ -286,6 +315,28 @@ func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error)
 	game.CreatedAt = gameSrc.CreatedAt
 	game.UpdatedAt = time.Now()
 	game.InternalName = gameSrc.InternalName
+
+	// Check for exists tags in main tag-collection
+	checked_tags := []string{}
+	for _, tag := range game.Tags {
+		if TagExist(tag, all_tags) {
+			checked_tags = append(checked_tags, tag)
+		}
+	}
+	game.Tags = checked_tags
+
+	// Check for exists genres in main genre-collection
+	checked_genres := []string{}
+	for _, genre := range game.GenreAddition {
+		if GenreExist(genre, all_genres) {
+			checked_genres = append(checked_genres, genre)
+		}
+	}
+	game.GenreAddition = checked_genres
+	if !GenreExist(game.GenreMain, all_genres) {
+		game.GenreMain = ""
+	}
+
 	err = p.db.Save(game).Error
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
 		return NewServiceError(http.StatusConflict, "Invalid internal_name")
