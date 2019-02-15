@@ -13,10 +13,11 @@ const (
 	StatusApproved ClientDocumentStatus = 2 //`approved`
 	StatusDeclined ClientDocumentStatus = 3 //`declined`
 
-	ReviewNew      ReviewStatus = 0 //`new`
-	ReviewApproved ReviewStatus = 1 //`approved`
-	ReviewChecking ReviewStatus = 2 //`checking`
-	ReviewReturned ReviewStatus = 3 //`returned`
+	ReviewUndefined ReviewStatus = -1 //`new`
+	ReviewNew       ReviewStatus = 0  //`new`
+	ReviewApproved  ReviewStatus = 1  //`approved`
+	ReviewChecking  ReviewStatus = 2  //`checking`
+	ReviewReturned  ReviewStatus = 3  //`returned`
 )
 
 type DocumentsInfo struct {
