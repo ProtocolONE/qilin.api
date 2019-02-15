@@ -136,7 +136,7 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 			},
 		},
 		Status:       model.StatusOnReview,
-		ReviewStatus: model.ReviewNew,
+		ReviewStatus: model.ReviewChecking,
 		Banking: model.JSONB{
 			"Currency": "USD",
 		},
@@ -156,7 +156,8 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 				"Position": "IT Director",
 			},
 		},
-		Status: model.StatusApproved,
+		Status:       model.StatusApproved,
+		ReviewStatus: model.ReviewApproved,
 		Banking: model.JSONB{
 			"Currency": "EUR",
 		},
@@ -176,7 +177,8 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 				"Position": "CEO",
 			},
 		},
-		Status: model.StatusDeclined,
+		Status:       model.StatusDeclined,
+		ReviewStatus: model.ReviewReturned,
 		Banking: model.JSONB{
 			"Currency": "USD",
 		},
@@ -187,7 +189,7 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 		vendorDocuments4 := model.DocumentsInfo{
 			VendorID: id,
 			Company: model.JSONB{
-				"Name":            "TEST2",
+				"Name":            "ZTEST2",
 				"AlternativeName": "Alt MEGA NAME",
 				"Country":         "RUSSIA",
 			},
@@ -201,7 +203,8 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 					"Position": "Test Position",
 				},
 			},
-			Status: model.StatusOnReview,
+			Status:       model.StatusOnReview,
+			ReviewStatus: model.ReviewNew,
 			Banking: model.JSONB{
 				"Currency": "USD",
 			},
@@ -255,5 +258,64 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(1, len(requests))
-}
 
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-status")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(13, len(requests))
+	should.Equal(model.ReviewReturned, requests[0].ReviewStatus)
+	should.Equal(model.ReviewChecking, requests[1].ReviewStatus)
+	should.Equal(model.ReviewApproved, requests[2].ReviewStatus)
+	for i := 3; i < len(requests); i++ {
+		should.Equal(model.ReviewNew, requests[i].ReviewStatus)
+	}
+
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+status")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(13, len(requests))
+	for i := 0; i < 10; i++ {
+		should.Equal(model.ReviewNew, requests[i].ReviewStatus)
+	}
+	should.Equal(model.ReviewReturned, requests[12].ReviewStatus)
+	should.Equal(model.ReviewChecking, requests[11].ReviewStatus)
+	should.Equal(model.ReviewApproved, requests[10].ReviewStatus)
+
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+name")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(13, len(requests))
+	should.Equal("Ash of Evils ", requests[0].Company["Name"])
+	should.Equal("MEGA TEST", requests[1].Company["Name"])
+	should.Equal("PUBG TEST", requests[2].Company["Name"])
+	for i := 3; i < len(requests); i++ {
+		should.Equal("ZTEST2", requests[i].Company["Name"])
+	}
+
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-name")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(13, len(requests))
+	for i := 0; i < 10; i++ {
+		should.Equal("ZTEST2", requests[i].Company["Name"])
+	}
+	should.Equal("Ash of Evils ", requests[12].Company["Name"])
+	should.Equal("MEGA TEST", requests[11].Company["Name"])
+	should.Equal("PUBG TEST", requests[10].Company["Name"])
+
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+updatedAt")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(13, len(requests))
+
+	for i := 0; i > len(requests); i++ {
+		should.True(requests[i].UpdatedAt.Before())
+	}
+
+	should.Equal("MEGA TEST", requests[0].Company["Name"])
+	should.Equal("PUBG TEST", requests[1].Company["Name"])
+	should.Equal("Ash of Evils ", requests[2].Company["Name"])
+	for i := 3; i < len(requests); i++ {
+		should.Equal("ZTEST2", requests[i].Company["Name"])
+	}
+}

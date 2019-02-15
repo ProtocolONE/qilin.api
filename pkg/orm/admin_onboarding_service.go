@@ -28,7 +28,7 @@ func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string,
 	}
 
 	if status != model.ReviewUndefined {
-		query = query.Where("status = ?", status)
+		query = query.Where("review_status = ?", status)
 	}
 
 	if sort != "" {
@@ -41,9 +41,9 @@ func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string,
 			case "+updatedAt":
 				orderBy = "updated_at ASC"
 			case "-status":
-				orderBy = "status DESC"
+				orderBy = "review_status DESC"
 			case "+status":
-				orderBy = "status ASC"
+				orderBy = "review_status ASC"
 			case "-name":
 				orderBy = "company->>'Name' DESC"
 			case "+name":
