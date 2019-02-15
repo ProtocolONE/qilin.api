@@ -112,15 +112,15 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Makes more game-tags")
 	err = gameService.CreateTags([]model.GameTag{
 		{
-			ID:    "action",
+			ID:    1,
 			Title: utils.LocalizedString{EN: "Action", RU: "Стрелялки"},
 		},
 		{
-			ID:    "test",
+			ID:    2,
 			Title: utils.LocalizedString{EN: "Test", RU: "Тест"},
 		},
 		{
-			ID:    "tank",
+			ID:    3,
 			Title: utils.LocalizedString{EN: "Tanks", RU: "Танки"},
 		},
 	})
@@ -189,7 +189,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Equal(games[0].InternalName, game2Name, "Second game")
 
 	suite.T().Log("Update game")
-	game3.Tags = []string{"action", "tank"}
+	game3.Tags = []int64{1, 2}
 	game3.Developers = "Developers"
 	game3.InternalName = gameName + "-x"
 	game3.Platforms.Windows = true
@@ -250,7 +250,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Retrive tags with user", userId.String())
 	tags, err := gameService.FindTags(userId, "Стрелялки", 20, 0)
 	require.Equal(len(tags), 1, "Must be one match")
-	require.Equal(tags[0].ID, "action", "Same value")
+	require.Equal(tags[0].ID, 1, "Same value")
 }
 
 func (suite *GameServiceTestSuite) TestDescriptors() {

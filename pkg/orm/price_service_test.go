@@ -45,8 +45,8 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 		ID:             id,
 		InternalName:   "Test_game_2",
 		ReleaseDate:    time.Now(),
-		GenreAddition:  pq.StringArray{},
-		Tags:           pq.StringArray{},
+		GenreAddition:  pq.Int64Array{},
+		Tags:           pq.Int64Array{},
 		FeaturesCommon: pq.StringArray{},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
