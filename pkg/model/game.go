@@ -11,7 +11,7 @@ import (
 
 type (
 	GameTag struct {
-		ID    string                `gorm:"primary_key"`
+		ID    int                   `gorm:"primary_key"`
 		Title utils.LocalizedString `gorm:"type:jsonb; not null"`
 	}
 
@@ -39,9 +39,9 @@ type (
 		Platforms            game.Platforms        `gorm:"type:jsonb; not null; default:'{}'"`
 		Requirements         game.GameRequirements `gorm:"type:jsonb; not null; default:'{}'"`
 		Languages            game.GameLangs        `gorm:"type:jsonb; not null; default:'{}'"`
-		GenreMain            string                `gorm:"type:text; not null; default:''"`
-		GenreAddition        pq.StringArray        `gorm:"type:text[]; not null; default:array[]::text[]"`
-		Tags                 pq.StringArray        `gorm:"type:text[]; not null; default:array[]::text[]"`
+		GenreMain            int                   `gorm:"type:integer"`
+		GenreAddition        pq.Int64Array         `gorm:"type:integer[]; not null; default:array[]::integer[]"`
+		Tags                 pq.Int64Array         `gorm:"type:integer[]; not null; default:array[]::integer[]"`
 
 		Vendor    *Vendor   /// VendorID is foreignKey for Vendor
 		VendorID  uuid.UUID `gorm:"type:uuid"`

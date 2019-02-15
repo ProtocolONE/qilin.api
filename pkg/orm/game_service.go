@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -136,9 +137,9 @@ func (p *GameService) Create(userId uuid.UUID, vendorId uuid.UUID, internalName 
 	item.Requirements = bto.GameRequirements{}
 	item.Languages = bto.GameLangs{}
 	item.FeaturesCommon = []string{}
-	item.GenreMain = ""
-	item.GenreAddition = []string{}
-	item.Tags = []string{}
+	item.GenreMain = 0
+	item.GenreAddition = []int64{}
+	item.Tags = []int64{}
 	item.VendorID = vendorId
 	item.CreatorID = userId
 
@@ -276,35 +277,15 @@ func (p *GameService) Delete(userId uuid.UUID, gameId uuid.UUID) (err error) {
 	return nil
 }
 
-func GenreExist(genre string, all []model.GameGenre) bool {
-	for _, exist := range all {
-		if exist.ID == genre {
-			return true
-		}
+func joinInts(list []int64, sep string) string {
+	strs := []string{}
+	for _, i := range list {
+		strs = append(strs, strconv.FormatInt(i, 10))
 	}
-	return false
-}
-
-func TagExist(tag string, all []model.GameTag) bool {
-	for _, exist := range all {
-		if exist.ID == tag {
-			return true
-		}
-	}
-	return false
+	return strings.Join(strs, sep)
 }
 
 func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error) {
-
-	all_tags, err := p.FindTags(userId, "", 1000, 0)
-	if err != nil {
-		return err
-	}
-
-	all_genres, err := p.FindGenres(userId, "", 1000, 0)
-	if err != nil {
-		return err
-	}
 
 	gameSrc, err := p.GetInfo(userId, game.ID)
 	if err != nil {
@@ -316,25 +297,35 @@ func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error)
 	game.UpdatedAt = time.Now()
 	game.InternalName = gameSrc.InternalName
 
-	// Check for exists tags in main tag-collection
-	checked_tags := []string{}
-	for _, tag := range game.Tags {
-		if TagExist(tag, all_tags) {
-			checked_tags = append(checked_tags, tag)
+	if game.GenreAddition == nil {
+		game.GenreAddition = []int64{}
+	}
+	tempGenres := game.GenreAddition
+	if game.GenreMain > 0 {
+		tempGenres = append(tempGenres, int64(game.GenreMain))
+	}
+	if len(tempGenres) > 0 {
+		foundGenres := 0
+		err = p.db.Model(&model.GameGenre{}).Where("id in ("  + joinInts(tempGenres, ",") +  ")").Count(&foundGenres).Error
+		if err != nil {
+			return errors.Wrap(err, "Fetch genres")
+		}
+		if foundGenres != len(tempGenres) {
+			return NewServiceError(http.StatusConflict, "Invalid genre")
 		}
 	}
-	game.Tags = checked_tags
-
-	// Check for exists genres in main genre-collection
-	checked_genres := []string{}
-	for _, genre := range game.GenreAddition {
-		if GenreExist(genre, all_genres) {
-			checked_genres = append(checked_genres, genre)
-		}
+	if game.Tags == nil {
+		game.Tags = []int64{}
 	}
-	game.GenreAddition = checked_genres
-	if !GenreExist(game.GenreMain, all_genres) {
-		game.GenreMain = ""
+	if len(game.Tags) > 0 {
+		foundTags := 0
+		err = p.db.Model(&model.GameTag{}).Where("id in (" + joinInts(game.Tags, ",") + ")").Count(&foundTags).Error
+		if err != nil {
+			return errors.Wrap(err, "Fetch genres")
+		}
+		if foundTags != len(game.Tags) {
+			return NewServiceError(http.StatusConflict, "Invalid tag")
+		}
 	}
 
 	err = p.db.Save(game).Error
