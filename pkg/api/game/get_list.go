@@ -32,32 +32,20 @@ func (api *Router) GetList(ctx echo.Context) error {
 		return err
 	}
 
-	all_genres, err := api.gameService.GetGenres(nil)
-	if err != nil {
-		return err
-	}
-
 	games, err := api.gameService.GetList(userId, vendorId, offset, limit, internalName, genre, releaseDate, sort, price)
 	if err != nil {
 		return err
 	}
 	dto := []ShortGameInfoDTO{}
 	for _, game := range games {
-		// Filter only game genres
-		genres := []GameTagDTO{}
-		for _, genre_id := range game.Genre {
-			for _, genre := range all_genres {
-				if genre.ID == genre_id {
-					genres = append(genres, GameTagDTO{Id: genre.ID, Title: genre.Title})
-					break
-				}
-			}
-		}
 		dto = append(dto, ShortGameInfoDTO{
 			ID:           game.ID,
 			InternalName: game.InternalName,
 			Icon:         "",
-			Genre:        genres,
+			Genres:       GameGenreDTO{
+				Main:       game.GenreMain,
+				Addition:   game.GenreAddition,
+			},
 			ReleaseDate:  game.ReleaseDate,
 			Prices:       GamePricesDTO{},
 		})

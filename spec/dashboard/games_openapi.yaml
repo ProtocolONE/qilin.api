@@ -2016,6 +2016,16 @@ components:
             en: multiplayer
             ru: мультиплеер
 
+    GameGenres:
+      type: object
+      properties:
+        main:
+          type: string
+        addition:
+          type: array
+          items:
+            type: string
+
     Genre:
       type: object
       properties:
@@ -2116,10 +2126,8 @@ components:
         icon:
           type: "string"
           readOnly: true
-        genre:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/Genre"
+        genres:
+          $ref: '#/components/schemas/GameGenres'
           readOnly: true
         releaseDate:
           type: "string"
@@ -2201,26 +2209,22 @@ components:
         - $ref: '#/components/schemas/BaseGame'
         - type: object
           properties:
-            genre:
-              type: "array"
-              items:
-                $ref: "#/components/schemas/Genre"
+            genres:
+              $ref: '#/components/schemas/GameGenres'
             tags:
-              type: "array"
+              type: array
               items:
-                $ref: "#/components/schemas/Tag"
+                type: string
 
     ChangeGame:
       allOf:
         - $ref: '#/components/schemas/BaseGame'
         - type: object
           properties:
-            genre:
-              type: "array"
-              items:
-                type: string
+            genres:
+              $ref: '#/components/schemas/GameGenres'
             tags:
-              type: "array"
+              type: array
               items:
                 type: string
 

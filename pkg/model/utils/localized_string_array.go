@@ -12,7 +12,14 @@ type LocalizedStringArray struct {
 	EN []string `json:"en"`
 
 	// russian name
-	RU []string `json:"ru"`
+	RU []string `json:"ru,omitempty"`
+
+	// other languages
+	FR []string `json:"fr,omitempty"`
+	ES []string `json:"es,omitempty"`
+	DE []string `json:"de,omitempty"`
+	IT []string `json:"it,omitempty"`
+	PT []string `json:"pt,omitempty"`
 }
 
 func (p LocalizedStringArray) Value() (driver.Value, error) {
