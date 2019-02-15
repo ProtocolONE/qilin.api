@@ -1679,36 +1679,36 @@ components:
 
     DiscountRequest:
       type: object
-        properties:
-          title:
-            type: object
-            additionalProperties:
+      properties:
+        title:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "WINTER SALE"
+            ru: "ЗИМНЯЯ РАСПРОДАЖА"
+        description:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            en: "SPECIAL OFFER"
+            ru: "СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ"
+        date:
+          type: object
+          properties:
+            start:
               type: string
-            example:
-              en: "WINTER SALE"
-              ru: "ЗИМНЯЯ РАСПРОДАЖА"
-          description:
-            type: object
-            additionalProperties:
+              format: date-time
+              example: "2019-07-21T17:32:28Z"
+            end:
               type: string
-            example:
-              en: "SPECIAL OFFER"
-              ru: "СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ"
-          date:
-            type: object
-            properties:
-              start:
-                type: string
-                format: date-time
-                example: "2019-07-21T17:32:28Z"
-              end:
-                type: string
-                format: date-time
-                example: "2019-08-21T17:32:28Z"
-          rate:
-            type: number
-            format: float
-            example: 50
+              format: date-time
+              example: "2019-08-21T17:32:28Z"
+        rate:
+          type: number
+          format: float
+          example: 50
 
     Discount:
       allOf:
