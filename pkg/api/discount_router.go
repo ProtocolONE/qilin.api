@@ -13,6 +13,7 @@ import (
 )
 
 type Discount struct {
+	Id			string `json:"id"`
 	Title       *utils.LocalizedString `json:"title" validate:"required"`
 	Description *utils.LocalizedString `json:"description"`
 	Date        DateRange              `json:"date" validate:"required,dive,required"`
@@ -75,7 +76,9 @@ func (router *DiscountsRouter) post(ctx echo.Context) error {
 		return err
 	}
 
-	return ctx.JSON(http.StatusCreated, DiscountCreated{discountID})
+	dto.Id = discountID.String()
+
+	return ctx.JSON(http.StatusCreated, dto)
 }
 
 func (router *DiscountsRouter) get(ctx echo.Context) error {

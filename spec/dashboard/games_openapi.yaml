@@ -719,6 +719,7 @@ paths:
     post:
       tags:
         - price
+        - discount
       summary: "Create new discount for game"
       parameters:
         - name: id
@@ -731,10 +732,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Discount'
+              $ref: '#/components/schemas/DiscountRequest'
       responses:
         201:
           description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discount'
         401:
           $ref: '#/components/responses/Unauthorized'
         403:
@@ -748,9 +753,11 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/games/{id}/discounts/{discountId}:
     put:
       tags:
         - price
+        - discount
       summary: "Change discount for game"
       parameters:
         - name: id
@@ -769,7 +776,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Discount'
+              $ref: '#/components/schemas/DiscountRequest'
       responses:
         200:
           description: OK
@@ -789,6 +796,7 @@ paths:
     delete:
       tags:
         - price
+        - discount
       summary: "Remove discount for game"
       parameters:
         - name: id
@@ -1669,42 +1677,48 @@ components:
                     type: number
                     format: float
 
-    Discount:
+    DiscountRequest:
       type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: "028536a6-3e8e-4926-9669-1cd8f31d8f61"
-        title:
-          type: object
-          additionalProperties:
-            type: string
-          example:
-            en: "WINTER SALE"
-            ru: "ЗИМНЯЯ РАСПРОДАЖА"
-        description:
-          type: object
-          additionalProperties:
-            type: string
-          example:
-            en: "SPECIAL OFFER"
-            ru: "СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ"
-        date:
-          type: object
+        properties:
+          title:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              en: "WINTER SALE"
+              ru: "ЗИМНЯЯ РАСПРОДАЖА"
+          description:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              en: "SPECIAL OFFER"
+              ru: "СПЕЦИАЛЬНОЕ ПРЕДЛОЖЕНИЕ"
+          date:
+            type: object
+            properties:
+              start:
+                type: string
+                format: date-time
+                example: "2019-07-21T17:32:28Z"
+              end:
+                type: string
+                format: date-time
+                example: "2019-08-21T17:32:28Z"
+          rate:
+            type: number
+            format: float
+            example: 50
+
+    Discount:
+      allOf:
+        - $ref: '#/components/schemas/DiscountRequest'
+        - type: object
           properties:
-            start:
+            id:
               type: string
-              format: date-time
-              example: "2019-07-21T17:32:28Z"
-            end:
-              type: string
-              format: date-time
-              example: "2019-08-21T17:32:28Z"
-        rate:
-          type: number
-          format: float
-          example: 50
+              format: uuid
+              example: "028536a6-3e8e-4926-9669-1cd8f31d8f61"
 
     Media:
       type: object
