@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/pkg/errors"
 	"net/http"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
@@ -13,7 +14,7 @@ import (
 )
 
 type Discount struct {
-	Id			string `json:"id"`
+	ID          string                 `json:"id"`
 	Title       *utils.LocalizedString `json:"title" validate:"required"`
 	Description *utils.LocalizedString `json:"description"`
 	Date        DateRange              `json:"date" validate:"required,dive,required"`
@@ -76,7 +77,7 @@ func (router *DiscountsRouter) post(ctx echo.Context) error {
 		return err
 	}
 
-	dto.Id = discountID.String()
+	dto.ID = discountID.String()
 
 	return ctx.JSON(http.StatusCreated, dto)
 }
@@ -92,14 +93,22 @@ func (router *DiscountsRouter) get(ctx echo.Context) error {
 		return err
 	}
 
-	var dto []Discount
+	dto := make([]Discount, len(discounts))
 	err = mapper.Map(discounts, &dto)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Can't decode domain to dto")
+		return echo.NewHTTPError(http.StatusInternalServerError, errors.Wrap(err,"Can't decode domain to dto"))
 	}
 
 	if dto == nil {
 		return ctx.JSON(http.StatusOK, make([]Discount, 0))
+	}
+
+	for i,d := range discounts {
+		dto[i].ID = d.ID.String()
+		dto[i].Date = DateRange{
+			Start: d.DateStart,
+			End: d.DateEnd,
+		}
 	}
 
 	return ctx.JSON(http.StatusOK, dto)

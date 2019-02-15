@@ -81,9 +81,7 @@ func (suite *DiscountRouterTestSuite) TearDownTest() {
 	}
 }
 
-
-
-func (suite *DiscountRouterTestSuite) TestGetDiscountsShouldReturnEmptyArray() {
+func (suite *DiscountRouterTestSuite) TEstGetDiscountsShouldReturnObjects() {
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDiscounts))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -96,6 +94,37 @@ func (suite *DiscountRouterTestSuite) TestGetDiscountsShouldReturnEmptyArray() {
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 		assert.Equal(suite.T(), emptyDiscounts, rec.Body.String())
+	}
+}
+
+func (suite *DiscountRouterTestSuite) TestGetDiscountsShouldReturnEmptyArray() {
+	id, _ := uuid.FromString(TestID)
+	discount := model.Discount{
+		Title: model.JSONB{
+			"en": "asd",
+		},
+		GameID: id,
+		Rate:   10,
+	}
+	discount.ID = uuid.NewV4()
+
+	err := suite.db.DB().Create(&discount).Error
+	assert.NoError(suite.T(), err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDiscounts))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/games/:id/discounts")
+	c.SetParamNames("id")
+	c.SetParamValues(TestID)
+
+	// Assertions
+	if assert.NoError(suite.T(), suite.router.get(c)) {
+		assert.Equal(suite.T(), http.StatusOK, rec.Code)
+		body := rec.Body.String()
+		assert.NotEmpty(suite.T(), body)
+		assert.NotEqual(suite.T(), emptyDiscounts, body)
 	}
 }
 
