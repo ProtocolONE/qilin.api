@@ -39,7 +39,7 @@ type (
 		Platforms            game.Platforms        `gorm:"type:jsonb; not null; default:'{}'"`
 		Requirements         game.GameRequirements `gorm:"type:jsonb; not null; default:'{}'"`
 		Languages            game.GameLangs        `gorm:"type:jsonb; not null; default:'{}'"`
-		GenreMain            int                   `gorm:"type:integer"`
+		GenreMain            int64                 `gorm:"type:integer"`
 		GenreAddition        pq.Int64Array         `gorm:"type:integer[]; not null; default:array[]::integer[]"`
 		Tags                 pq.Int64Array         `gorm:"type:integer[]; not null; default:array[]::integer[]"`
 
