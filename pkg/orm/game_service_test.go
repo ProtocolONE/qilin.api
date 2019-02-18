@@ -9,14 +9,15 @@ import (
 	"qilin-api/pkg/test"
 	"testing"
 
-	"github.com/gofrs/uuid"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type GameServiceTestSuite struct {
 	suite.Suite
-	db *orm.Database
+	db      *orm.Database
+	userId  uuid.UUID
 }
 
 func Test_GameService(t *testing.T) {
@@ -65,6 +66,27 @@ func (suite *GameServiceTestSuite) SetupTest() {
 	},
 		System: "CERO",
 	}).Error)
+
+	suite.NoError(db.DB().Create(&model.GameGenre{
+		model.GameTag{
+			ID:    1,
+			Title: utils.LocalizedString{EN: "Action"},
+		},
+	}).Error)
+
+	suite.NoError(db.DB().Create(&model.GameGenre{
+		model.GameTag{
+			ID:    2,
+			Title: utils.LocalizedString{EN: "Test"},
+		},
+	}).Error)
+
+	suite.NoError(db.DB().Create(&model.GameGenre{
+		model.GameTag{
+			ID:    3,
+			Title: utils.LocalizedString{EN: "Tanks"},
+		},
+	}).Error)
 }
 
 func (suite *GameServiceTestSuite) TearDownTest() {
@@ -94,6 +116,8 @@ func (suite *GameServiceTestSuite) TestGames() {
 	userId, err := userService.Register("test@protocol.one", "mega123!", "ru")
 	require.Nil(err, "Unable to register user1")
 
+	suite.userId = userId
+
 	suite.T().Log("Register second user")
 	user2Id, err := userService.Register("test@protocol2.one", "mega124!", "en")
 	require.Nil(err, "Unable to register user2")
@@ -112,15 +136,15 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Makes more game-tags")
 	err = gameService.CreateTags([]model.GameTag{
 		{
-			ID:    "action",
+			ID:    1,
 			Title: utils.LocalizedString{EN: "Action", RU: "Стрелялки"},
 		},
 		{
-			ID:    "test",
+			ID:    2,
 			Title: utils.LocalizedString{EN: "Test", RU: "Тест"},
 		},
 		{
-			ID:    "tank",
+			ID:    3,
 			Title: utils.LocalizedString{EN: "Tanks", RU: "Танки"},
 		},
 	})
@@ -189,13 +213,16 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Equal(games[0].InternalName, game2Name, "Second game")
 
 	suite.T().Log("Update game")
-	game3.Tags = []string{"action", "tank"}
+	game3.Tags = []int64{1, 2}
 	game3.Developers = "Developers"
 	game3.InternalName = gameName + "-x"
 	game3.Platforms.Windows = true
 	game3.Platforms.Linux = true
 	game3.Requirements.Windows.Recommended.Graphics = "4200ti"
 	game3.Publishers = "Publishers"
+	game3.GenreMain = 1
+	game3.GenreAddition = []int64{2, 3}
+
 	err = gameService.UpdateInfo(userId, game3)
 	require.Nil(err, "Must be save without error")
 
@@ -209,6 +236,8 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Equal(game5.Requirements.Windows.Recommended.Graphics, "4200ti", "Must be same")
 	require.Equal(game5.Publishers, game3.Publishers, "Must be same")
 	require.Equal(len(game5.Tags), 2, "Must be same")
+    require.Equal(len(game5.GenreAddition), 2, "Must be 3 extra genres")
+	require.Equal(game5.GenreMain, int64(1), "Genre with id 1")
 
 	suite.T().Log("Get game descriptions")
 	gameDescr, err := gameService.GetDescr(userId, game5.ID)
@@ -250,7 +279,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Retrive tags with user", userId.String())
 	tags, err := gameService.FindTags(userId, "Стрелялки", 20, 0)
 	require.Equal(len(tags), 1, "Must be one match")
-	require.Equal(tags[0].ID, "action", "Same value")
+	require.Equal(tags[0].ID, 1, "Same value")
 }
 
 func (suite *GameServiceTestSuite) TestDescriptors() {
@@ -273,4 +302,23 @@ func (suite *GameServiceTestSuite) TestDescriptors() {
 	require.Equal(1, len(descriptors))
 	require.Equal(testDescr.System, descriptors[0].System)
 	require.Equal(testDescr.Title, descriptors[0].Title)
+}
+
+func (suite *GameServiceTestSuite) TestFindAllGenres() {
+	require := require.New(suite.T())
+
+	gameService, err := orm.NewGameService(suite.db)
+	require.NoError(err)
+
+	genres, err := gameService.FindGenres(suite.userId, "", 10, 0)
+	require.NoError(err)
+	require.Equal(3, len(genres))
+	require.Equal(1, genres[0].ID)
+	require.Equal("Action", genres[0].Title.EN)
+
+	genres2, err := gameService.FindGenres(suite.userId, "", 1, 1)
+	require.NoError(err)
+	require.Equal(1, len(genres2))
+	require.Equal(2, genres2[0].ID)
+	require.Equal("Test", genres2[0].Title.EN)
 }

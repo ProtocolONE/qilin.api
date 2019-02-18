@@ -55,7 +55,7 @@ type (
 	}
 
 	GameTagDTO struct {
-		Id    string                `json:"id" validate:"required"`
+		Id    int                   `json:"id" validate:"required"`
 		Title utils.LocalizedString `json:"title" validate:"dive"`
 	}
 
@@ -85,21 +85,21 @@ type (
 	}
 
 	GameGenreDTO struct {
-		Main        string          `json:"main"`
-		Addition    []string        `json:"addition" validate:"required"`
+		Main        int64        `json:"main"`
+		Addition    []int64      `json:"addition" validate:"required"`
 	}
 
 	GameDTO struct {
 		ID uuid.UUID `json:"id"`
 		BaseGameDTO
 		Genres GameGenreDTO `json:"genres" validate:"required,dive"`
-		Tags   []string     `json:"tags" validate:"required"`
+		Tags   []int64      `json:"tags" validate:"required"`
 	}
 
 	UpdateGameDTO struct {
 		BaseGameDTO
 		Genres GameGenreDTO `json:"genres" validate:"required,dive"`
-		Tags   []string     `json:"tags" validate:"required"`
+		Tags   []int64      `json:"tags" validate:"required"`
 	}
 
 	GamePriceDTO struct {

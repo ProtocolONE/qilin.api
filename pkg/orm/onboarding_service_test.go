@@ -49,8 +49,8 @@ func (suite *OnbardingServiceTestSuite) SetupTest() {
 		ID:             id,
 		InternalName:   "Test_game_3",
 		ReleaseDate:    time.Now(),
-		GenreAddition:  pq.StringArray{},
-		Tags:           pq.StringArray{},
+		GenreAddition:  pq.Int64Array{},
+		Tags:           pq.Int64Array{},
 		FeaturesCommon: pq.StringArray{},
 		VendorID:		id,
 	}).Error
