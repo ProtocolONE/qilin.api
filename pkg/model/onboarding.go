@@ -1,6 +1,8 @@
 package model
 
 import (
+	"errors"
+	"fmt"
 	"github.com/satori/go.uuid"
 )
 
@@ -12,11 +14,14 @@ const (
 	StatusOnReview ClientDocumentStatus = 1 //`on_review`
 	StatusApproved ClientDocumentStatus = 2 //`approved`
 	StatusDeclined ClientDocumentStatus = 3 //`declined`
+	StatusArchived ClientDocumentStatus = 4 //`declined`
 
-	ReviewNew      ReviewStatus = 0 //`new`
-	ReviewApproved ReviewStatus = 1 //`approved`
-	ReviewChecking ReviewStatus = 2 //`checking`
-	ReviewReturned ReviewStatus = 3 //`returned`
+	ReviewUndefined ReviewStatus = -1 //`new`
+	ReviewNew       ReviewStatus = 0  //`new`
+	ReviewApproved  ReviewStatus = 1  //`approved`
+	ReviewChecking  ReviewStatus = 2  //`checking`
+	ReviewReturned  ReviewStatus = 3  //`returned`
+	ReviewArchived  ReviewStatus = 4  //`archived`
 )
 
 type DocumentsInfo struct {
@@ -29,21 +34,54 @@ type DocumentsInfo struct {
 	VendorID     uuid.UUID            `gorm:"type:uuid;not null"`
 }
 
+func ReviewStatusFromString(review string) (ReviewStatus, error) {
+	switch review {
+	case "":
+		return ReviewUndefined, nil
+	case "returned":
+		return ReviewReturned, nil
+	case "new":
+		return ReviewNew, nil
+	case "approved":
+		return ReviewApproved, nil
+	case "checking":
+		return ReviewChecking, nil
+	case "archived":
+		return ReviewArchived, nil
+	}
+	return ReviewUndefined, errors.New(fmt.Sprintf("Unknown review status `%s`", review))
+}
+
+func (status ReviewStatus) ToString() string {
+	switch status {
+	case ReviewReturned:
+		return "returned"
+	case ReviewChecking:
+		return "checking"
+	case ReviewApproved:
+		return "approved"
+	case ReviewNew:
+		return "new"
+	case ReviewUndefined:
+		return "undefined"
+	case ReviewArchived:
+		return "archived"
+	}
+
+	return ""
+}
+
 func (status ClientDocumentStatus) ToString() string {
 	if status == StatusDraft {
 		return "draft"
-	}
-
-	if status == StatusApproved {
+	} else if status == StatusApproved {
 		return "approved"
-	}
-
-	if status == StatusDeclined {
+	} else if status == StatusDeclined {
 		return "declined"
-	}
-
-	if status == StatusOnReview {
+	} else if status == StatusOnReview {
 		return "on_review"
+	} else if status == StatusArchived {
+		return "archived"
 	}
 
 	return ""
