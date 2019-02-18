@@ -159,6 +159,15 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
+	clientOnboarding, err := orm.NewOnboardingService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitClientOnboardingRouter(s.Router, clientOnboarding); err != nil {
+		return err
+	}
+
 	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
