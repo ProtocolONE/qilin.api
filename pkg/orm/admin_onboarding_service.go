@@ -24,7 +24,7 @@ func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string,
 	var documents []model.DocumentsInfo
 	query := p.db.Where("status <> ?", model.StatusDraft).Limit(limit).Offset(offset)
 	if name != "" {
-		query = query.Where("company->>'Name' LIKE ?", "%"+name+"%")
+		query = query.Where("company->>'Name' ILIKE ?", "%"+name+"%")
 	}
 
 	if status != model.ReviewUndefined {
@@ -70,6 +70,7 @@ func (p *AdminOnboardingService) GetForVendor(id uuid.UUID) (*model.DocumentsInf
 		if err != nil {
 			return nil, NewServiceError(http.StatusInternalServerError, err)
 		}
+		return nil, NewServiceError(http.StatusNotFound)
 	}
 
 	result := model.DocumentsInfo{}
@@ -80,4 +81,43 @@ func (p *AdminOnboardingService) GetForVendor(id uuid.UUID) (*model.DocumentsInf
 	}
 
 	return &result, nil
+}
+
+func (p *AdminOnboardingService) ChangeStatus(id uuid.UUID, status model.ReviewStatus, message string) error {
+	doc, err := p.GetForVendor(id)
+	if err != nil {
+		return err
+	}
+
+	if doc == nil || doc.ID == uuid.Nil {
+		return NewServiceError(http.StatusBadRequest, "Trying to change status for non-existing review")
+	}
+
+	if doc.Status == model.StatusDraft {
+		return NewServiceError(http.StatusBadRequest, "Trying to change status for documents that have not been sent to review")
+	}
+
+	switch status {
+	case model.ReviewApproved:
+		doc.Status = model.StatusApproved
+	case model.ReviewReturned:
+		doc.Status = model.StatusDeclined
+	case model.ReviewChecking:
+		doc.Status = model.StatusOnReview
+	case model.ReviewArchived:
+		doc.Status = model.StatusArchived
+	default:
+		return NewServiceError(http.StatusBadRequest, fmt.Sprintf("Can't change to status `%s`", status.ToString()))
+	}
+	doc.ReviewStatus = status
+
+	err = p.db.Save(doc).Error
+
+	if err != nil {
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Saving document error"))
+	}
+
+	//TODO: добавить отправку message с добавлением новой функциональности
+
+	return nil
 }

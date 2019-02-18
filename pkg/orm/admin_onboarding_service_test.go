@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"net/http"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/orm"
@@ -71,6 +72,16 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 	}
 	_, err = vendorService.Create(&vendor)
 	suite.Nil(err, "Must create new vendor")
+
+	vendor2 := model.Vendor{
+		ID:              uuid.FromStringOrNil("5862ead5-acf5-4092-a7bc-a645f279096d"),
+		Name:            "domino1",
+		Domain3:         "domino2",
+		Email:           "domino3@proto.com",
+		HowManyProducts: "+10004",
+		ManagerID:       userId,
+	}
+	_, err = vendorService.Create(&vendor2)
 
 	id, _ := uuid.FromString(GameID)
 	game := model.Game{}
@@ -230,6 +241,90 @@ func (suite *AdminOnboardingServiceTestSuite) TearDownTest() {
 	}
 }
 
+func (suite *AdminOnboardingServiceTestSuite) TestChangeStatus() {
+	should := require.New(suite.T())
+	id := uuid.FromStringOrNil("5862ead5-acf5-4092-a7bc-a645f279096d")
+
+	vendorDocuments := model.DocumentsInfo{
+		VendorID: id,
+		Company: model.JSONB{
+			"Name":            "MEGA TEST",
+			"AlternativeName": "Alt MEGA NAME",
+			"Country":         "RUSSIA",
+		},
+		Contact: model.JSONB{
+			"Authorized": model.JSONB{
+				"FullName": "Эдуард Никифоров",
+				"Position": "Руководитель",
+			},
+			"Technical": model.JSONB{
+				"FullName": "Роман Обрамович",
+				"Position": "Батрак",
+			},
+		},
+		Status:       model.StatusOnReview,
+		ReviewStatus: model.ReviewNew,
+		Banking: model.JSONB{
+			"Currency": "USD",
+		},
+	}
+	vendorDocuments.ID = uuid.NewV4()
+	should.Nil(suite.db.DB().Create(&vendorDocuments).Error)
+	fromDb := model.DocumentsInfo{}
+
+	err := suite.service.ChangeStatus(id, model.ReviewApproved, "")
+	should.Nil(err)
+	should.Nil(suite.db.DB().Model(&vendorDocuments).Where("id = ?", vendorDocuments.ID).First(&fromDb).Error)
+	should.Equal(model.StatusApproved, fromDb.Status)
+	should.Equal(model.ReviewApproved, fromDb.ReviewStatus)
+
+	err = suite.service.ChangeStatus(id, model.ReviewReturned, "")
+	should.Nil(err)
+	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
+	should.Equal(model.StatusDeclined, fromDb.Status)
+	should.Equal(model.ReviewReturned, fromDb.ReviewStatus)
+
+	err = suite.service.ChangeStatus(id, model.ReviewChecking, "")
+	should.Nil(err)
+	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
+	should.Equal(model.StatusOnReview, fromDb.Status)
+	should.Equal(model.ReviewChecking, fromDb.ReviewStatus)
+
+	err = suite.service.ChangeStatus(id, model.ReviewArchived, "")
+	should.Nil(err)
+	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
+	should.Equal(model.StatusArchived, fromDb.Status)
+	should.Equal(model.ReviewArchived, fromDb.ReviewStatus)
+
+	err = suite.service.ChangeStatus(id, model.ReviewUndefined, "")
+	should.NotNil(err)
+	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
+	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
+	should.Equal(model.StatusArchived, fromDb.Status)
+	should.Equal(model.ReviewArchived, fromDb.ReviewStatus)
+
+	err = suite.service.ChangeStatus(id, model.ReviewNew, "")
+	should.NotNil(err)
+	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
+	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
+	should.Equal(model.StatusArchived, fromDb.Status)
+	should.Equal(model.ReviewArchived, fromDb.ReviewStatus)
+
+	err = suite.service.ChangeStatus(uuid.NewV4(), model.ReviewNew, "")
+	should.NotNil(err)
+	should.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
+
+	vendorDocuments.Status = model.StatusDraft
+	vendorDocuments.ReviewStatus = model.ReviewNew
+	should.Nil(suite.db.DB().Save(&vendorDocuments).Error)
+	err = suite.service.ChangeStatus(id, model.ReviewNew, "")
+	should.NotNil(err)
+	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
+	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
+	should.Equal(model.StatusDraft, fromDb.Status)
+	should.Equal(model.ReviewNew, fromDb.ReviewStatus)
+}
+
 func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 	should := require.New(suite.T())
 
@@ -259,6 +354,13 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(1, len(requests))
+	should.Equal("MEGA TEST", requests[0].Company["Name"])
+
+	requests, err = suite.service.GetRequests(100, 0, "mega", model.ReviewUndefined, "")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(1, len(requests))
+	should.Equal("MEGA TEST", requests[0].Company["Name"])
 
 	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-status")
 	should.Nil(err)
@@ -304,6 +406,15 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 	should.Equal("MEGA TEST", requests[11].Company["Name"])
 	should.Equal("PUBG TEST", requests[10].Company["Name"])
 
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-updatedAt")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(13, len(requests))
+
+	for i := 0; i > len(requests)-1; i++ {
+		should.True(requests[i].UpdatedAt.After(requests[i+1].UpdatedAt))
+	}
+
 	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+updatedAt")
 	should.Nil(err)
 	should.NotNil(requests)
@@ -312,11 +423,59 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 	for i := 0; i > len(requests)-1; i++ {
 		should.True(requests[i].UpdatedAt.Before(requests[i+1].UpdatedAt))
 	}
-	//
-	//should.Equal("MEGA TEST", requests[0].Company["Name"])
-	//should.Equal("PUBG TEST", requests[1].Company["Name"])
-	//should.Equal("Ash of Evils ", requests[2].Company["Name"])
-	//for i := 3; i < len(requests); i++ {
-	//	should.Equal("ZTEST2", requests[i].Company["Name"])
-	//}
+
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewNew, "")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(10, len(requests))
+
+	for i := 0; i > len(requests); i++ {
+		should.Equal(model.ReviewNew, requests[i].ReviewStatus)
+	}
+
+	requests, err = suite.service.GetRequests(100, 5, "", model.ReviewNew, "")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(5, len(requests))
+
+	for i := 0; i > len(requests); i++ {
+		should.Equal(model.ReviewNew, requests[i].ReviewStatus)
+	}
+
+	requests2, err := suite.service.GetRequests(5, 0, "", model.ReviewNew, "")
+	should.Nil(err)
+	should.NotNil(requests2)
+	should.Equal(5, len(requests2))
+
+	for i := 0; i > len(requests2); i++ {
+		should.Equal(model.ReviewNew, requests2[i].ReviewStatus)
+		should.NotEqual(requests[i].ID, requests2[i].ID)
+	}
+
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewChecking, "")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(1, len(requests))
+
+	for i := 0; i > len(requests); i++ {
+		should.Equal(model.ReviewChecking, requests[i].ReviewStatus)
+	}
+
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewApproved, "")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(1, len(requests))
+
+	for i := 0; i > len(requests); i++ {
+		should.Equal(model.ReviewApproved, requests[i].ReviewStatus)
+	}
+
+	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewReturned, "")
+	should.Nil(err)
+	should.NotNil(requests)
+	should.Equal(1, len(requests))
+
+	for i := 0; i > len(requests); i++ {
+		should.Equal(model.ReviewReturned, requests[i].ReviewStatus)
+	}
 }

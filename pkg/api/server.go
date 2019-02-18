@@ -168,6 +168,15 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
+	adminClientOnboarding, err := orm.NewAdminOnboardingService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitAdminOnboardingRouter(s.Router.Group("/admin"), adminClientOnboarding); err != nil {
+		return err
+	}
+
 	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
