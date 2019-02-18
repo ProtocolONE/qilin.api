@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
-	"strconv"
+	"qilin-api/pkg/utils"
 	"strings"
 	"time"
 )
@@ -277,14 +277,6 @@ func (p *GameService) Delete(userId uuid.UUID, gameId uuid.UUID) (err error) {
 	return nil
 }
 
-func joinInts(list []int64, sep string) string {
-	strs := []string{}
-	for _, i := range list {
-		strs = append(strs, strconv.FormatInt(i, 10))
-	}
-	return strings.Join(strs, sep)
-}
-
 func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error) {
 
 	gameSrc, err := p.GetInfo(userId, game.ID)
@@ -306,12 +298,12 @@ func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error)
 	}
 	if len(tempGenres) > 0 {
 		foundGenres := 0
-		err = p.db.Model(&model.GameGenre{}).Where("id in ("  + joinInts(tempGenres, ",") +  ")").Count(&foundGenres).Error
+		err = p.db.Model(&model.GameGenre{}).Where("id in ("  + utils.JoinInt(tempGenres, ",") +  ")").Count(&foundGenres).Error
 		if err != nil {
 			return errors.Wrap(err, "Fetch genres")
 		}
 		if foundGenres != len(tempGenres) {
-			return NewServiceError(http.StatusConflict, "Invalid genre")
+			return NewServiceError(http.StatusUnprocessableEntity, "Invalid genre")
 		}
 	}
 	if game.Tags == nil {
@@ -319,12 +311,12 @@ func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error)
 	}
 	if len(game.Tags) > 0 {
 		foundTags := 0
-		err = p.db.Model(&model.GameTag{}).Where("id in (" + joinInts(game.Tags, ",") + ")").Count(&foundTags).Error
+		err = p.db.Model(&model.GameTag{}).Where("id in (" + utils.JoinInt(game.Tags, ",") + ")").Count(&foundTags).Error
 		if err != nil {
 			return errors.Wrap(err, "Fetch genres")
 		}
 		if foundTags != len(game.Tags) {
-			return NewServiceError(http.StatusConflict, "Invalid tag")
+			return NewServiceError(http.StatusUnprocessableEntity, "Invalid tag")
 		}
 	}
 

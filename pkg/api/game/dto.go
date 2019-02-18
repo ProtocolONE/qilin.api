@@ -85,7 +85,7 @@ type (
 	}
 
 	GameGenreDTO struct {
-		Main        int          `json:"main"`
+		Main        int64        `json:"main"`
 		Addition    []int64      `json:"addition" validate:"required"`
 	}
 

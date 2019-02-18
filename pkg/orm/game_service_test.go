@@ -9,14 +9,15 @@ import (
 	"qilin-api/pkg/test"
 	"testing"
 
-	"github.com/gofrs/uuid"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type GameServiceTestSuite struct {
 	suite.Suite
-	db *orm.Database
+	db      *orm.Database
+	userId  uuid.UUID
 }
 
 func Test_GameService(t *testing.T) {
@@ -93,6 +94,8 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Register new user")
 	userId, err := userService.Register("test@protocol.one", "mega123!", "ru")
 	require.Nil(err, "Unable to register user1")
+
+	suite.userId = userId
 
 	suite.T().Log("Register second user")
 	user2Id, err := userService.Register("test@protocol2.one", "mega124!", "en")
@@ -273,4 +276,42 @@ func (suite *GameServiceTestSuite) TestDescriptors() {
 	require.Equal(1, len(descriptors))
 	require.Equal(testDescr.System, descriptors[0].System)
 	require.Equal(testDescr.Title, descriptors[0].Title)
+}
+
+func (suite *GameServiceTestSuite) TestFindAllGenres() {
+	require := require.New(suite.T())
+
+	require.NoError(suite.db.DB().Create(&model.GameGenre{
+		model.GameTag{
+			ID:    1,
+			Title: utils.LocalizedString{EN: "Action"},
+		},
+	}).Error)
+	require.NoError(suite.db.DB().Create(&model.GameGenre{
+		model.GameTag{
+			ID:    2,
+			Title: utils.LocalizedString{EN: "Test"},
+		},
+	}).Error)
+	require.NoError(suite.db.DB().Create(&model.GameGenre{
+		model.GameTag{
+			ID:    3,
+			Title: utils.LocalizedString{EN: "Tanks"},
+		},
+	}).Error)
+
+	gameService, err := orm.NewGameService(suite.db)
+	require.NoError(err)
+
+	genres, err := gameService.FindGenres(suite.userId, "", 10, 0)
+	require.NoError(err)
+	require.Equal(3, len(genres))
+	require.Equal(1, genres[0].ID)
+	require.Equal("Action", genres[0].Title.EN)
+
+	genres2, err := gameService.FindGenres(suite.userId, "", 1, 1)
+	require.NoError(err)
+	require.Equal(1, len(genres2))
+	require.Equal(2, genres2[0].ID)
+	require.Equal("Test", genres2[0].Title.EN)
 }
