@@ -1201,7 +1201,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /admin/api/v1/vendors/reviews:
+  /api/v1/admin/vendors/reviews:
     get:
       summary: "Get list of vendor requests"
       tags:
@@ -1293,7 +1293,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /admin/api/v1/vendors/{id}/documents/status:
+  /api/v1/admin/vendors/{id}/documents/status:
     put:
       tags:
         - admin
@@ -1345,7 +1345,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /admin/api/v1/vendors/{id}/messages:
+  /api/v1/admin/vendors/{id}/messages:
     post:
       tags:
         - admin
@@ -1383,7 +1383,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /admin/api/v1/vendors/{id}/documents:
+  /api/v1/admin/vendors/{id}/documents:
     get:
       tags:
         - admin
@@ -1578,9 +1578,11 @@ components:
               type: string
               description: "Address line 2"
             registrationNumber:
-              type: number
+              type: string
+              example: "12394071075"
             taxId:
-              type: number
+              type: string
+              example: "4300098"
               description: "Tax ID / EIN / TIN"
         contact:
           type: object
@@ -1626,9 +1628,8 @@ components:
               example: "Bank of Baroda"
             address:
               type: string
-
             accountNumber:
-              type: number
+              type: string
             swift:
               type: string
             details:

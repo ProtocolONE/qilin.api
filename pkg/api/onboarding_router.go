@@ -50,8 +50,8 @@ type (
 		City               string `json:"city" validate:"required"`
 		Address            string `json:"address" validate:"required"`
 		AdditionalAddress  string `json:"additionalAddress"`
-		RegistrationNumber int64  `json:"registrationNumber" validate:"required"`
-		TaxId              int64  `json:"taxId" validate:"required"`
+		RegistrationNumber string `json:"registrationNumber" validate:"required"`
+		TaxId              string `json:"taxId" validate:"required"`
 	}
 
 	DocumentsInfoDTO struct {
@@ -64,7 +64,7 @@ type (
 		Company CompanyDTO `json:"company" validate:"required,dive"`
 		Contact ContactDTO `json:"contact" validate:"required,dive"`
 		Banking BankingDTO `json:"banking" validate:"required,dive"`
-		Status  string      `json:"status"`
+		Status  string     `json:"status"`
 	}
 )
 
@@ -75,7 +75,7 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	r := group.Group("/vendors/:id")
 	r.GET("/documents", router.getDocument)
 	r.PUT("/documents", router.changeDocument)
-	r.PUT("/documents/reviews", router.sendToReview)
+	r.POST("/documents/reviews", router.sendToReview)
 
 	return &router, nil
 }
