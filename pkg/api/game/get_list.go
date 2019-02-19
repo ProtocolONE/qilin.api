@@ -38,8 +38,12 @@ func (api *Router) GetList(ctx echo.Context) error {
 	}
 	dto := []ShortGameInfoDTO{}
 	for _, game := range games {
+		prices := GamePriceDTO{
+			Currency: game.Price.Currency,
+			Price: float64(game.Price.Price),
+		}
 		dto = append(dto, ShortGameInfoDTO{
-			ID:           game.ID,
+			ID:           game.Game.ID,
 			InternalName: game.InternalName,
 			Icon:         "",
 			Genres:       GameGenreDTO{
@@ -47,7 +51,7 @@ func (api *Router) GetList(ctx echo.Context) error {
 				Addition:   game.GenreAddition,
 			},
 			ReleaseDate:  game.ReleaseDate,
-			Prices:       GamePricesDTO{},
+			Prices:       prices,
 		})
 	}
 
