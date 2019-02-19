@@ -27,15 +27,15 @@ type OnboardingClientRouterTestSuite struct {
 }
 
 var (
-	emptyDocument                 = `{"company":{"name":"","alternativeName":"","country":"","region":"","zip":"","city":"","address":"","additionalAddress":"","registrationNumber":0,"taxId":0},"contact":{"authorized":{"fullName":"","email":"","phone":"","position":""},"technical":{"fullName":"","email":"","phone":""}},"banking":{"currency":"","name":"","address":"","accountNumber":"","swift":"","details":""},"status":"draft"}`
-	nonEmptyDocument              = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":1232321312,"taxId":13122414},"contact":{"authorized":{"fullName":"TestName","email":"test@email.com","phone":"+7123456789","position":"TestPosition"},"technical":{"fullName":"","email":"","phone":""}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
-	badDocumentNoName             = `{"company":{"country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":1232321312,"taxId":13122414},"contact":{},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
-	badDocumentNoRegion           = `{"company":{"name":"TestName","alternativeName":"","country":"russia","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":1232321312,"taxId":13122414},"contact":{"authorized":{"fullName":"test","position":"testposition","email":"email@enail.com","phone":"123123124"}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
-	badDocumentNoZip              = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":1232321312,"taxId":13122414},"contact":{"authorized":{"fullName":"test","position":"testposition","email":"email@enail.com","phone":"123123124"}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
-	badDocumentNoContact          = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":1232321312,"taxId":13122414},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
-	badDocumentWrongCurrency      = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":1232321312,"taxId":13122414},"contact":{"authorized":{"fullName":"test","position":"testposition","email":"email@enail.com","phone":"123123124"}},"banking":{"currency":"LOL","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
-	badDocumentEmptyContact       = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":1232321312,"taxId":13122414},"contact":{"authorized":{}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
-	badDocumentContactWithoutName = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":1232321312,"taxId":13122414},"contact":{"authorized":{"position":"testposition","email":"email@enail.com","phone":"123123124"}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
+	emptyDocument                 = `{"company":{"name":"","alternativeName":"","country":"","region":"","zip":"","city":"","address":"","additionalAddress":"","registrationNumber":"","taxId":""},"contact":{"authorized":{"fullName":"","email":"","phone":"","position":""},"technical":{"fullName":"","email":"","phone":""}},"banking":{"currency":"","name":"","address":"","accountNumber":"","swift":"","details":""},"status":"draft"}`
+	nonEmptyDocument              = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":"1232321312","taxId":"13122414"},"contact":{"authorized":{"fullName":"TestName","email":"test@email.com","phone":"+7123456789","position":"TestPosition"},"technical":{"fullName":"","email":"","phone":""}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
+	badDocumentNoName             = `{"company":{"country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":"1232321312","taxId":"13122414"},"contact":{},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
+	badDocumentNoRegion           = `{"company":{"name":"TestName","alternativeName":"","country":"russia","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":"1232321312","taxId":"13122414"},"contact":{"authorized":{"fullName":"test","position":"testposition","email":"email@enail.com","phone":"123123124"}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
+	badDocumentNoZip              = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":"1232321312","taxId":"13122414"},"contact":{"authorized":{"fullName":"test","position":"testposition","email":"email@enail.com","phone":"123123124"}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
+	badDocumentNoContact          = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":"1232321312","taxId":"13122414"},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
+	badDocumentWrongCurrency      = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":"1232321312","taxId":"13122414"},"contact":{"authorized":{"fullName":"test","position":"testposition","email":"email@enail.com","phone":"123123124"}},"banking":{"currency":"LOL","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
+	badDocumentEmptyContact       = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":"1232321312","taxId":"13122414"},"contact":{"authorized":{}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
+	badDocumentContactWithoutName = `{"company":{"name":"TestName","alternativeName":"","country":"russia","region":"Moscow","zip":"098978","city":"Moscow","address":"Some address","additionalAddress":"Some add address","registrationNumber":"1232321312","taxId":"13122414"},"contact":{"authorized":{"position":"testposition","email":"email@enail.com","phone":"123123124"}},"banking":{"currency":"USD","name":"Bank of Baroda","address":"string","accountNumber":"12345678901234567","swift":"QWERTY","details":"NoDetails"},"status":"draft"}`
 )
 
 func Test_OnboardingClientRouter(t *testing.T) {
@@ -122,8 +122,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetShouldReturnObject() {
 			"city":               "Moscow",
 			"address":            "Some address",
 			"additionalAddress":  "Some add address",
-			"registrationNumber": 1232321312,
-			"taxId":              13122414,
+			"registrationNumber": "1232321312",
+			"taxId":              "13122414",
 		},
 	}
 	info.ID = uuid.NewV4()
@@ -178,8 +178,8 @@ func (suite *OnboardingClientRouterTestSuite) TestSendToReviewShouldReturnCreate
 			"city":               "Moscow",
 			"address":            "Some address",
 			"additionalAddress":  "Some add address",
-			"registrationNumber": 1232321312,
-			"taxId":              13122414,
+			"registrationNumber": "1232321312",
+			"taxId":              "13122414",
 		},
 	}
 	info.ID = uuid.NewV4()
@@ -230,8 +230,8 @@ func (suite *OnboardingClientRouterTestSuite) TestSendToReviewShouldReturnError(
 			"city":               "Moscow",
 			"address":            "Some address",
 			"additionalAddress":  "Some add address",
-			"registrationNumber": 1232321312,
-			"taxId":              13122414,
+			"registrationNumber": "1232321312",
+			"taxId":              "13122414",
 		},
 	}
 	info.ID = uuid.NewV4()
@@ -282,8 +282,8 @@ func (suite *OnboardingClientRouterTestSuite) TestChangeShouldReturnErrorWhenNot
 			"city":               "Moscow",
 			"address":            "Some address",
 			"additionalAddress":  "Some add address",
-			"registrationNumber": 1232321312,
-			"taxId":              13122414,
+			"registrationNumber": "1232321312",
+			"taxId":              "13122414",
 		},
 	}
 	info.ID = uuid.NewV4()

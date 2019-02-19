@@ -29,6 +29,7 @@ func (suite *VendorServiceTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
+	db.DropAllTables()
 	db.Init()
 
 	suite.db = db
