@@ -148,7 +148,24 @@ func (suite *GameServiceTestSuite) TestGames() {
 			Title: utils.LocalizedString{EN: "Tanks", RU: "Танки"},
 		},
 	})
-	require.Nil(err, "Unable to create game")
+	require.Nil(err, "Unable to create game tags")
+
+	suite.T().Log("Makes more genres")
+	err = gameService.CreateGenres([]model.GameGenre{
+		{model.GameTag{
+			ID:    4,
+			Title: utils.LocalizedString{EN: "genre-1", RU: "Жанр-1"},
+		}},
+		{model.GameTag{
+			ID:    5,
+			Title: utils.LocalizedString{EN: "genre-2", RU: "Жанр-2"},
+		}},
+			{model.GameTag{
+			ID:    6,
+			Title: utils.LocalizedString{EN: "genre-3", RU: "Жанр-3"},
+		}},
+	})
+	require.Nil(err, "Unable to create genres")
 
 	suite.T().Log("Create game")
 	gameName := "game1"
