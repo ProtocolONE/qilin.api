@@ -74,6 +74,7 @@ type (
 	// GameService is a helper service class to interact with Game object.
 	GameService interface {
 		CreateTags([]GameTag) error
+		CreateGenres([]GameGenre) error
 
 		GetTags([]string) ([]GameTag, error)
 		GetGenres([]string) ([]GameGenre, error)

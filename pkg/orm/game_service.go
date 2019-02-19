@@ -381,3 +381,13 @@ func (p *GameService) CreateTags(tags []model.GameTag) (err error) {
 	}
 	return
 }
+
+func (p *GameService) CreateGenres(genres []model.GameGenre) (err error) {
+	for _, g := range genres {
+		err = p.db.Create(&g).Error
+		if err != nil {
+			return errors.Wrap(err, "Create game tag")
+		}
+	}
+	return
+}
