@@ -66,9 +66,15 @@ type (
 		GameID uuid.UUID
 	}
 
+	ShortGameInfo struct {
+		Game
+		Price
+	}
+
 	// GameService is a helper service class to interact with Game object.
 	GameService interface {
 		CreateTags([]GameTag) error
+		CreateGenres([]GameGenre) error
 
 		GetTags([]string) ([]GameTag, error)
 		GetGenres([]string) ([]GameGenre, error)
@@ -78,10 +84,14 @@ type (
 
 		Create(userId uuid.UUID, vendorId uuid.UUID, internalName string) (*Game, error)
 		Delete(userId uuid.UUID, gameId uuid.UUID) error
-		GetList(userId uuid.UUID, vendorId uuid.UUID, offset, limit int, internalName, genre, releaseDate, sort string, price float64) ([]*Game, error)
+		GetList(userId uuid.UUID, vendorId uuid.UUID, offset, limit int, internalName, genre, releaseDate, sort string, price float64) ([]*ShortGameInfo, error)
 		GetInfo(userId uuid.UUID, gameId uuid.UUID) (*Game, error)
 		UpdateInfo(userId uuid.UUID, game *Game) error
 		GetDescr(userId uuid.UUID, gameId uuid.UUID) (*GameDescr, error)
 		UpdateDescr(userId uuid.UUID, descr *GameDescr) error
 	}
 )
+
+func (ShortGameInfo) TableName() string {
+	return "games"
+}

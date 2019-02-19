@@ -2034,11 +2034,11 @@ components:
       type: object
       properties:
         main:
-          type: string
+          type: integer
         addition:
           type: array
           items:
-            type: string
+            type: integer
 
     Genre:
       type: object
@@ -2228,7 +2228,7 @@ components:
             tags:
               type: array
               items:
-                type: string
+                type: integer
 
     ChangeGame:
       allOf:
@@ -2240,7 +2240,7 @@ components:
             tags:
               type: array
               items:
-                type: string
+                type: integer
 
     Score:
       type: object

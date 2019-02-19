@@ -160,7 +160,7 @@ func (p *GameService) Create(userId uuid.UUID, vendorId uuid.UUID, internalName 
 }
 
 func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
-	offset, limit int, internalName, genre, releaseDate, sort string, price float64) (list []*model.Game, err error) {
+	offset, limit int, internalName, genre, releaseDate, sort string, price float64) (list []*model.ShortGameInfo, err error) {
 
 	if err := p.verify_UserAndVendor(userId, vendorId); err != nil {
 		return nil, err
@@ -182,15 +182,17 @@ func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
 
 	if genre != "" {
 		genres := []model.GameGenre{}
-		err = p.db.Where("title ->> ? ilike ?", user.Lang, genre).Limit(1).Find(&genres).Error
+		/// title[user.Lang] === genre or title.en === genre
+		err = p.db.Where("(title ->> ? ilike ? or title ->> 'en' ilike ?)", user.Lang, genre, genre).
+			Limit(1).Find(&genres).Error
 		if err != nil {
 			return nil, errors.Wrap(err, "while fetch genres")
 		}
 		if len(genres) == 0 {
 			return // 200: No any genre found
 		}
-		conds = append(conds, "? = ANY(genre)")
-		vals = append(vals, genres[0].ID)
+		conds = append(conds, "(genre_main = ? or ? = ANY(genre_addition))")
+		vals = append(vals, genres[0].ID, genres[0].ID)
 	}
 
 	if releaseDate != "" {
@@ -203,29 +205,26 @@ func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
 	}
 
 	if price > 0 {
-		conds = append(conds, `game_prices.value = ?`)
+		conds = append(conds, `abs(prices.price - ?) < 0.01`)
 		vals = append(vals, price)
 	}
-
-	conds = append(conds, `vendor_id = ?`)
-	vals = append(vals, vendorId)
 
 	var orderBy interface{}
 	orderBy = "created_at ASC"
 	if sort != "" {
 		switch sort {
 		case "-genre":
-			orderBy = "created_at DESC"
+			orderBy = "game_genres.title ->> 'en' DESC, created_at DESC"
 		case "+genre":
-			orderBy = "genre ASC"
+			orderBy = "game_genres.title ->> 'en' ASC, created_at ASC"
 		case "-releaseDate":
 			orderBy = "release_date DESC"
 		case "+releaseDate":
 			orderBy = "release_date ASC"
 		case "-price":
-			orderBy = "game_prices.value DESC"
+			orderBy = "prices ASC, prices.price DESC, created_at DESC"
 		case "+price":
-			orderBy = "game_prices.value ASC"
+			orderBy = "prices DESC, prices.price ASC, created_at ASC"
 		case "-name":
 			orderBy = "internal_name DESC"
 		case "+name":
@@ -235,9 +234,11 @@ func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
 
 	err = p.db.
 		Model(model.Game{}).
-		// TODO: relate with prices
-		//Joins("LEFT JOIN game_prices on game_prices.game_id = game.id and game_prices.currency = ?", vendor.Currency).
-		Where(strings.Join(conds, " and "), vals...).
+		Select("games.*, prices.currency, prices.price").
+		Joins("LEFT JOIN prices on prices.base_price_id = games.id and prices.currency = games.common ->> 'Currency'").
+		Joins("LEFT JOIN game_genres on game_genres.id = games.genre_main").
+		Where(`vendor_id = ?`, vendorId).
+		Where(strings.Join(conds, " or "), vals...).
 		Order(orderBy).
 		Limit(limit).
 		Offset(offset).
@@ -374,6 +375,16 @@ func (p *GameService) UpdateDescr(userId uuid.UUID, descr *model.GameDescr) (err
 func (p *GameService) CreateTags(tags []model.GameTag) (err error) {
 	for _, t := range tags {
 		err = p.db.Create(&t).Error
+		if err != nil {
+			return errors.Wrap(err, "Create game tag")
+		}
+	}
+	return
+}
+
+func (p *GameService) CreateGenres(genres []model.GameGenre) (err error) {
+	for _, g := range genres {
+		err = p.db.Create(&g).Error
 		if err != nil {
 			return errors.Wrap(err, "Create game tag")
 		}

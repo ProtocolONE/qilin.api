@@ -107,15 +107,13 @@ type (
 		Currency string  `json:"currency" validate:"required"`
 	}
 
-	GamePricesDTO []GamePriceDTO
-
 	ShortGameInfoDTO struct {
 		ID           uuid.UUID     `json:"id"`
 		InternalName string        `json:"internalName"`
 		Icon         string        `json:"icon"`
 		Genres       GameGenreDTO  `json:"genres"`
 		ReleaseDate  time.Time     `json:"releaseDate"`
-		Prices       GamePricesDTO `json:"prices"`
+		Prices       GamePriceDTO  `json:"prices"`
 	}
 
 	DescrReview struct {
