@@ -42,11 +42,14 @@ func main() {
 
 	mailer := sys.NewMailer(config.Mailer)
 
+	notifier := sys.NewNotifierImpl(config.Notifier.ApiKey, config.Notifier.Host)
+
 	serverOptions := api.ServerOptions{
 		Jwt:          &config.Jwt,
 		ServerConfig: &config.Server,
 		Database:     db,
 		Mailer:       mailer,
+		Notifier:     notifier,
 	}
 
 	server, err := api.NewServer(&serverOptions)

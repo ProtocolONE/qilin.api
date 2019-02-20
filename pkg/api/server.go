@@ -21,6 +21,7 @@ type ServerOptions struct {
 	Jwt          *conf.Jwt
 	Database     *orm.Database
 	Mailer       sys.Mailer
+	Notifier     *sys.Notifier
 }
 
 type Server struct {
@@ -30,6 +31,7 @@ type Server struct {
 
 	Router     *echo.Group
 	AuthRouter *echo.Group
+	Notifier   *sys.Notifier
 }
 
 type QilinValidator struct {
@@ -45,6 +47,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		echo:         echo.New(),
 		serverConfig: opts.ServerConfig,
 		db:           opts.Database,
+		Notifier:     opts.Notifier,
 	}
 
 	server.echo.HideBanner = true
