@@ -75,8 +75,7 @@ func (s *DiscountService) AddDiscountForGame(id uuid.UUID, discount *model.Disco
 //UpdateDiscountForGame method for update existing discount
 func (s *DiscountService) UpdateDiscountForGame(discount *model.Discount) error {
 	discountInDb := model.Discount{}
-
-	err := s.db.Model(&discountInDb).Where("id = ?", discount.ID).First(&discount).Error
+	err := s.db.Model(&discountInDb).Where("id = ? AND game_id = ?", discount.ID, discount.GameID).First(&discountInDb).Error
 
 	if err == gorm.ErrRecordNotFound {
 		return NewServiceError(http.StatusNotFound, "Discount not found")
@@ -88,10 +87,7 @@ func (s *DiscountService) UpdateDiscountForGame(discount *model.Discount) error 
 		return NewServiceError(http.StatusUnprocessableEntity, "Rate should be more than 0")
 	}
 
-	discount.GameID = discountInDb.GameID
-	discount.UpdatedAt = time.Now()
-
-	err = s.db.Model(&discountInDb).Update(discount).Error
+	err = s.db.Save(discount).Error
 	if err != nil {
 		return errors.Wrap(err, "Update discount")
 	}

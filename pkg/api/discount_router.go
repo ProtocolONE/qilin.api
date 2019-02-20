@@ -115,7 +115,7 @@ func (router *DiscountsRouter) get(ctx echo.Context) error {
 }
 
 func (router *DiscountsRouter) put(ctx echo.Context) error {
-	_, err := uuid.FromString(ctx.Param("id"))
+	gameId, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -143,6 +143,7 @@ func (router *DiscountsRouter) put(ctx echo.Context) error {
 	domain.DateStart = dto.Date.Start
 	domain.DateEnd = dto.Date.End
 	domain.ID = discountID
+	domain.GameID = gameId
 
 	if err := router.service.UpdateDiscountForGame(&domain); err != nil {
 		return err

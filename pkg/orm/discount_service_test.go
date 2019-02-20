@@ -259,6 +259,7 @@ func (suite *DiscountServiceTestSuite) TestUpdateDiscountShouldChangeInDB() {
 		DateStart: start,
 	}
 	newDiscount.ID = newId
+	newDiscount.GameID = id
 
 	err = suite.service.UpdateDiscountForGame(&newDiscount)
 	assert.Nil(suite.T(), err, "Unable to update discount for game")
@@ -270,8 +271,8 @@ func (suite *DiscountServiceTestSuite) TestUpdateDiscountShouldChangeInDB() {
 	assert.Equal(suite.T(), newDiscount.Rate, inDb.Rate, "Rate not equals")
 	assert.Equal(suite.T(), newDiscount.Title, inDb.Title, "Rate not equals")
 	assert.Equal(suite.T(), newDiscount.Description, inDb.Description, "Rate not equals")
-	assert.Equal(suite.T(), newDiscount.DateEnd, inDb.DateEnd, "Rate not equals")
-	assert.Equal(suite.T(), newDiscount.DateStart, inDb.DateStart, "Rate not equals")
+	assert.True(suite.T(), newDiscount.DateStart.Equal(inDb.DateStart), "Rate not equals")
+	assert.True(suite.T(), newDiscount.DateEnd.Equal(inDb.DateEnd), "Rate not equals")
 	assert.Equal(suite.T(), id, inDb.GameID, "Rate not equals")
 }
 
