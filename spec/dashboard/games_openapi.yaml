@@ -1131,8 +1131,8 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/notifications/{notificationId}:
-    patch:
+  /api/v1/vendors/{id}/notifications/{notificationId}/read:
+    put:
       tags:
         - vendor
         - onboarding
@@ -1164,6 +1164,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         500:
           $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/notifications/{notificationId}:
     get:
       tags:
         - vendor
