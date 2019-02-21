@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"qilin-api/pkg/sys"
 	"qilin-api/pkg/test"
 	"qilin-api/pkg/utils"
 	"strings"
@@ -57,7 +58,11 @@ func (suite *OnboardingClientRouterTestSuite) SetupTest() {
 
 	e := echo.New()
 	service, err := orm.NewOnboardingService(db)
-	router, err := InitClientOnboardingRouter(e.Group("/api/v1"), service)
+	notifier, err := sys.NewNotifier(config.Notifier.ApiKey, config.Notifier.Host)
+	should.Nil(err)
+	notService, err := orm.NewNotificationService(db, notifier)
+	should.Nil(err)
+	router, err := InitClientOnboardingRouter(e.Group("/api/v1"), service, notService)
 	v := validator.New()
 	assert.NoError(suite.T(), utils.RegisterCustomValidations(v))
 	e.Validator = &QilinValidator{validator: v}

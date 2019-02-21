@@ -83,7 +83,7 @@ func (p *AdminOnboardingService) GetForVendor(id uuid.UUID) (*model.DocumentsInf
 	return &result, nil
 }
 
-func (p *AdminOnboardingService) ChangeStatus(id uuid.UUID, status model.ReviewStatus, message string) error {
+func (p *AdminOnboardingService) ChangeStatus(id uuid.UUID, status model.ReviewStatus) error {
 	doc, err := p.GetForVendor(id)
 	if err != nil {
 		return err
@@ -116,8 +116,6 @@ func (p *AdminOnboardingService) ChangeStatus(id uuid.UUID, status model.ReviewS
 	if err != nil {
 		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Saving document error"))
 	}
-
-	//TODO: добавить отправку message с добавлением новой функциональности
 
 	return nil
 }

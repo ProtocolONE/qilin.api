@@ -272,52 +272,52 @@ func (suite *AdminOnboardingServiceTestSuite) TestChangeStatus() {
 	should.Nil(suite.db.DB().Create(&vendorDocuments).Error)
 	fromDb := model.DocumentsInfo{}
 
-	err := suite.service.ChangeStatus(id, model.ReviewApproved, "")
+	err := suite.service.ChangeStatus(id, model.ReviewApproved)
 	should.Nil(err)
 	should.Nil(suite.db.DB().Model(&vendorDocuments).Where("id = ?", vendorDocuments.ID).First(&fromDb).Error)
 	should.Equal(model.StatusApproved, fromDb.Status)
 	should.Equal(model.ReviewApproved, fromDb.ReviewStatus)
 
-	err = suite.service.ChangeStatus(id, model.ReviewReturned, "")
+	err = suite.service.ChangeStatus(id, model.ReviewReturned)
 	should.Nil(err)
 	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
 	should.Equal(model.StatusDeclined, fromDb.Status)
 	should.Equal(model.ReviewReturned, fromDb.ReviewStatus)
 
-	err = suite.service.ChangeStatus(id, model.ReviewChecking, "")
+	err = suite.service.ChangeStatus(id, model.ReviewChecking)
 	should.Nil(err)
 	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
 	should.Equal(model.StatusOnReview, fromDb.Status)
 	should.Equal(model.ReviewChecking, fromDb.ReviewStatus)
 
-	err = suite.service.ChangeStatus(id, model.ReviewArchived, "")
+	err = suite.service.ChangeStatus(id, model.ReviewArchived)
 	should.Nil(err)
 	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
 	should.Equal(model.StatusArchived, fromDb.Status)
 	should.Equal(model.ReviewArchived, fromDb.ReviewStatus)
 
-	err = suite.service.ChangeStatus(id, model.ReviewUndefined, "")
+	err = suite.service.ChangeStatus(id, model.ReviewUndefined)
 	should.NotNil(err)
 	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
 	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
 	should.Equal(model.StatusArchived, fromDb.Status)
 	should.Equal(model.ReviewArchived, fromDb.ReviewStatus)
 
-	err = suite.service.ChangeStatus(id, model.ReviewNew, "")
+	err = suite.service.ChangeStatus(id, model.ReviewNew)
 	should.NotNil(err)
 	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
 	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)
 	should.Equal(model.StatusArchived, fromDb.Status)
 	should.Equal(model.ReviewArchived, fromDb.ReviewStatus)
 
-	err = suite.service.ChangeStatus(uuid.NewV4(), model.ReviewNew, "")
+	err = suite.service.ChangeStatus(uuid.NewV4(), model.ReviewNew)
 	should.NotNil(err)
 	should.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
 
 	vendorDocuments.Status = model.StatusDraft
 	vendorDocuments.ReviewStatus = model.ReviewNew
 	should.Nil(suite.db.DB().Save(&vendorDocuments).Error)
-	err = suite.service.ChangeStatus(id, model.ReviewNew, "")
+	err = suite.service.ChangeStatus(id, model.ReviewNew)
 	should.NotNil(err)
 	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
 	should.Nil(suite.db.DB().Model(&vendorDocuments).First(&fromDb).Error)

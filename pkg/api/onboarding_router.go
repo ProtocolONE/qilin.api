@@ -11,7 +11,8 @@ import (
 
 type (
 	OnboardingClientRouter struct {
-		service *orm.OnboardingService
+		service             *orm.OnboardingService
+		notificationService *orm.NotificationService
 	}
 
 	ContactDTO struct {
@@ -68,9 +69,10 @@ type (
 	}
 )
 
-func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingService) (*OnboardingClientRouter, error) {
+func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingService, notificationService *orm.NotificationService) (*OnboardingClientRouter, error) {
 	router := OnboardingClientRouter{
-		service: service,
+		service:             service,
+		notificationService: notificationService,
 	}
 	r := group.Group("/vendors/:id")
 	r.GET("/documents", router.getDocument)

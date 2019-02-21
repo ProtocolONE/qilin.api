@@ -30,8 +30,8 @@ type Jwt struct {
 }
 
 type Notifier struct {
-	Host   string `envconfig:"NOTIFIER_HOST" required:"false" default:"localhost"`
-	ApiKey string `envconfig:"NOTIFIER_API_KEY" required:"true"`
+	Host   string `envconfig:"HOST" required:"false" default:"http://localhost:8000"`
+	ApiKey string `envconfig:"API_KEY" required:"true"`
 }
 
 // Mailer specifies all the parameters needed for dump mail sender

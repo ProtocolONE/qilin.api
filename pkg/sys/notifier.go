@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/centrifugal/gocent"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type Notifier interface {
 	Publish(channel string, payload []byte) error
-	SendMessage(message NotifyMessage) error
+	SendMessage(channel string, message NotifyMessage) error
 }
 
 type NotifierImpl struct {
@@ -18,30 +20,39 @@ type NotifierImpl struct {
 }
 
 type NotifyMessage struct {
+	ID       string `json:"id"`
 	Title    string `json:"title"`
 	Body     string `json:"body"`
 	DateTime string `json:"dateTime"`
 }
 
-const OnboardingNotify string = "onboarding:messages"
+func NewNotifier(secret string, addr string) (Notifier, error) {
+	if secret == "" {
+		return nil, errors.New("ApiKey couldn't be empty")
+	}
 
-func NewNotifier(secret string, addr string) (notifier Notifier) {
 	client := gocent.New(gocent.Config{
 		Addr: addr,
 		Key:  secret,
 	})
-	notifier = &NotifierImpl{secret: secret, client: client}
-	return
+
+	notifier := &NotifierImpl{secret: secret, client: client}
+	return notifier, nil
 }
 
 func (n *NotifierImpl) Publish(channel string, payload []byte) error {
 	return n.client.Publish(context.TODO(), channel, payload)
 }
 
-func (n *NotifierImpl) SendMessage(message NotifyMessage) error {
+func (n *NotifierImpl) SendMessage(channel string, message NotifyMessage) error {
 	bytes, err := json.Marshal(message)
 	if err != nil {
+		zap.L().Error("[SendMessage] Can't marshal json", zap.Error(err))
 		return err
 	}
-	return n.Publish(OnboardingNotify, bytes)
+	err = n.Publish(channel, bytes)
+	if err != nil {
+		zap.L().Error("[SendMessage] Error during publish", zap.Error(err))
+	}
+	return err
 }

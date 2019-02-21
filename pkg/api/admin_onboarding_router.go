@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
+	"go.uber.org/zap"
 	"net/http"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
@@ -12,7 +13,8 @@ import (
 )
 
 type OnboardingAdminRouter struct {
-	service *orm.AdminOnboardingService
+	service             *orm.AdminOnboardingService
+	notificationService *orm.NotificationService
 }
 
 type ChangeStatusRequest struct {
@@ -20,14 +22,30 @@ type ChangeStatusRequest struct {
 	Status  string `json:"status" validate:"required"`
 }
 
-func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingService) (*OnboardingAdminRouter, error) {
+type NotificationRequest struct {
+	Message string `json:"message"`
+	Title   string `json:"title" validate:"required"`
+}
+
+type NotificationDTO struct {
+	ID        string `json:"id"`
+	Message   string `json:"message"`
+	Title     string `json:"title"`
+	CreatedAt string `json:"createdAt"`
+	SsUnread  bool   `json:"isUnread"`
+}
+
+func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingService, notificationService *orm.NotificationService) (*OnboardingAdminRouter, error) {
 	router := OnboardingAdminRouter{
-		service: service,
+		service:             service,
+		notificationService: notificationService,
 	}
 	r := group.Group("/vendors")
 	r.GET("/reviews", router.getReviews)
 	r.GET("/:id/documents", router.getDocument)
 	r.PUT("/:id/documents", router.changeStatus)
+	r.POST("/:id/messages", router.sendNotification)
+	r.GET("/:id/messages", router.getNotifications)
 
 	return &router, nil
 }
@@ -53,9 +71,16 @@ func (api *OnboardingAdminRouter) changeStatus(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad status"))
 	}
 
-	err = api.service.ChangeStatus(id, status, request.Message)
+	err = api.service.ChangeStatus(id, status)
 	if err != nil {
 		return err
+	}
+
+	if request.Message != "" {
+		_, err := api.notificationService.SendNotification(&model.Notification{Title: request.Message, Message: request.Message, VendorID: id})
+		if err != nil {
+			zap.L().Error(err.Error())
+		}
 	}
 
 	return ctx.JSON(http.StatusOK, "")
@@ -131,4 +156,75 @@ func (api *OnboardingAdminRouter) getReviews(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, dto)
+}
+
+func (api *OnboardingAdminRouter) getNotifications(ctx echo.Context) error {
+	id, err := uuid.FromString(ctx.Param("id"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+
+	offset := 0
+	limit := 20
+
+	if offsetParam := ctx.QueryParam("offset"); offsetParam != "" {
+		if num, err := strconv.Atoi(offsetParam); err == nil {
+			offset = num
+		} else {
+			return orm.NewServiceError(http.StatusBadRequest, errors.Wrapf(err, "Bad offset"))
+		}
+	}
+
+	if limitParam := ctx.QueryParam("limit"); limitParam != "" {
+		if num, err := strconv.Atoi(limitParam); err == nil {
+			limit = num
+		} else {
+			return orm.NewServiceError(http.StatusBadRequest, errors.Wrapf(err, "Bad limit"))
+		}
+	}
+
+	query := ctx.QueryParam("query")
+	sort := ctx.QueryParam("sort")
+
+	notifications, err := api.notificationService.GetNotifications(id, limit, offset, query, sort)
+	if err != nil {
+		return err
+	}
+
+	var result []NotificationDTO
+	err = mapper.Map(notifications, &result)
+	if err != nil {
+		return orm.NewServiceErrorf(http.StatusInternalServerError, "Can't map to dto %#v", notifications)
+	}
+
+	return ctx.JSON(http.StatusOK, result)
+}
+
+func (api *OnboardingAdminRouter) sendNotification(ctx echo.Context) error {
+	id, err := uuid.FromString(ctx.Param("id"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+
+	request := new(NotificationRequest)
+	if err := ctx.Bind(request); err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+
+	if errs := ctx.Validate(request); errs != nil {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
+	}
+
+	notification, err := api.notificationService.SendNotification(&model.Notification{Message: request.Message, Title: request.Title, VendorID: id})
+	if err != nil {
+		return err
+	}
+
+	result := NotificationDTO{}
+	err = mapper.Map(notification, &result)
+	if err != nil {
+		return orm.NewServiceErrorf(http.StatusInternalServerError, "Can't map to DTO `%#v`", notification)
+	}
+
+	return ctx.JSON(http.StatusOK, result)
 }
