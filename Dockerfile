@@ -12,6 +12,10 @@ RUN go mod download
 # Copy all files in currend directiry into home directory
 COPY . ./
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -o $GOPATH/bin/qilin_api .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o /application/bin/app .
 
-ENTRYPOINT $GOPATH/bin/qilin_api server
+FROM alpine:3.9
+
+COPY --from builder /application /application
+
+ENTRYPOINT /application/bin/app server
