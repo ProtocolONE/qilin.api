@@ -16,6 +16,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -o /application/bin/app .
 
 FROM alpine:3.9
 
-COPY --from builder /application /application
+COPY --from=builder /application /application
 
 ENTRYPOINT /application/bin/app server
