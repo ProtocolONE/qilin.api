@@ -1,6 +1,19 @@
 version: "3.6"
 
 services:
+  centrifugo:
+    image: centrifugo/centrifugo:latest
+    environment:
+      - CENTRIFUGO_SECRET=secret
+      - CENTRIFUGO_ADMIN_PASSWORD=admin
+      - CENTRIFUGO_ADMIN_SECRET=secret
+    tty: true
+    command: centrifugo --admin
+    ports:
+      - "8000:8000"
+    networks:
+      - p1devnet
+
   qilinapi-postgres:
     image: postgres:10.5
     container_name: qilinapi-postgres
@@ -55,6 +68,7 @@ services:
       - QILINAPI_JWT_SECRET=hlF0swObPsKN+0n3FVZd9ocfhjOmcS9A8QB7aZK5cDLPmK/QSXvksgkuBTErPfMEIPBKUtD28QjQqBVD9t/nVJ92qr1tlYq7e6F+mN/lYWNYdAApbR50BNY2+GPm/Tv8w1fwaMu7z08OU0+KBxHFxq+TbRusgOeeggovS4BnQ1FhoZv5So+Tf+bSCPQcWcbdPnw4IoM055qoFwvCz4AFi5ty7eCc1GvMVqU+6N/pPA4Q1LpB9+mG8rYbwoTuy31MF6lbhKlxRHRBUdkiJRhyeRskFI6neJ0rhNd62QzU82tyyYMKZ/s4/tBTk/YxvF7QP8cWBe9/kWu/DmUdecFq6w==
       - QILINAPI_JWT_ALGORITHM=HS256
       - QILINAPI_LOG_LEVEL=debug
+      - QILINAPI_NOTIFIER_API_KEY=secret
 
 networks:
   p1devnet:

@@ -42,11 +42,17 @@ func main() {
 
 	mailer := sys.NewMailer(config.Mailer)
 
+	notifier, err := sys.NewNotifier(config.Notifier.ApiKey, config.Notifier.Host)
+	if err != nil {
+		logger.Fatal("Failed to create notifier", zap.Error(err))
+	}
+
 	serverOptions := api.ServerOptions{
 		Jwt:          &config.Jwt,
 		ServerConfig: &config.Server,
 		Database:     db,
 		Mailer:       mailer,
+		Notifier:     notifier,
 	}
 
 	server, err := api.NewServer(&serverOptions)

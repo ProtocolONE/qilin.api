@@ -14,7 +14,6 @@ type OnboardingService struct {
 	db *gorm.DB
 }
 
-
 func NewOnboardingService(db *Database) (*OnboardingService, error) {
 	return &OnboardingService{db.database}, nil
 }
@@ -128,6 +127,7 @@ func (p *OnboardingService) ChangeDocument(document *model.DocumentsInfo)  error
 
 	return nil
 }
+
 
 
 

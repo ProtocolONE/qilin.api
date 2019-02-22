@@ -21,12 +21,14 @@ type ServerOptions struct {
 	Jwt          *conf.Jwt
 	Database     *orm.Database
 	Mailer       sys.Mailer
+	Notifier     sys.Notifier
 }
 
 type Server struct {
 	db           *orm.Database
 	echo         *echo.Echo
 	serverConfig *conf.ServerConfig
+	notifier   sys.Notifier
 
 	Router     *echo.Group
 	AuthRouter *echo.Group
@@ -45,6 +47,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		echo:         echo.New(),
 		serverConfig: opts.ServerConfig,
 		db:           opts.Database,
+		notifier:     opts.Notifier,
 	}
 
 	server.echo.HideBanner = true
@@ -164,7 +167,13 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	if _, err := InitClientOnboardingRouter(s.Router, clientOnboarding); err != nil {
+	notificationService, err := orm.NewNotificationService(s.db, s.notifier)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitClientOnboardingRouter(s.Router, clientOnboarding, notificationService); err != nil {
 		return err
 	}
 
@@ -173,7 +182,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	if _, err := InitAdminOnboardingRouter(s.Router.Group("/admin"), adminClientOnboarding); err != nil {
+	if _, err := InitAdminOnboardingRouter(s.Router.Group("/admin"), adminClientOnboarding, notificationService); err != nil {
 		return err
 	}
 

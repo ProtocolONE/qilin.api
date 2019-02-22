@@ -20,9 +20,13 @@ func NewServiceError(code int, message ...interface{}) *ServiceError {
 	if len(message) > 0 {
 		if errs, ok := message[0].(error); ok {
 			he.Message = errs.Error()
-		} else {
-			he.Message = message[0]
+		} else if text, ok := message[0].(string); ok && len(text) > 0 {
+			he.Message = text
 		}
 	}
 	return he
+}
+
+func NewServiceErrorf(code int, format string, args ...interface{}) *ServiceError {
+	return NewServiceError(code, fmt.Sprintf(format, args...))
 }

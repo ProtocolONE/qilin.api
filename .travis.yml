@@ -15,6 +15,8 @@ env:
     - QILINAPI_JWT_ALGORITHM=HS256
     - QILINAPI_SERVER_ALLOW_ORIGINS=https://qilin.tst.protocol.one
     - QILINAPI_SERVER_ALLOW_CREDENTIALS=true
+    - QILINAPI_NOTIFIER_API_KEY=secret
+    - QILINAPI_NOTIFIER_HOST=http://localhost:8000
 
 install: true
 

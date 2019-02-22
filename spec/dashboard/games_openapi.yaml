@@ -1026,7 +1026,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/notifications/short:
+  /api/v1/vendors/{id}/messages/short:
     get:
       tags:
         - vendor
@@ -1060,7 +1060,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/notifications:
+  /api/v1/vendors/{id}/messages:
     get:
       summary: "Get list of notifications"
       tags:
@@ -1131,8 +1131,8 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/notifications/{notificationId}:
-    patch:
+  /api/v1/vendors/{id}/messages/{messageId}/read:
+    put:
       tags:
         - vendor
         - onboarding
@@ -1145,7 +1145,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: notificationId
+        - name: messageId
           in: path
           required: true
           schema:
@@ -1164,6 +1164,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         500:
           $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/messages/{messageId}:
     get:
       tags:
         - vendor
@@ -1359,6 +1361,40 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: limit
+          in: query
+          description: "Limit for query"
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+        - name: offset
+          in: query
+          description: "Offset for query"
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Notifications requests sorting"
+          example: -createdAt,+title
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              enum:
+                - -title
+                - +title
+                - -createdAt
+                - +createdAt
+                - -isUnread
+                - +isUnread
+        - name: query
+          in: query
+          example: "Error"
+          description: "Notifications requests name filter"
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -1499,7 +1535,7 @@ components:
         createdAt:
           type: string
           format: 'date-time'
-        isUnread:
+        isRead:
           type: boolean
 
     ShortNotification:
@@ -1513,7 +1549,7 @@ components:
         createdAt:
           type: string
           format: 'date-time'
-        isUnread:
+        isRead:
           type: boolean
 
     AdminGetMerchantRequest:

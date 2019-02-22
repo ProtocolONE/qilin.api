@@ -1,0 +1,14 @@
+{
+  "secret": "secret",
+  "admin_password": "6729f756-687b-4f1e-acde-d22107003505",
+  "admin_secret": "b4267731-219b-490b-871d-0b024fb50333",
+  "api_key": "secret",
+  "history_size": 1,
+  "history_lifetime": 30,
+  "namespaces": [
+    {
+      "name": "notification",
+      "presence": true
+    }
+  ]
+}

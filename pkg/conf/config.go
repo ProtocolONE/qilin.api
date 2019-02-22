@@ -6,6 +6,7 @@ type Config struct {
 	Database Database
 	Jwt      Jwt
 	Mailer   Mailer
+	Notifier Notifier
 }
 
 // ServerConfig specifies all the parameters needed for http server
@@ -26,6 +27,11 @@ type Database struct {
 type Jwt struct {
 	SignatureSecret string `envconfig:"SECRET" required:"true"`
 	Algorithm       string `envconfig:"ALGORITHM" required:"false" default:"HS256"`
+}
+
+type Notifier struct {
+	Host   string `envconfig:"HOST" required:"false" default:"http://localhost:8000"`
+	ApiKey string `envconfig:"API_KEY" required:"true"`
 }
 
 // Mailer specifies all the parameters needed for dump mail sender
