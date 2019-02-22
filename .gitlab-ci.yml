@@ -3,28 +3,19 @@ variables:
 
 stages:
   - build
-  - push
   - deploy
 
 build:
   stage: build
-  script:
-    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG.$CI_PIPELINE_ID .
-    - (if [ -f Dockerfile.nginx ]; then docker build -t $CI_REGISTRY_IMAGE:"$CI_COMMIT_REF_SLUG"-static.$CI_PIPELINE_ID -f Dockerfile.nginx . ; else echo "Project without static content"; fi);
-  only:
-  - master
-
-push:
-  stage: push
-  variables:
-    GIT_STRATEGY: none
   before_script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG.$CI_PIPELINE_ID .
+    - (if [ -f Dockerfile.nginx ]; then docker build -t $CI_REGISTRY_IMAGE:"$CI_COMMIT_REF_SLUG"-static.$CI_PIPELINE_ID -f Dockerfile.nginx . ; else echo "Project without static content"; fi);
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG.$CI_PIPELINE_ID
     - (if [ -f Dockerfile.nginx ]; then docker push $CI_REGISTRY_IMAGE:"$CI_COMMIT_REF_SLUG"-static.$CI_PIPELINE_ID ; else echo "Project without static content"; fi);
-  only:
-  - master  
+    only:
+  - master
 
 deploy_production:
   stage: deploy
