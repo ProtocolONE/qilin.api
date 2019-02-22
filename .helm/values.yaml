@@ -39,7 +39,8 @@ frontend:
     - QILINAPI_MAILER_REPLY_TO
     - QILINAPI_MAILER_FROM
     - QILINAPI_MAILER_SKIP_VERIFY
-
+    - QILINAPI_NOTIFIER_API_KEY
+    - QILINAPI_NOTIFIER_HOST
   
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
