@@ -18,7 +18,7 @@ import (
 type NotificationServiceTestSuite struct {
 	suite.Suite
 	db *orm.Database
-	service *orm.NotificationService
+	service model.NotificationService
 }
 
 

@@ -15,7 +15,7 @@ import (
 
 type OnboardingAdminRouter struct {
 	service             *orm.AdminOnboardingService
-	notificationService *orm.NotificationService
+	notificationService model.NotificationService
 }
 
 type ChangeStatusRequest struct {
@@ -43,7 +43,7 @@ type ShortNotificationDTO struct {
 	IsRead    bool   `json:"isRead"`
 }
 
-func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingService, notificationService *orm.NotificationService) (*OnboardingAdminRouter, error) {
+func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingService, notificationService model.NotificationService) (*OnboardingAdminRouter, error) {
 	router := OnboardingAdminRouter{
 		service:             service,
 		notificationService: notificationService,

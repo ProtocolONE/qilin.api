@@ -15,7 +15,7 @@ import (
 type (
 	OnboardingClientRouter struct {
 		service             *orm.OnboardingService
-		notificationService *orm.NotificationService
+		notificationService model.NotificationService
 	}
 
 	ContactDTO struct {
@@ -72,7 +72,7 @@ type (
 	}
 )
 
-func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingService, notificationService *orm.NotificationService) (*OnboardingClientRouter, error) {
+func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingService, notificationService model.NotificationService) (*OnboardingClientRouter, error) {
 	router := OnboardingClientRouter{
 		service:             service,
 		notificationService: notificationService,

@@ -13,7 +13,7 @@ type Notifier interface {
 	SendMessage(channel string, message NotifyMessage) error
 }
 
-type NotifierImpl struct {
+type notifierImpl struct {
 	secret  string
 	address string
 	client  *gocent.Client
@@ -36,15 +36,15 @@ func NewNotifier(secret string, addr string) (Notifier, error) {
 		Key:  secret,
 	})
 
-	notifier := &NotifierImpl{secret: secret, client: client}
+	notifier := &notifierImpl{secret: secret, client: client}
 	return notifier, nil
 }
 
-func (n *NotifierImpl) Publish(channel string, payload []byte) error {
+func (n *notifierImpl) Publish(channel string, payload []byte) error {
 	return n.client.Publish(context.TODO(), channel, payload)
 }
 
-func (n *NotifierImpl) SendMessage(channel string, message NotifyMessage) error {
+func (n *notifierImpl) SendMessage(channel string, message NotifyMessage) error {
 	bytes, err := json.Marshal(message)
 	if err != nil {
 		zap.L().Error("[SendMessage] Can't marshal json", zap.Error(err))

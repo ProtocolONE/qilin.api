@@ -13,20 +13,20 @@ import (
 	"time"
 )
 
-type NotificationService struct {
+type notificationService struct {
 	db *gorm.DB
 	notifier sys.Notifier
 }
 
-const NotificationMask string = "notification:%s"
+const notificationMask string = "notification:%s"
 
 //NewNotificationService is method for creating new instance of service
-func NewNotificationService(db *Database, notifier sys.Notifier) (*NotificationService, error) {
-	return &NotificationService{db.database, notifier}, nil
+func NewNotificationService(db *Database, notifier sys.Notifier) (model.NotificationService, error) {
+	return &notificationService{db.database, notifier}, nil
 }
 
 //GetNotifications is method for retrieving
-func (p *NotificationService) GetNotifications(id uuid.UUID, limit int, offset int, search string, sort string) ([]model.Notification, error) {
+func (p *notificationService) GetNotifications(id uuid.UUID, limit int, offset int, search string, sort string) ([]model.Notification, error) {
 	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, id); exist == false || err != nil {
 		if err != nil {
 			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Checking vendor existing"))
@@ -84,7 +84,7 @@ func (p *NotificationService) GetNotifications(id uuid.UUID, limit int, offset i
 }
 
 //MarkAsRead is method for marking notification as read
-func (p *NotificationService) MarkAsRead(id uuid.UUID) error {
+func (p *notificationService) MarkAsRead(id uuid.UUID) error {
 	notification := model.Notification{}
 	if res := p.db.Model(&model.Notification{}).Where("id = ?", id).First(&notification); res.Error != nil {
 		if res.RecordNotFound() {
@@ -103,7 +103,7 @@ func (p *NotificationService) MarkAsRead(id uuid.UUID) error {
 }
 
 //SendNotification is method for sending notification via web socket and saving to db
-func (p *NotificationService) SendNotification(notification *model.Notification) (*model.Notification, error) {
+func (p *notificationService) SendNotification(notification *model.Notification) (*model.Notification, error) {
 	if exist, err := utils.CheckExists(p.db, model.Vendor{}, notification.VendorID); !(exist && err == nil) {
 		if err != nil {
 			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Checking existing vendor"))
@@ -125,12 +125,12 @@ func (p *NotificationService) SendNotification(notification *model.Notification)
 		DateTime: time.Now().UTC().String(),
 	}
 
-	_ = p.notifier.SendMessage(fmt.Sprintf(NotificationMask, notification.VendorID), message)
+	_ = p.notifier.SendMessage(fmt.Sprintf(notificationMask, notification.VendorID), message)
 
 	return res.Value.(*model.Notification), nil
 }
 
-func (p *NotificationService) GetNotification(id uuid.UUID) (*model.Notification, error) {
+func (p *notificationService) GetNotification(id uuid.UUID) (*model.Notification, error) {
 	notification := model.Notification{}
 	res := p.db.Model(model.Notification{}).Where("id = ?", id).First(&notification)
 	if res.Error != nil {
