@@ -10,6 +10,7 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"strconv"
+	"time"
 )
 
 type OnboardingAdminRouter struct {
@@ -32,7 +33,14 @@ type NotificationDTO struct {
 	Message   string `json:"message"`
 	Title     string `json:"title"`
 	CreatedAt string `json:"createdAt"`
-	SsUnread  bool   `json:"isUnread"`
+	IsRead    bool   `json:"isRead"`
+}
+
+type ShortNotificationDTO struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	CreatedAt string `json:"createdAt"`
+	IsRead    bool   `json:"isRead"`
 }
 
 func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingService, notificationService *orm.NotificationService) (*OnboardingAdminRouter, error) {
@@ -197,6 +205,11 @@ func (api *OnboardingAdminRouter) getNotifications(ctx echo.Context) error {
 		return orm.NewServiceErrorf(http.StatusInternalServerError, "Can't map to dto %#v", notifications)
 	}
 
+	for i, n := range notifications {
+		result[i].ID = n.ID.String()
+		result[i].CreatedAt = n.CreatedAt.Format(time.RFC3339)
+	}
+
 	return ctx.JSON(http.StatusOK, result)
 }
 
@@ -225,6 +238,9 @@ func (api *OnboardingAdminRouter) sendNotification(ctx echo.Context) error {
 	if err != nil {
 		return orm.NewServiceErrorf(http.StatusInternalServerError, "Can't map to DTO `%#v`", notification)
 	}
+
+	result.CreatedAt = notification.CreatedAt.Format(time.RFC3339)
+	result.ID = notification.ID.String()
 
 	return ctx.JSON(http.StatusOK, result)
 }

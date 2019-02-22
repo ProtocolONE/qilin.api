@@ -1026,7 +1026,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/notifications/short:
+  /api/v1/vendors/{id}/messages/short:
     get:
       tags:
         - vendor
@@ -1131,7 +1131,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/notifications/{notificationId}/read:
+  /api/v1/vendors/{id}/messages/{messageId}/read:
     put:
       tags:
         - vendor
@@ -1145,7 +1145,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: notificationId
+        - name: messageId
           in: path
           required: true
           schema:
@@ -1165,7 +1165,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/notifications/{notificationId}:
+  /api/v1/vendors/{id}/messages/{messageId}:
     get:
       tags:
         - vendor
@@ -1501,7 +1501,7 @@ components:
         createdAt:
           type: string
           format: 'date-time'
-        isUnread:
+        isRead:
           type: boolean
 
     ShortNotification:
@@ -1515,7 +1515,7 @@ components:
         createdAt:
           type: string
           format: 'date-time'
-        isUnread:
+        isRead:
           type: boolean
 
     AdminGetMerchantRequest:

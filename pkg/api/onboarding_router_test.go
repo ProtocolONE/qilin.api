@@ -12,6 +12,7 @@ import (
 	"qilin-api/pkg/utils"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
@@ -84,7 +85,8 @@ func (suite *OnboardingClientRouterTestSuite) TearDownTest() {
 	}
 }
 
-func (suite *OnboardingClientRouterTestSuite) TestGetShouldReturnEmpty() {
+func (suite *OnboardingClientRouterTestSuite) TestGetDocument() {
+	shouldBe := require.New(suite.T())
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDocument))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -98,6 +100,30 @@ func (suite *OnboardingClientRouterTestSuite) TestGetShouldReturnEmpty() {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 		assert.Equal(suite.T(), emptyDocument, rec.Body.String())
 	}
+
+	req = httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDocument))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/documents")
+	c.SetParamNames("id")
+	c.SetParamValues("XXX")
+
+	err := suite.router.getDocument(c)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
+
+	req = httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDocument))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/documents")
+	c.SetParamNames("id")
+	c.SetParamValues(uuid.NewV4().String())
+
+	err = suite.router.getDocument(c)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
 }
 
 func (suite *OnboardingClientRouterTestSuite) TestGetShouldReturnObject() {
@@ -394,18 +420,18 @@ func (suite *OnboardingClientRouterTestSuite) generateNotifications(id uuid.UUID
 	should := require.New(suite.T())
 	notification := &model.Notification{VendorID: id, Title: "Some title", Message: "ZZZ"}
 	notification.ID = uuid.NewV4()
-	notification.IsRead = true
+	notification.IsRead = false
 	should.Nil(suite.db.DB().Create(notification).Error)
 
 	notification = &model.Notification{VendorID: uuid.NewV4(), Title: "Some title", Message: "YYY"}
-	notification.IsRead = true
+	notification.IsRead = false
 	notification.ID = uuid.NewV4()
 	should.Nil(suite.db.DB().Create(notification).Error)
 
 	for i := 0; i < 100; i++ {
 		notification = &model.Notification{VendorID: id, Title: fmt.Sprintf("Test title %d", i), Message: fmt.Sprintf("%d", i)}
 		notification.ID = uuid.NewV4()
-		notification.IsRead = false
+		notification.IsRead = true
 		should.Nil(suite.db.DB().Create(notification).Error)
 	}
 }
@@ -570,4 +596,85 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 		he := err.(*orm.ServiceError)
 		should.Equal(http.StatusBadRequest, he.Code)
 	}
+
+	req = httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyObject))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/messages/short")
+	c.SetParamNames("id")
+	c.SetParamValues(TestID)
+
+	err = suite.router.getLastNotifications(c)
+	should.Nil(err)
+	should.Equal(http.StatusOK, rec.Code)
+
+	var result []ShortNotificationDTO
+	err = json.Unmarshal(rec.Body.Bytes(), &result)
+	should.NotNil(result)
+	should.Equal(3, len(result))
+	for _, n := range result {
+		should.NotEmpty(n.CreatedAt)
+		should.NotEmpty(n.Title)
+		should.NotEmpty(n.ID)
+	}
+}
+
+func (suite *OnboardingClientRouterTestSuite) TestGetNotification() {
+	should := require.New(suite.T())
+	notification := &model.Notification{VendorID: uuid.FromStringOrNil(TestID), Title: "Some title", Message: "ZZZ"}
+	notification.ID = uuid.NewV4()
+	notification.IsRead = true
+	should.Nil(suite.db.DB().Create(notification).Error)
+
+	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyObject))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/messages/:messageId")
+	c.SetParamNames("id", "messageId")
+	c.SetParamValues(TestID, "XXX")
+
+	err := suite.router.getNotification(c)
+	should.NotNil(err)
+	if err != nil {
+		he := err.(*orm.ServiceError)
+		should.Equal(http.StatusBadRequest, he.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyObject))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/messages/:messageId")
+	c.SetParamNames("id", "messageId")
+	c.SetParamValues(TestID, uuid.NewV4().String())
+
+	err = suite.router.getNotification(c)
+	should.NotNil(err)
+	if err != nil {
+		he := err.(*orm.ServiceError)
+		should.Equal(http.StatusNotFound, he.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyObject))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/messages/:messageId")
+	c.SetParamNames("id", "messageId")
+	c.SetParamValues(TestID, notification.ID.String())
+
+	err = suite.router.getNotification(c)
+	should.Nil(err)
+	should.Equal(http.StatusOK, rec.Code)
+	var result NotificationDTO
+	should.Nil(json.Unmarshal(rec.Body.Bytes(), &result))
+	should.Equal(notification.ID.String(), result.ID)
+	should.Equal("ZZZ", result.Message)
+	should.Equal("Some title", result.Title)
+	should.NotEmpty(result.CreatedAt)
+	createdAt, err := time.Parse(time.RFC3339, result.CreatedAt)
+	should.Nil(err)
+	should.True(createdAt.After(time.Now().Add(-time.Duration(1)*time.Minute)))
 }

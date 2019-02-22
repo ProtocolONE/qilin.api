@@ -129,3 +129,15 @@ func (p *NotificationService) SendNotification(notification *model.Notification)
 
 	return res.Value.(*model.Notification), nil
 }
+
+func (p *NotificationService) GetNotification(id uuid.UUID) (*model.Notification, error) {
+	notification := model.Notification{}
+	res := p.db.Model(model.Notification{}).Where("id = ?", id).First(&notification)
+	if res.Error != nil {
+		if res.RecordNotFound() {
+			return nil, NewServiceError(http.StatusNotFound, "Get notification")
+		}
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(res.Error, "Get notification"))
+	}
+	return &notification, nil
+}

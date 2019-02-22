@@ -9,6 +9,7 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"strconv"
+	"time"
 )
 
 type (
@@ -83,13 +84,55 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	r.GET("/messages", router.getNotifications)
 	r.GET("/messages/:messageId", router.getNotification)
 	r.PUT("/messages/:messageId/read", router.markAsRead)
-
+	r.GET("/messages/short", router.getLastNotifications)
 
 	return &router, nil
 }
 
+func (api *OnboardingClientRouter) getLastNotifications(ctx echo.Context) error {
+	id, err := uuid.FromString(ctx.Param("id"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+
+	notifications, err := api.notificationService.GetNotifications(id, 3, 0, "", "")
+	if err != nil {
+		return err
+	}
+
+	var result []ShortNotificationDTO
+	err = mapper.Map(notifications, &result)
+	if err != nil {
+		return orm.NewServiceErrorf(http.StatusInternalServerError, "Can't map to dto %#v", notifications)
+	}
+
+	for i, n := range notifications {
+		result[i].ID = n.ID.String()
+		result[i].CreatedAt = n.CreatedAt.Format(time.RFC3339)
+	}
+
+	return ctx.JSON(http.StatusOK, result)
+}
+
 func (api *OnboardingClientRouter) getNotification(ctx echo.Context) error {
-	panic("not implemented")
+	id, err := uuid.FromString(ctx.Param("messageId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+	notification, err := api.notificationService.GetNotification(id)
+	if err != nil {
+		return err
+	}
+
+	dto := NotificationDTO{}
+	err = mapper.Map(notification, &dto)
+	if err != nil {
+		return orm.NewServiceError(http.StatusInternalServerError, err)
+	}
+	dto.ID = notification.ID.String()
+	dto.CreatedAt = notification.CreatedAt.Format(time.RFC3339)
+
+	return ctx.JSON(http.StatusOK, dto)
 }
 
 func (api *OnboardingClientRouter) markAsRead(ctx echo.Context) error {
@@ -150,6 +193,11 @@ func (api *OnboardingClientRouter) getNotifications(ctx echo.Context) error {
 		return orm.NewServiceErrorf(http.StatusInternalServerError, "Can't map to dto %#v", notifications)
 	}
 
+	for i, n := range notifications {
+		result[i].ID = n.ID.String()
+		result[i].CreatedAt = n.CreatedAt.Format(time.RFC3339)
+	}
+
 	return ctx.JSON(http.StatusOK, result)
 }
 
@@ -187,7 +235,7 @@ func (api *OnboardingClientRouter) getDocument(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	document, err := api.service.GetForVendor(id)
@@ -198,7 +246,7 @@ func (api *OnboardingClientRouter) getDocument(ctx echo.Context) error {
 	result := DocumentsInfoResponseDTO{}
 
 	if err := mapper.Map(document, &result); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return orm.NewServiceError(http.StatusInternalServerError, err)
 	}
 
 	result.Status = document.Status.ToString()
