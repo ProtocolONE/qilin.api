@@ -1060,7 +1060,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/notifications:
+  /api/v1/vendors/{id}/messages:
     get:
       summary: "Get list of notifications"
       tags:
@@ -1361,6 +1361,40 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: limit
+          in: query
+          description: "Limit for query"
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+        - name: offset
+          in: query
+          description: "Offset for query"
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: "Notifications requests sorting"
+          example: -createdAt,+title
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              enum:
+                - -title
+                - +title
+                - -createdAt
+                - +createdAt
+                - -isUnread
+                - +isUnread
+        - name: query
+          in: query
+          example: "Error"
+          description: "Notifications requests name filter"
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
