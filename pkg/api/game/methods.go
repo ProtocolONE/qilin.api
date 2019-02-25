@@ -2,12 +2,16 @@ package game
 
 import (
 	"github.com/labstack/echo"
+	"github.com/lunny/html2md"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/satori/go.uuid"
+	"gopkg.in/russross/blackfriday.v2"
 	"net/http"
 	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/orm"
+	"reflect"
 	"strconv"
 )
 
@@ -134,6 +138,15 @@ func (api *Router) GetDescr(ctx echo.Context) error {
 			Quote:     review.Quote,
 		})
 	}
+
+	descrAcc := reflect.ValueOf(&dto.Description)
+	descrVal := descrAcc.Elem()
+	for i := 0; i < descrVal.NumField(); i++ {
+		markdown := descrVal.Field(i).String()
+		html := blackfriday.Run([]byte(markdown))
+		descrVal.Field(i).SetString(string(html))
+	}
+
 	return ctx.JSON(http.StatusOK, dto)
 }
 
@@ -162,6 +175,22 @@ func (api *Router) UpdateDescr(ctx echo.Context) error {
 			Quote:     review.Quote,
 		})
 	}
+
+	// Converts from html to markdown
+	descrAcc := reflect.ValueOf(&dto.Description)
+	descrVal := descrAcc.Elem()
+	for i := 0; i < descrVal.NumField(); i++ {
+		field := descrVal.Field(i)
+		html := field.String()
+		if html != "" {
+			safe_html := bluemonday.UGCPolicy().SanitizeBytes([]byte(html))
+			html = string(safe_html)
+		}
+		field.SetString(html)
+		markdown := html2md.Convert(html)
+		field.SetString(markdown)
+	}
+
 	err = api.gameService.UpdateDescr(userId, &model.GameDescr{
 		GameID:                gameId,
 		Tagline:               dto.Tagline,
