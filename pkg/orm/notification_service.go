@@ -18,7 +18,7 @@ type notificationService struct {
 	notifier sys.Notifier
 }
 
-const notificationMask string = "notification:%s"
+const notificationMask string = "qilin:%s"
 
 //NewNotificationService is method for creating new instance of service
 func NewNotificationService(db *Database, notifier sys.Notifier) (model.NotificationService, error) {
