@@ -1203,7 +1203,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/admin/vendors/reviews:
+  admin/api/v1/vendors/reviews:
     get:
       summary: "Get list of vendor requests"
       tags:
@@ -1295,7 +1295,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/admin/vendors/{id}/documents/status:
+  admin/api/v1/vendors/{id}/documents/status:
     put:
       tags:
         - admin
@@ -1347,7 +1347,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/admin/vendors/{id}/messages:
+  admin/api/v1/vendors/{id}/messages:
     post:
       tags:
         - admin
@@ -1419,7 +1419,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/admin/vendors/{id}/documents:
+  admin/api/v1/vendors/{id}/documents:
     get:
       tags:
         - admin
