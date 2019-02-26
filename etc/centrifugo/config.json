@@ -7,7 +7,7 @@
   "history_lifetime": 30,
   "namespaces": [
     {
-      "name": "notification",
+      "name": "qilin",
       "presence": true
     }
   ]

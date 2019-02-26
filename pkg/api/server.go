@@ -28,10 +28,11 @@ type Server struct {
 	db           *orm.Database
 	echo         *echo.Echo
 	serverConfig *conf.ServerConfig
-	notifier   sys.Notifier
+	notifier     sys.Notifier
 
-	Router     *echo.Group
-	AuthRouter *echo.Group
+	Router      *echo.Group
+	AdminRouter *echo.Group
+	AuthRouter  *echo.Group
 }
 
 type QilinValidator struct {
@@ -74,11 +75,20 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.Pre(middleware.RemoveTrailingSlash())
 
 	server.Router = server.echo.Group("/api/v1")
+	server.AdminRouter = server.echo.Group("/admin/api/v1")
 
 	pemKey, err := base64.StdEncoding.DecodeString(opts.Jwt.SignatureSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "Decode JWT failed")
 	}
+
+	server.AdminRouter.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		ContextKey:    context.TokenKey,
+		AuthScheme:    "Bearer",
+		TokenLookup:   "header:Authorization",
+		SigningKey:    pemKey,
+		SigningMethod: opts.Jwt.Algorithm,
+	}))
 
 	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		ContextKey:    context.TokenKey,
@@ -182,7 +192,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	if _, err := InitAdminOnboardingRouter(s.Router.Group("/admin"), adminClientOnboarding, notificationService); err != nil {
+	if _, err := InitAdminOnboardingRouter(s.AdminRouter, adminClientOnboarding, notificationService); err != nil {
 		return err
 	}
 
