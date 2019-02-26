@@ -42,6 +42,7 @@ var (
 	userId             = `95a97684-9dad-11d1-80b4-00c04fd430c8`
 	vendorId           = `6ba97684-9dad-11d1-80b4-00c04fd430c8`
 	createGamesPayload = `{"InternalName":"new_game", "vendorId": "` + vendorId + `"}`
+	gameDescrPayload   = `{"tagline":{"en":""},"description":{"en":"\u003cp\u003e\u003cstrong\u003etest\u003c/strong\u003e\u003c/p\u003e\n"},"reviews":[],"additionalDescription":"","gameSite":"","socials":{"facebook":"","twitter":""}}`
 )
 
 func (suite *GamesRouterTestSuite) SetupTest() {
@@ -116,4 +117,32 @@ func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
 	game := model.Game{}
 	err = suite.db.DB().First(&game).Error
 	require.Equal(suite.T(), game.InternalName, "new_game", "Incorrect game creates")
+
+	{
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(gameDescrPayload))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		c := suite.echo.NewContext(req, httptest.NewRecorder())
+		c.SetPath("/api/v1/games/:id/descriptions")
+		c.SetParamNames("id")
+		c.SetParamValues(game.ID.String())
+		c.Set(context.TokenKey, suite.token)
+
+		err := suite.router.UpdateDescr(c)
+		require.Nil(suite.T(), err, "Update game descriptions")
+	}
+
+	{
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := suite.echo.NewContext(req, rec)
+		c.SetPath("/api/v1/games/:id/descriptions")
+		c.SetParamNames("id")
+		c.SetParamValues(game.ID.String())
+		c.Set(context.TokenKey, suite.token)
+
+		err := suite.router.GetDescr(c)
+		require.Nil(suite.T(), err, "Retrive game descriptions")
+		require.Equal(suite.T(), rec.Body.String(), gameDescrPayload)
+	}
 }
