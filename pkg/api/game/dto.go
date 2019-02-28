@@ -117,7 +117,7 @@ type (
 	}
 
 	DescrReview struct {
-		PressName string `json:"pressName" validate:"required"`
+		PressName string `json:"pressName"`
 		Link      string `json:"link"`
 		Score     string `json:"score"`
 		Quote     string `json:"quote"`
