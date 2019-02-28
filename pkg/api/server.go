@@ -17,18 +17,20 @@ import (
 )
 
 type ServerOptions struct {
-	ServerConfig *conf.ServerConfig
-	Jwt          *conf.Jwt
-	Database     *orm.Database
-	Mailer       sys.Mailer
-	Notifier     sys.Notifier
+	ServerConfig     *conf.ServerConfig
+	Jwt              *conf.Jwt
+	Database         *orm.Database
+	Mailer           sys.Mailer
+	Notifier         sys.Notifier
+	CentrifugoSecret string
 }
 
 type Server struct {
-	db           *orm.Database
-	echo         *echo.Echo
-	serverConfig *conf.ServerConfig
-	notifier     sys.Notifier
+	db               *orm.Database
+	echo             *echo.Echo
+	serverConfig     *conf.ServerConfig
+	notifier         sys.Notifier
+	centrifugoSecret string
 
 	Router      *echo.Group
 	AdminRouter *echo.Group
@@ -45,10 +47,11 @@ func (cv *QilinValidator) Validate(i interface{}) error {
 
 func NewServer(opts *ServerOptions) (*Server, error) {
 	server := &Server{
-		echo:         echo.New(),
-		serverConfig: opts.ServerConfig,
-		db:           opts.Database,
-		notifier:     opts.Notifier,
+		echo:             echo.New(),
+		serverConfig:     opts.ServerConfig,
+		db:               opts.Database,
+		notifier:         opts.Notifier,
+		centrifugoSecret: opts.CentrifugoSecret,
 	}
 
 	server.echo.HideBanner = true
@@ -177,7 +180,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 		return err
 	}
 
-	notificationService, err := orm.NewNotificationService(s.db, s.notifier)
+	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 
 	if err != nil {
 		return err

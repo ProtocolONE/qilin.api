@@ -2,9 +2,11 @@ package orm
 
 import (
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
+	"go.uber.org/zap"
 	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm/utils"
@@ -14,15 +16,26 @@ import (
 )
 
 type notificationService struct {
-	db *gorm.DB
+	db       *gorm.DB
 	notifier sys.Notifier
+	secret   string
 }
 
 const notificationMask string = "qilin:%s"
 
 //NewNotificationService is method for creating new instance of service
-func NewNotificationService(db *Database, notifier sys.Notifier) (model.NotificationService, error) {
-	return &notificationService{db.database, notifier}, nil
+func NewNotificationService(db *Database, notifier sys.Notifier, secret string) (model.NotificationService, error) {
+	return &notificationService{db.database, notifier, secret}, nil
+}
+
+func (p *notificationService) GetUserToken(id uuid.UUID) string {
+	claims := jwt.MapClaims{"sub": uuid.NewV4().String()}
+	t, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(p.secret))
+	if err != nil {
+		zap.L().Error("Could not generate Cetrifugo token", zap.Error(err))
+		return ""
+	}
+	return t
 }
 
 //GetNotifications is method for retrieving
@@ -119,10 +132,10 @@ func (p *notificationService) SendNotification(notification *model.Notification)
 	}
 
 	message := sys.NotifyMessage{
-		ID: notification.ID.String(),
-		Title: notification.Title,
-		Body: notification.Message,
-		DateTime: time.Now().UTC().String(),
+		ID:       notification.ID.String(),
+		Title:    notification.Title,
+		Body:     notification.Message,
+		DateTime: time.Now().UTC().Format(time.RFC3339),
 	}
 
 	_ = p.notifier.SendMessage(fmt.Sprintf(notificationMask, notification.VendorID), message)

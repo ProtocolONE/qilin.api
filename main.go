@@ -48,11 +48,12 @@ func main() {
 	}
 
 	serverOptions := api.ServerOptions{
-		Jwt:          &config.Jwt,
-		ServerConfig: &config.Server,
-		Database:     db,
-		Mailer:       mailer,
-		Notifier:     notifier,
+		Jwt:              &config.Jwt,
+		ServerConfig:     &config.Server,
+		Database:         db,
+		Mailer:           mailer,
+		Notifier:         notifier,
+		CentrifugoSecret: config.Notifier.Secret,
 	}
 
 	server, err := api.NewServer(&serverOptions)

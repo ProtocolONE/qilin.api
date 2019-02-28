@@ -1049,6 +1049,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ShortNotification'
+          headers:
+            X-Centrifugo-Token:
+              schema:
+                type: string
         400:
           $ref: '#/components/responses/BadRequest'
         401:

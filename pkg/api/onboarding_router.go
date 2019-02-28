@@ -111,6 +111,11 @@ func (api *OnboardingClientRouter) getLastNotifications(ctx echo.Context) error 
 		result[i].CreatedAt = n.CreatedAt.Format(time.RFC3339)
 	}
 
+	token := api.notificationService.GetUserToken(id)
+	if token != "" {
+		ctx.Response().Header().Add("X-Centrifugo-Token", token)
+	}
+
 	return ctx.JSON(http.StatusOK, result)
 }
 

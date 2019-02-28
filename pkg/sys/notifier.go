@@ -51,6 +51,7 @@ func (n *notifierImpl) SendMessage(channel string, message NotifyMessage) error 
 		return err
 	}
 	err = n.Publish(channel, bytes)
+
 	if err != nil {
 		zap.L().Error("[SendMessage] Error during publish", zap.Error(err))
 	}
