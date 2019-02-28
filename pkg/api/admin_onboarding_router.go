@@ -51,7 +51,7 @@ func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingSe
 	r := group.Group("/vendors")
 	r.GET("/reviews", router.getReviews)
 	r.GET("/:id/documents", router.getDocument)
-	r.PUT("/:id/documents", router.changeStatus)
+	r.PUT("/:id/documents/status", router.changeStatus)
 	r.POST("/:id/messages", router.sendNotification)
 	r.GET("/:id/messages", router.getNotifications)
 
