@@ -1,4 +1,4 @@
-{{- $deployment := .Values.frontend -}}
+{{- $deployment := .Values.backend -}}
 {{- $svcName := printf "%s-%s" .Release.Name $deployment.name }}
 apiVersion: v1
 kind: Service

@@ -10,9 +10,9 @@ ingress:
 certIssuer:
   email: admin@protocol.one
 
-frontend:
+backend:
   name: qilinapi
-  role: frontend
+  role: backend
   image: "p1hub/qilin.api"
   imageTag: latest
   port: 80
@@ -41,6 +41,7 @@ frontend:
     - QILINAPI_MAILER_SKIP_VERIFY
     - QILINAPI_NOTIFIER_API_KEY
     - QILINAPI_NOTIFIER_HOST
+    - QILINAPI_NOTIFIER_SECRET
   
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
