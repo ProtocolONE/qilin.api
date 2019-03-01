@@ -17,6 +17,7 @@ env:
     - QILINAPI_SERVER_ALLOW_CREDENTIALS=true
     - QILINAPI_NOTIFIER_API_KEY=secret
     - QILINAPI_NOTIFIER_HOST=http://localhost:8000
+    - QILINAPI_NOTIFIER_SECRET=secret
 
 install: true
 

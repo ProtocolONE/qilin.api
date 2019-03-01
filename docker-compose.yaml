@@ -69,6 +69,7 @@ services:
       - QILINAPI_JWT_ALGORITHM=HS256
       - QILINAPI_LOG_LEVEL=debug
       - QILINAPI_NOTIFIER_API_KEY=secret
+      - QILINAPI_NOTIFIER_SECRET=secret
 
 networks:
   p1devnet:
