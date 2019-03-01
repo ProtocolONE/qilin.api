@@ -67,7 +67,7 @@ func (suite *OnboardingAdminRouterTestSuite) SetupTest() {
 	should.Nil(err)
 	notifier, err := sys.NewNotifier(config.Notifier.ApiKey, config.Notifier.Host)
 	should.Nil(err)
-	notService, err := orm.NewNotificationService(db, notifier)
+	notService, err := orm.NewNotificationService(db, notifier, config.Notifier.Secret)
 	should.Nil(err)
 	router, err := InitAdminOnboardingRouter(e.Group("/api/v1"), service, notService)
 	should.Nil(err)
