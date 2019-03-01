@@ -21,7 +21,7 @@ func (api *Router) GetList(ctx echo.Context) error {
 	if err != nil {
 		limit = 20
 	}
-	internalName := ctx.QueryParam("technicalName")
+	internalName := ctx.QueryParam("internalName")
 	genre := ctx.QueryParam("genre")
 	price, _ := strconv.ParseFloat(ctx.QueryParam("price"), 64)
 	releaseDate := ctx.QueryParam("releaseDate")

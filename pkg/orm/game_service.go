@@ -225,9 +225,9 @@ func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
 			orderBy = "prices ASC, prices.price DESC, created_at DESC"
 		case "+price":
 			orderBy = "prices DESC, prices.price ASC, created_at ASC"
-		case "-name":
+		case "-internalName":
 			orderBy = "internal_name DESC"
-		case "+name":
+		case "+internalName":
 			orderBy = "internal_name ASC"
 		}
 	}

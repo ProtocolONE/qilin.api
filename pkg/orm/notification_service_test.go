@@ -50,7 +50,7 @@ func (suite *NotificationServiceTestSuite) SetupTest() {
 	assert.Nil(suite.T(), db.DB().Create(&model.Vendor{ID: uuid.FromStringOrNil(vendorId), Name: "Test vendor2", Domain3: "domain2", Email:"email2@email.com"}).Error)
 
 	suite.db = db
-	suite.service, err = orm.NewNotificationService(db, notifier)
+	suite.service, err = orm.NewNotificationService(db, notifier, config.Notifier.Secret)
 	assert.Nil(suite.T(), err)
 
 }
