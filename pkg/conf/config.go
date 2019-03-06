@@ -25,9 +25,9 @@ type Database struct {
 
 // Auth1 specifies all the parameters needed for authenticate
 type Auth1 struct {
-	Issuer       string `envconfig:"ISSUER" required:"true" default:"https://dev-auth1.tst.protocol.one"`
-	ClientId     string `envconfig:"CLIENTID" required:"true"`
-	ClientSecret string `envconfig:"CLIENTSECRET" required:"true"`
+	Issuer       string `envconfig:"AUTH1_ISSUER" required:"true" default:"https://dev-auth1.tst.protocol.one"`
+	ClientId     string `envconfig:"AUTH1_CLIENTID" required:"true"`
+	ClientSecret string `envconfig:"AUTH1_CLIENTSECRET" required:"true"`
 }
 
 type Notifier struct {
