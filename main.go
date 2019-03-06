@@ -27,7 +27,9 @@ func main() {
 		logger.Fatal("Failed to make Postgres connection", zap.Error(err))
 	}
 
-	db.Init()
+	if err := db.Init(); err != nil {
+		logger.Fatal("Failed to migrate database", zap.Error(err))
+	}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -48,7 +50,7 @@ func main() {
 	}
 
 	serverOptions := api.ServerOptions{
-		Jwt:              &config.Jwt,
+		Auth1:            &config.Auth1,
 		ServerConfig:     &config.Server,
 		Database:         db,
 		Mailer:           mailer,

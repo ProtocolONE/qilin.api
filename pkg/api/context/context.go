@@ -1,10 +1,8 @@
 package context
 
 import (
-	"encoding/base64"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"net/http"
 )
 
@@ -13,28 +11,10 @@ const (
 	LoggerKey = "app.logger"
 )
 
-func getToken(ctx echo.Context) *jwt.Token {
-	obj := ctx.Get(TokenKey)
-	if obj == nil {
-		return nil
-	}
-
-	return obj.(*jwt.Token)
-}
-
-func GetAuthUUID(ctx echo.Context) (result uuid.UUID, err error) {
-	token := ctx.Get(TokenKey).(*jwt.Token)
+func GetAuthExternalUserId(ctx echo.Context) (externalUserId string, err error) {
+	token := ctx.Get("user").(*jwtverifier.UserInfo)
 	if token == nil {
-		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token")
+		return "", echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token: "+err.Error())
 	}
-	claims := token.Claims.(jwt.MapClaims)
-	data, err := base64.StdEncoding.DecodeString(claims["id"].(string))
-	if data == nil {
-		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token")
-	}
-	uuidObj, err := uuid.FromBytes(data)
-	if data == nil {
-		return uuid.Nil, echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token")
-	}
-	return uuidObj, nil
+	return token.UserID, nil
 }

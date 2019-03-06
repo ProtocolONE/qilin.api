@@ -14,6 +14,7 @@ import (
 type (
 	VendorRouter struct {
 		vendorService model.VendorService
+		userService   model.UserService
 	}
 
 	VendorDTO struct {
@@ -26,9 +27,10 @@ type (
 	}
 )
 
-func InitVendorRoutes(api *Server, service model.VendorService) error {
+func InitVendorRoutes(api *Server, service model.VendorService, userService model.UserService) error {
 	vendorRouter := VendorRouter{
 		vendorService: service,
+		userService:   userService,
 	}
 
 	api.Router.GET("/vendors", vendorRouter.getAll)
@@ -99,7 +101,7 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 	}
 
 	// Assign to new vendor current user id as manager
-	managerId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -109,7 +111,7 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 		Domain3:         dto.Domain3,
 		Email:           dto.Email,
 		HowManyProducts: dto.HowManyProducts,
-		ManagerID:       managerId,
+		ManagerID:       userId,
 	})
 	if err != nil {
 		return err
@@ -145,7 +147,7 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 		Domain3:         dto.Domain3,
 		Email:           dto.Email,
 		HowManyProducts: dto.HowManyProducts,
-		ManagerID: dto.ManagerId,
+		ManagerID:       dto.ManagerId,
 	})
 	if err != nil {
 		return err
@@ -159,4 +161,17 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 		HowManyProducts: vendor.HowManyProducts,
 		ManagerId:       vendor.ManagerID,
 	})
+}
+
+func (api *VendorRouter) getUserId(ctx echo.Context) (uuid.UUID, error) {
+	extUserId, err := context.GetAuthExternalUserId(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	user, err := api.userService.FindByExternalID(extUserId)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return user.ID, nil
 }

@@ -1,13 +1,12 @@
 package api
 
 import (
-	"encoding/base64"
+	"github.com/ProtocolONE/authone-jwt-verifier-golang"
+	jwt_middleware "github.com/ProtocolONE/authone-jwt-verifier-golang/middleware/echo"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
-	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/game"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
@@ -18,7 +17,7 @@ import (
 
 type ServerOptions struct {
 	ServerConfig     *conf.ServerConfig
-	Jwt              *conf.Jwt
+	Auth1            *conf.Auth1
 	Database         *orm.Database
 	Mailer           sys.Mailer
 	Notifier         sys.Notifier
@@ -80,29 +79,20 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.Router = server.echo.Group("/api/v1")
 	server.AdminRouter = server.echo.Group("/admin/api/v1")
 
-	pemKey, err := base64.StdEncoding.DecodeString(opts.Jwt.SignatureSecret)
-	if err != nil {
-		return nil, errors.Wrap(err, "Decode JWT failed")
+	settings := jwtverifier.Config{
+		ClientID:     opts.Auth1.ClientId,
+		ClientSecret: opts.Auth1.ClientSecret,
+		Scopes:       []string{"openid", "offline"},
+		RedirectURL:  "",
+		Issuer:       opts.Auth1.Issuer,
 	}
+	jwtv := jwtverifier.NewJwtVerifier(settings)
 
-	server.AdminRouter.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		ContextKey:    context.TokenKey,
-		AuthScheme:    "Bearer",
-		TokenLookup:   "header:Authorization",
-		SigningKey:    pemKey,
-		SigningMethod: opts.Jwt.Algorithm,
-	}))
-
-	server.Router.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		ContextKey:    context.TokenKey,
-		AuthScheme:    "Bearer",
-		TokenLookup:   "header:Authorization",
-		SigningKey:    pemKey,
-		SigningMethod: opts.Jwt.Algorithm,
-	}))
+	server.AdminRouter.Use(jwt_middleware.AuthOneJwtWithConfig(jwtv))
+	server.Router.Use(jwt_middleware.AuthOneJwtWithConfig(jwtv))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
-	if err := server.setupRoutes(opts.Jwt, opts.Mailer); err != nil {
+	if err := server.setupRoutes(opts.Mailer); err != nil {
 		zap.L().Fatal("Fail to setup routes", zap.Error(err))
 	}
 
@@ -115,12 +105,16 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
-	userService, err := orm.NewUserService(s.db, jwtConf, mailer)
+func (s *Server) setupRoutes(mailer sys.Mailer) error {
+	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {
 		return err
 	}
 
+	userService, err := orm.NewUserService(s.db, mailer)
+	if err != nil {
+		return err
+	}
 	if err := InitUserRoutes(s, userService); err != nil {
 		return err
 	}
@@ -129,8 +123,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
-
-	if err := InitVendorRoutes(s, vendorService); err != nil {
+	if err := InitVendorRoutes(s, vendorService, userService); err != nil {
 		return err
 	}
 
@@ -138,7 +131,6 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
-
 	if _, err := InitMediaRouter(s.Router, mediaService); err != nil {
 		return err
 	}
@@ -147,12 +139,14 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
+	if _, err := game.InitRoutes(s.Router, gameService, userService); err != nil {
+		return err
+	}
 
 	priceService, err := orm.NewPriceService(s.db)
 	if err != nil {
 		return err
 	}
-
 	if _, err := InitPriceRouter(s.Router, priceService); err != nil {
 		return err
 	}
@@ -161,7 +155,6 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
-
 	if _, err := InitRatingsRouter(s.Router, ratingService); err != nil {
 		return err
 	}
@@ -170,7 +163,6 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
-
 	if _, err := InitDiscountsRouter(s.Router, discountService); err != nil {
 		return err
 	}
@@ -179,13 +171,6 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
-
-	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
-
-	if err != nil {
-		return err
-	}
-
 	if _, err := InitClientOnboardingRouter(s.Router, clientOnboarding, notificationService); err != nil {
 		return err
 	}
@@ -194,12 +179,7 @@ func (s *Server) setupRoutes(jwtConf *conf.Jwt, mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
-
 	if _, err := InitAdminOnboardingRouter(s.AdminRouter, adminClientOnboarding, notificationService); err != nil {
-		return err
-	}
-
-	if _, err := game.InitRoutes(s.Router, gameService); err != nil {
 		return err
 	}
 

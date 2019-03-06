@@ -16,18 +16,19 @@ hardware or cloud platform.
 
 Qilin management API designed to be launched with Kubernetes and handle all configuration from env variables:
 
-| Variable                      | Default                                                           | Description                                                                                                                                |
-|-------------------------------|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| QILINAPI_SERVER_PORT              | 8080                                                              | HTTP port to listed API requests.                                                                                                          |
-| QILINAPI_SERVER_ALLOW_ORIGINS     | *                                                                 | Comma separated list of [CORS domains](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin).             |
-| QILINAPI_SERVER_ALLOW_CREDENTIALS | false                                                             | Look at [CORS documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials) about this value. |
-| QILINAPI_SERVER_DEBUG             | false                                                             | Enable debug mode for [echo based](https://echo.labstack.com/) server.                                                                     |
-| QILINAPI_DATABASE_DSN             | See below                                                         | [GORM Postgres DSN](http://doc.gorm.io/database.html#connecting-to-a-database) string                                                      |
-| QILINAPI_DATABASE_DEBUG           | false                                                             | Enable logmode for Postgress.                                                                                                              |
-| QILINAPI_JWT_SECRET               |                                                                   | BASE64 encoded JWT secret key. Here is no default value, it should be provided.                                                            |
-| QILINAPI_JWT_ALGORITHM            | HS256                                                             | JWT Algorithm.                                                                                                                             |
-| QILINAPI_LOG_LEVEL                | debug                                                             | Default logging level in application.                                                                                                      |
-| QILINAPI_LOG_REPORT_CALLER        | false                                                             | Loggin stack trace enable.                                                                                                                 |
+| Variable                          | Default      | Description                                                                                                                                |
+|-----------------------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| QILINAPI_SERVER_PORT              | 8080         | HTTP port to listed API requests.                                                                                                          |
+| QILINAPI_SERVER_ALLOW_ORIGINS     | *            | Comma separated list of [CORS domains](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin).             |
+| QILINAPI_SERVER_ALLOW_CREDENTIALS | false        | Look at [CORS documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials) about this value. |
+| QILINAPI_SERVER_DEBUG             | false        | Enable debug mode for [echo based](https://echo.labstack.com/) server.                                                                     |
+| QILINAPI_DATABASE_DSN             | See below    | [GORM Postgres DSN](http://doc.gorm.io/database.html#connecting-to-a-database) string                                                      |
+| QILINAPI_DATABASE_DEBUG           | false        | Enable logmode for Postgress.                                                                                                              |
+| QILINAPI_LOG_LEVEL                | debug        | Default logging level in application.                                                                                                      |
+| QILINAPI_LOG_REPORT_CALLER        | false        | Loggin stack trace enable.                                                                                                                 |
+| QILINAPI_AUTH1_ISSUER             |              | URL to ProtocolOne authentication server (without slash on the end).                                                                       |
+| QILINAPI_AUTH1_CLIENTID           |              | Application identifier from ProtocolOne authenticate server.                                                                               |
+| QILINAPI_AUTH1_CLIENTSECRET       |              | Secret authentication key for the application from ProtocolOne authenticate server.                                                        |
 
 Default database DSN is `postgres://postgres:postgres@localhost:5432/qilin?sslmode=disable`. 
 

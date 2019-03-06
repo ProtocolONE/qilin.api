@@ -4,7 +4,7 @@ package conf
 type Config struct {
 	Server   ServerConfig
 	Database Database
-	Jwt      Jwt
+	Auth1    Auth1
 	Mailer   Mailer
 	Notifier Notifier
 }
@@ -23,10 +23,11 @@ type Database struct {
 	LogMode bool   `envconfig:"DEBUG" required:"false" default:"false"`
 }
 
-// Jwt specifies all the parameters needed for Jwt middleware
-type Jwt struct {
-	SignatureSecret string `envconfig:"SECRET" required:"true"`
-	Algorithm       string `envconfig:"ALGORITHM" required:"false" default:"HS256"`
+// Auth1 specifies all the parameters needed for authenticate
+type Auth1 struct {
+	Issuer       string `envconfig:"ISSUER" required:"true" default:"https://dev-auth1.tst.protocol.one"`
+	ClientId     string `envconfig:"CLIENTID" required:"true"`
+	ClientSecret string `envconfig:"CLIENTSECRET" required:"true"`
 }
 
 type Notifier struct {

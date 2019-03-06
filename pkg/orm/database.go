@@ -26,8 +26,10 @@ func NewDatabase(config *conf.Database) (*Database, error) {
 	return &Database{db}, err
 }
 
-func (db *Database) Init() {
-	db.database.AutoMigrate(
+// Unable to migrate with message: gen_random_uuid() does not exist?
+// Execute query: CREATE EXTENSION pgcrypto;
+func (db *Database) Init() error {
+	return db.database.AutoMigrate(
 		&model.User{},
 		&model.Vendor{},
 		&model.Game{},
@@ -42,7 +44,7 @@ func (db *Database) Init() {
 		&model.GameRating{},
 		&model.DocumentsInfo{},
 		&model.Notification{},
-	)
+	).Error
 }
 
 //DropAllTables is method for clearing DB. WARNING: Use it only for testing purposes

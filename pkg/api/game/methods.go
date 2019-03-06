@@ -30,7 +30,7 @@ func (api *Router) Create(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendorId")
 	}
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (api *Router) GetInfo(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (api *Router) Delete(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (api *Router) UpdateInfo(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (api *Router) GetDescr(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
 	}
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func (api *Router) UpdateDescr(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
 	}
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func (api *Router) GetGenres(ctx echo.Context) error {
 	if err != nil {
 		limit = 20
 	}
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func (api *Router) GetTags(ctx echo.Context) (err error) {
 	if err != nil {
 		limit = 20
 	}
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -260,18 +260,31 @@ func (api *Router) GetTags(ctx echo.Context) (err error) {
 }
 
 func (api *Router) GetRatingDescriptors(ctx echo.Context) error {
-    system := ctx.QueryParam("title")
-    descriptors, err := api.gameService.GetRatingDescriptors(system)
-    if err != nil {
-        return err
-    }
-    dto := []RatingDescriptorDTO{}
-    for _, desc := range descriptors {
-        dto = append(dto, RatingDescriptorDTO{
-            Id: desc.ID,
-            Title: desc.Title,
-            System: desc.System,
-        })
-    }
-    return ctx.JSON(http.StatusOK, dto)
+	system := ctx.QueryParam("title")
+	descriptors, err := api.gameService.GetRatingDescriptors(system)
+	if err != nil {
+		return err
+	}
+	dto := []RatingDescriptorDTO{}
+	for _, desc := range descriptors {
+		dto = append(dto, RatingDescriptorDTO{
+			Id:     desc.ID,
+			Title:  desc.Title,
+			System: desc.System,
+		})
+	}
+	return ctx.JSON(http.StatusOK, dto)
+}
+
+func (api *Router) getUserId(ctx echo.Context) (uuid.UUID, error) {
+	extUserId, err := context.GetAuthExternalUserId(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	user, err := api.userService.FindByExternalID(extUserId)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return user.ID, nil
 }
