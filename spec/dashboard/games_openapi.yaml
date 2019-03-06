@@ -1554,6 +1554,8 @@ components:
           format: 'date-time'
         isRead:
           type: boolean
+        haveMsg:
+          type: boolean
 
     AdminGetMerchantRequest:
       allOf:

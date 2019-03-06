@@ -41,6 +41,7 @@ type ShortNotificationDTO struct {
 	Title     string `json:"title"`
 	CreatedAt string `json:"createdAt"`
 	IsRead    bool   `json:"isRead"`
+	HaveMsg   bool   `json:"haveMsg"`
 }
 
 func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingService, notificationService model.NotificationService) (*OnboardingAdminRouter, error) {
