@@ -1,12 +1,9 @@
 package api
 
 import (
-	"fmt"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
-	"log"
-	"math/rand"
 	"net/http"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
@@ -88,25 +85,6 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	r.GET("/messages/:messageId", router.getNotification)
 	r.PUT("/messages/:messageId/read", router.markAsRead)
 	r.GET("/messages/short", router.getLastNotifications)
-
-	go func (){
-		for {
-			time.Sleep(time.Second * 2)
-			vendorId, _ := uuid.FromString("5d42a808-329c-4705-978a-12bbbe552cc0")
-			userId, _ := uuid.FromString("75defbee-4b3f-43c4-9376-b3a3e9c3c200")
-			_, err := notificationService.SendNotification(&model.Notification{
-				Title: fmt.Sprintf("title-%d", rand.Int31n(1000) + 1000),
-				Message: "message",
-				IsRead: false,
-				VendorID: vendorId,
-				UserID: userId,
-			})
-			if err != nil {
-				log.Println(err)
-			}
-			time.Sleep(time.Second * 60 * 2)
-		}
-	}()
 
 	return &router, nil
 }
