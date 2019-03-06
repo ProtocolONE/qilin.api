@@ -676,5 +676,5 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotification() {
 	should.NotEmpty(result.CreatedAt)
 	createdAt, err := time.Parse(time.RFC3339, result.CreatedAt)
 	should.Nil(err)
-	should.True(createdAt.After(time.Now().Add(-time.Duration(1)*time.Minute)))
+	should.True(createdAt.After(time.Now().Add(-time.Duration(1) * time.Minute)))
 }

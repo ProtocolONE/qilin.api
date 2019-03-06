@@ -94,8 +94,8 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 	game.Languages = bto.GameLangs{}
 	game.FeaturesCommon = []string{}
 	game.GenreMain = 1
-	game.GenreAddition = []int64 {1,2}
-	game.Tags = []int64 {1,2}
+	game.GenreAddition = []int64{1, 2}
+	game.Tags = []int64{1, 2}
 	game.VendorID = vendor.ID
 	game.CreatorID = userId
 

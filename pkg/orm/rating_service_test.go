@@ -274,15 +274,15 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadIdShouldReturnError
 	}
 }
 
-func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldReturnError()  {
+func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldReturnError() {
 	id, _ := uuid.FromString(ID)
 	testModel := &model.GameRating{
 		BBFC: model.JSONB{
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : []uint {
+			"rating":              "U",
+			model.DescriptorsField: []uint{
 				666, 667,
 			},
 		},
@@ -290,8 +290,8 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : []uint {
+			"rating":              "U",
+			model.DescriptorsField: []uint{
 				666, 667,
 			},
 		},
@@ -299,8 +299,8 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : []uint {
+			"rating":              "U",
+			model.DescriptorsField: []uint{
 				666, 667,
 			},
 		},
@@ -308,8 +308,8 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : []uint {
+			"rating":              "U",
+			model.DescriptorsField: []uint{
 				666, 667,
 			},
 		},
@@ -317,8 +317,8 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 			"displayOnlineNotice": true,
 			"showAgeRestrict":     true,
 			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : []uint {
+			"rating":              "U",
+			model.DescriptorsField: []uint{
 				666, 667,
 			},
 		},
@@ -354,39 +354,39 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsShouldReturnOk() {
 	id, _ := uuid.FromString(ID)
 	testModel := &model.GameRating{
 		BBFC: model.JSONB{
-			"displayOnlineNotice": true,
-			"showAgeRestrict":     true,
-			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : BBFCDescriptors,
+			"displayOnlineNotice":  true,
+			"showAgeRestrict":      true,
+			"ageRestrict":          10,
+			"rating":               "U",
+			model.DescriptorsField: BBFCDescriptors,
 		},
 		PEGI: model.JSONB{
-			"displayOnlineNotice": true,
-			"showAgeRestrict":     true,
-			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : PEGIDescriptors,
+			"displayOnlineNotice":  true,
+			"showAgeRestrict":      true,
+			"ageRestrict":          10,
+			"rating":               "U",
+			model.DescriptorsField: PEGIDescriptors,
 		},
 		USK: model.JSONB{
-			"displayOnlineNotice": true,
-			"showAgeRestrict":     true,
-			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : USKDescriptors,
+			"displayOnlineNotice":  true,
+			"showAgeRestrict":      true,
+			"ageRestrict":          10,
+			"rating":               "U",
+			model.DescriptorsField: USKDescriptors,
 		},
 		ESRB: model.JSONB{
-			"displayOnlineNotice": true,
-			"showAgeRestrict":     true,
-			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : ESRBDescriptors,
+			"displayOnlineNotice":  true,
+			"showAgeRestrict":      true,
+			"ageRestrict":          10,
+			"rating":               "U",
+			model.DescriptorsField: ESRBDescriptors,
 		},
 		CERO: model.JSONB{
-			"displayOnlineNotice": true,
-			"showAgeRestrict":     true,
-			"ageRestrict":         10,
-			"rating": "U",
-			model.DescriptorsField : CERODescriptors,
+			"displayOnlineNotice":  true,
+			"showAgeRestrict":      true,
+			"ageRestrict":          10,
+			"rating":               "U",
+			model.DescriptorsField: CERODescriptors,
 		},
 	}
 	err := suite.service.SaveRatingsForGame(id, testModel)

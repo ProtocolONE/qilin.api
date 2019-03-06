@@ -19,7 +19,7 @@ func NewOnboardingService(db *Database) (*OnboardingService, error) {
 }
 
 //SendToReview is method for sending vendor documents to review
-func  (p *OnboardingService) SendToReview(vendorId uuid.UUID) error {
+func (p *OnboardingService) SendToReview(vendorId uuid.UUID) error {
 	err := p.checkVendorExist(vendorId)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (p *OnboardingService) checkVendorExist(vendorId uuid.UUID) error {
 	err := p.db.Model(&model.Vendor{}).Where("ID = ?", vendorId).Count(&count).Error
 
 	if err != nil {
-		return NewServiceError(http.StatusBadRequest, errors.Wrap(err,  fmt.Sprintf("Get vendor id: %s", vendorId)))
+		return NewServiceError(http.StatusBadRequest, errors.Wrap(err, fmt.Sprintf("Get vendor id: %s", vendorId)))
 	}
 
 	if count == 0 {
@@ -70,7 +70,7 @@ func (p *OnboardingService) GetForVendor(id uuid.UUID) (*model.DocumentsInfo, er
 	err = p.db.Where("vendor_id = ?", id).First(&result).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, NewServiceError(http.StatusBadRequest, errors.Wrap(err,  fmt.Sprintf("Get vendor's documents with vendor id: %s", id)))
+		return nil, NewServiceError(http.StatusBadRequest, errors.Wrap(err, fmt.Sprintf("Get vendor's documents with vendor id: %s", id)))
 	}
 
 	return &result, nil
@@ -84,19 +84,19 @@ func (p *OnboardingService) GetById(id uuid.UUID) (*model.DocumentsInfo, error) 
 	if err == gorm.ErrRecordNotFound {
 		return nil, NewServiceError(http.StatusNotFound, fmt.Sprintf("Get vendor's documents with id: %s", id))
 	} else if err != nil {
-		return nil, NewServiceError(http.StatusBadRequest, errors.Wrap(err,  fmt.Sprintf("Get vendor's documents with id: %s", id)).Error())
+		return nil, NewServiceError(http.StatusBadRequest, errors.Wrap(err, fmt.Sprintf("Get vendor's documents with id: %s", id)).Error())
 	}
 
 	return result, err
 }
 
 //GetById is method for getting vendor documents by documentId
-func (p *OnboardingService) ChangeDocument(document *model.DocumentsInfo)  error {
+func (p *OnboardingService) ChangeDocument(document *model.DocumentsInfo) error {
 	count := 0
 	err := p.db.Model(&model.Vendor{}).Where("ID = ?", document.VendorID).Count(&count).Error
 
 	if err != nil {
-		return NewServiceError(http.StatusBadRequest, errors.Wrap(err,  fmt.Sprintf("Get vendor id: %s", document.VendorID)))
+		return NewServiceError(http.StatusBadRequest, errors.Wrap(err, fmt.Sprintf("Get vendor id: %s", document.VendorID)))
 	}
 
 	if count == 0 {
@@ -127,8 +127,3 @@ func (p *OnboardingService) ChangeDocument(document *model.DocumentsInfo)  error
 
 	return nil
 }
-
-
-
-
-

@@ -177,7 +177,7 @@ func (p *GameService) GetList(userId uuid.UUID, vendorId uuid.UUID,
 
 	if internalName != "" {
 		conds = append(conds, `internal_name ilike ?`)
-		vals = append(vals, "%" + internalName + "%")
+		vals = append(vals, "%"+internalName+"%")
 	}
 
 	if genre != "" {
@@ -299,7 +299,7 @@ func (p *GameService) UpdateInfo(userId uuid.UUID, game *model.Game) (err error)
 	}
 	if len(tempGenres) > 0 {
 		foundGenres := 0
-		err = p.db.Model(&model.GameGenre{}).Where("id in ("  + utils.JoinInt(tempGenres, ",") +  ")").Count(&foundGenres).Error
+		err = p.db.Model(&model.GameGenre{}).Where("id in (" + utils.JoinInt(tempGenres, ",") + ")").Count(&foundGenres).Error
 		if err != nil {
 			return errors.Wrap(err, "Fetch genres")
 		}

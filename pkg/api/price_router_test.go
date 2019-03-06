@@ -32,18 +32,18 @@ func Test_PriceRouter(t *testing.T) {
 }
 
 var (
-	testObject     = `{"common":{"currency":"USD","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
-	testBadObject  = `{"common":{"NotifyRateJumps":true},"preOrder":{"enabled":false}}`
-	testBadObjectWithUnwknowsCurrency  = `{"common":{"currency":"XXX","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
-	emptyBasePrice = `{"common":{"currency":"","notifyRateJumps":false},"preOrder":{"date":"","enabled":false},"prices":null}`
-	testPrice      = `{"price":100,"currency":"USD","vat":10}`
-	testBadPrice   = `{"vat":10}`
+	testObject                        = `{"common":{"currency":"USD","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
+	testBadObject                     = `{"common":{"NotifyRateJumps":true},"preOrder":{"enabled":false}}`
+	testBadObjectWithUnwknowsCurrency = `{"common":{"currency":"XXX","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
+	emptyBasePrice                    = `{"common":{"currency":"","notifyRateJumps":false},"preOrder":{"date":"","enabled":false},"prices":null}`
+	testPrice                         = `{"price":100,"currency":"USD","vat":10}`
+	testBadPrice                      = `{"vat":10}`
 
 	testPriceWithUnknownCurrency = `{"price":100,"currency":"XXX","vat":10}`
-	testPriceWithBadPrice = `{"price":"1a","currency":"USD","vat":10}`
-	testPriceWithBadVat = `{"price":100,"currency":"USD","vat":"qwe"}`
-	testPriceWithPriceLowerZero = `{"price":-100,"currency":"USD","vat":10}`
-	testPriceWithVatLowerZero = `{"price":100,"currency":"USD","vat":-10}`
+	testPriceWithBadPrice        = `{"price":"1a","currency":"USD","vat":10}`
+	testPriceWithBadVat          = `{"price":100,"currency":"USD","vat":"qwe"}`
+	testPriceWithPriceLowerZero  = `{"price":-100,"currency":"USD","vat":10}`
+	testPriceWithVatLowerZero    = `{"price":100,"currency":"USD","vat":-10}`
 )
 
 func (suite *PriceRouterTestSuite) SetupTest() {
@@ -206,7 +206,7 @@ func (suite *PriceRouterTestSuite) TestPutWithBadIdModelShouldReturnBadRequest()
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
-func (suite *PriceRouterTestSuite) TestDeleteUnknownCurrencyShouldReturnError () {
+func (suite *PriceRouterTestSuite) TestDeleteUnknownCurrencyShouldReturnError() {
 	req := httptest.NewRequest(http.MethodDelete, "/", strings.NewReader(testPriceWithUnknownCurrency))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -242,10 +242,10 @@ func (suite *PriceRouterTestSuite) TestPutBasePriceWihhUnknownCurrencyShouldRetu
 	}
 }
 
-func (suite *PriceRouterTestSuite) TestPutBadObjectsShouldReturnError () {
+func (suite *PriceRouterTestSuite) TestPutBadObjectsShouldReturnError() {
 	tests := []struct {
-		name string
-		body string
+		name   string
+		body   string
 		status int
 	}{
 		{name: "testPriceWithBadPrice", body: testPriceWithBadPrice, status: http.StatusBadRequest},

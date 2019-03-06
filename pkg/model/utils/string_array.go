@@ -18,4 +18,3 @@ func (arr StringArray) Contains(search string) bool {
 func (arr StringArray) String() string {
 	return strings.Join(arr, ", ")
 }
-

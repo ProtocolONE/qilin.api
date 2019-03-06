@@ -16,8 +16,8 @@ import (
 
 type GameServiceTestSuite struct {
 	suite.Suite
-	db      *orm.Database
-	userId  uuid.UUID
+	db     *orm.Database
+	userId uuid.UUID
 }
 
 func Test_GameService(t *testing.T) {
@@ -160,7 +160,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 			ID:    5,
 			Title: utils.LocalizedString{EN: "genre-2", RU: "Жанр-2"},
 		}},
-			{model.GameTag{
+		{model.GameTag{
 			ID:    6,
 			Title: utils.LocalizedString{EN: "genre-3", RU: "Жанр-3"},
 		}},
@@ -253,7 +253,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Equal(game5.Requirements.Windows.Recommended.Graphics, "4200ti", "Must be same")
 	require.Equal(game5.Publishers, game3.Publishers, "Must be same")
 	require.Equal(len(game5.Tags), 2, "Must be same")
-    require.Equal(len(game5.GenreAddition), 2, "Must be 3 extra genres")
+	require.Equal(len(game5.GenreAddition), 2, "Must be 3 extra genres")
 	require.Equal(game5.GenreMain, int64(1), "Genre with id 1")
 
 	suite.T().Log("Get game descriptions")

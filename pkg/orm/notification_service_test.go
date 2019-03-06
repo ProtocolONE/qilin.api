@@ -17,10 +17,9 @@ import (
 
 type NotificationServiceTestSuite struct {
 	suite.Suite
-	db *orm.Database
+	db      *orm.Database
 	service model.NotificationService
 }
-
 
 func Test_NotificationService(t *testing.T) {
 	suite.Run(t, new(NotificationServiceTestSuite))
@@ -46,8 +45,8 @@ func (suite *NotificationServiceTestSuite) SetupTest() {
 	assert.Nil(suite.T(), err)
 	assert.NotNil(suite.T(), notifier)
 
-	assert.Nil(suite.T(), db.DB().Create(&model.Vendor{ID: uuid.FromStringOrNil(GameID), Name: "Test vendor", Domain3: "domain", Email:"email@email.com"}).Error)
-	assert.Nil(suite.T(), db.DB().Create(&model.Vendor{ID: uuid.FromStringOrNil(vendorId), Name: "Test vendor2", Domain3: "domain2", Email:"email2@email.com"}).Error)
+	assert.Nil(suite.T(), db.DB().Create(&model.Vendor{ID: uuid.FromStringOrNil(GameID), Name: "Test vendor", Domain3: "domain", Email: "email@email.com"}).Error)
+	assert.Nil(suite.T(), db.DB().Create(&model.Vendor{ID: uuid.FromStringOrNil(vendorId), Name: "Test vendor2", Domain3: "domain2", Email: "email2@email.com"}).Error)
 
 	suite.db = db
 	suite.service, err = orm.NewNotificationService(db, notifier, config.Notifier.Secret)
@@ -104,42 +103,42 @@ func (suite *NotificationServiceTestSuite) TestGetNotifications() {
 	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "-createdDate")
 	should.Nil(err)
 	should.NotNil(notifications)
-	for i := 0; i < len(notifications) - 1; i++ {
+	for i := 0; i < len(notifications)-1; i++ {
 		should.True(notifications[i].CreatedAt.After(notifications[i+1].CreatedAt))
 	}
 
 	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+createdDate")
 	should.Nil(err)
 	should.NotNil(notifications)
-	for i := 0; i < len(notifications) - 1; i++ {
+	for i := 0; i < len(notifications)-1; i++ {
 		should.True(notifications[i].CreatedAt.Before(notifications[i+1].CreatedAt))
 	}
 
 	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+title")
 	should.Nil(err)
 	should.NotNil(notifications)
-	for i := 0; i < len(notifications) - 1; i++ {
+	for i := 0; i < len(notifications)-1; i++ {
 		should.Equal(-1, strings.Compare(notifications[i].Title, notifications[i+1].Title), "%d %s > %s", i, notifications[i].Title, notifications[i+1].Title)
 	}
 
 	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "-title")
 	should.Nil(err)
 	should.NotNil(notifications)
-	for i := 0; i < len(notifications) - 1; i++ {
+	for i := 0; i < len(notifications)-1; i++ {
 		should.Equal(1, strings.Compare(notifications[i].Title, notifications[i+1].Title), "%d %s > %s", i, notifications[i].Title, notifications[i+1].Title)
 	}
 
 	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+message")
 	should.Nil(err)
 	should.NotNil(notifications)
-	for i := 0; i < len(notifications) - 1; i++ {
+	for i := 0; i < len(notifications)-1; i++ {
 		should.Equal(-1, strings.Compare(notifications[i].Message, notifications[i+1].Message), "%d %s > %s", i, notifications[i].Message, notifications[i+1].Message)
 	}
 
 	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "-message")
 	should.Nil(err)
 	should.NotNil(notifications)
-	for i := 0; i < len(notifications) - 1; i++ {
+	for i := 0; i < len(notifications)-1; i++ {
 		should.Equal(1, strings.Compare(notifications[i].Message, notifications[i+1].Message), "%d %s > %s", i, notifications[i].Message, notifications[i+1].Message)
 	}
 
