@@ -41,7 +41,7 @@ var (
 	postNotification            = `{"title":"Hello world","message":"Somebody"}`
 	postNotificationNullMessage = `{"title":"Hello world", "message":null}`
 	postNotificationNullTitle   = `{"title":null, "message":"Bad message"}`
-	postNotificationBad   = `<"title":null, "message":"Bad message">`
+	postNotificationBad         = `<"title":null, "message":"Bad message">`
 )
 
 func Test_OnboardingAdminRouter(t *testing.T) {
