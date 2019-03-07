@@ -7,6 +7,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/orm/utils"
 )
 
 // OnboardingService is service to interact with database and vendor requests objects.
@@ -45,18 +46,13 @@ func  (p *OnboardingService) SendToReview(vendorId uuid.UUID) error {
 	return nil
 }
 
-func (p *OnboardingService) checkVendorExist(vendorId uuid.UUID) error {
-	count := 0
-	err := p.db.Model(&model.Vendor{}).Where("ID = ?", vendorId).Count(&count).Error
-
-	if err != nil {
-		return NewServiceError(http.StatusBadRequest, errors.Wrap(err,  fmt.Sprintf("Get vendor id: %s", vendorId)))
+func (p *OnboardingService) checkVendorExist(id uuid.UUID) error {
+	if exist, err := utils.CheckExists(p.db, model.Vendor{}, id); !exist || err != nil {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Get vendor by id"))
+		}
+		return NewServiceErrorf(http.StatusNotFound, "No vendors with id `%s`", id)
 	}
-
-	if count == 0 {
-		return NewServiceError(http.StatusNotFound, fmt.Sprintf("No vendor with id: %s", vendorId))
-	}
-
 	return nil
 }
 
@@ -123,6 +119,37 @@ func (p *OnboardingService) ChangeDocument(document *model.DocumentsInfo)  error
 	err = p.db.Save(document).Error
 	if err != nil {
 		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Save vendor's documents with id: %s", document.ID)).Error())
+	}
+
+	return nil
+}
+
+func (p *OnboardingService) RevokeReviewRequest(id uuid.UUID) error {
+	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, id); !exist || err != nil {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Trying to get vendor from db"))
+		}
+		return NewServiceErrorf(http.StatusNotFound, "No vendor with id %s", id)
+	}
+
+	info := &model.DocumentsInfo{}
+	result := p.db.Model(&model.Vendor{ID: id}).Related(&info)
+
+	if result.RecordNotFound() {
+		return NewServiceErrorf(http.StatusNotFound, "No documents found for vendor `%s`", id)
+	} else {
+		if result.Error != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrapf(result.Error, "Get vendor's documents with id: %s", id).Error())
+		}
+		if info.CanBeRevokedReview() == false {
+			return NewServiceErrorf(http.StatusBadRequest, "Can't revoke document review when status is `%s`", info.Status.ToString())
+		}
+		info.Status = model.StatusDraft
+	}
+
+	err := p.db.Save(info).Error
+	if err != nil {
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Save vendor's documents with id: %s", id)).Error())
 	}
 
 	return nil
