@@ -16,9 +16,9 @@ env:
     - QILINAPI_NOTIFIER_API_KEY=secret
     - QILINAPI_NOTIFIER_HOST=http://localhost:8000
     - QILINAPI_NOTIFIER_SECRET=secret
-    - QILINAPI_AUTH1_ISSUER=
-    - QILINAPI_AUTH1_CLIENTID=
-    - QILINAPI_AUTH1_CLIENTSECRET=
+    - QILINAPI_AUTH1_ISSUER=oauth1_issuer
+    - QILINAPI_AUTH1_CLIENTID=oauth1_clientid
+    - QILINAPI_AUTH1_CLIENTSECRET=oauth1_clientsecret
 
 install: true
 
