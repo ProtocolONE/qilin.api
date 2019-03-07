@@ -14,8 +14,8 @@ type Notification struct {
 
 type NotificationService interface {
 	GetNotifications(id uuid.UUID, limit int, offset int, search string, sort string) ([]Notification, error)
-	MarkAsRead(id uuid.UUID) error
+	MarkAsRead(vendorId uuid.UUID, messageId uuid.UUID) error
 	GetUserToken(id uuid.UUID) string
 	SendNotification(notification *Notification) (*Notification, error)
-	GetNotification(id uuid.UUID) (*Notification, error)
+	GetNotification(vendorId uuid.UUID, messageId uuid.UUID) (*Notification, error)
 }

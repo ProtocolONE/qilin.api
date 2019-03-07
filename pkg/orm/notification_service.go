@@ -39,16 +39,16 @@ func (p *notificationService) GetUserToken(id uuid.UUID) string {
 }
 
 //GetNotifications is method for retrieving
-func (p *notificationService) GetNotifications(id uuid.UUID, limit int, offset int, search string, sort string) ([]model.Notification, error) {
-	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, id); exist == false || err != nil {
+func (p *notificationService) GetNotifications(vendorId uuid.UUID, limit int, offset int, search string, sort string) ([]model.Notification, error) {
+	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, vendorId); exist == false || err != nil {
 		if err != nil {
 			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Checking vendor existing"))
 		}
 
-		return nil, NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", id)
+		return nil, NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", vendorId)
 	}
 
-	query := p.db.Model(&model.Notification{}).Where("vendor_id = ?", id).Limit(limit).Offset(offset)
+	query := p.db.Model(&model.Notification{}).Where("vendor_id = ?", vendorId).Limit(limit).Offset(offset)
 
 	if search != "" {
 		search = "%" + search + "%%"
@@ -97,13 +97,25 @@ func (p *notificationService) GetNotifications(id uuid.UUID, limit int, offset i
 }
 
 //MarkAsRead is method for marking notification as read
-func (p *notificationService) MarkAsRead(id uuid.UUID) error {
+func (p *notificationService) MarkAsRead(vendorId uuid.UUID, messageId uuid.UUID) error {
+	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, vendorId); exist == false || err != nil {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Checking vendor existing"))
+		}
+
+		return NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", vendorId)
+	}
+
 	notification := model.Notification{}
-	if res := p.db.Model(&model.Notification{}).Where("id = ?", id).First(&notification); res.Error != nil {
+	if res := p.db.Model(&model.Notification{}).Where("id = ?", messageId).First(&notification); res.Error != nil {
 		if res.RecordNotFound() {
-			return NewServiceErrorf(http.StatusNotFound, "Can't find notification with id `%s`", id)
+			return NewServiceErrorf(http.StatusNotFound, "Can't find notification with id `%s`", messageId)
 		}
 		return NewServiceError(http.StatusInternalServerError, errors.Wrap(res.Error, "Getting notification from db"))
+	}
+
+	if notification.VendorID != vendorId {
+		return NewServiceErrorf(http.StatusNotFound, "No message for vendor `%s` with message id `%s`", vendorId, messageId)
 	}
 
 	notification.IsRead = true
@@ -143,14 +155,26 @@ func (p *notificationService) SendNotification(notification *model.Notification)
 	return res.Value.(*model.Notification), nil
 }
 
-func (p *notificationService) GetNotification(id uuid.UUID) (*model.Notification, error) {
+func (p *notificationService) GetNotification(vendorId uuid.UUID, messageId uuid.UUID) (*model.Notification, error) {
+	if exist, err := utils.CheckExists(p.db, model.Vendor{}, vendorId); !(exist && err == nil) {
+		if err != nil {
+			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Checking existing vendor"))
+		}
+		return nil, NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", vendorId)
+	}
+
 	notification := model.Notification{}
-	res := p.db.Model(model.Notification{}).Where("id = ?", id).First(&notification)
+	res := p.db.Model(model.Notification{}).Where("id = ?", messageId).First(&notification)
 	if res.Error != nil {
 		if res.RecordNotFound() {
 			return nil, NewServiceError(http.StatusNotFound, "Get notification")
 		}
 		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(res.Error, "Get notification"))
 	}
+
+	if notification.VendorID != vendorId {
+		return nil, NewServiceErrorf(http.StatusNotFound, "No message for vendor `%s` with message id `%s`", vendorId, messageId)
+	}
+
 	return &notification, nil
 }
