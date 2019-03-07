@@ -1116,7 +1116,6 @@ paths:
           description: OK
           headers:
             - name: X-Items-Count
-              type: number
           content:
             application/json:
               schema:
@@ -1206,7 +1205,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  admin/api/v1/vendors/reviews:
+  /admin/api/v1/vendors/reviews:
     get:
       summary: "Get list of vendor requests"
       tags:
@@ -1264,7 +1263,6 @@ paths:
           description: OK
           headers:
             - name: X-Items-Count
-              type: number
           content:
             application/json:
               schema:
@@ -1298,7 +1296,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  admin/api/v1/vendors/{id}/documents/status:
+  /admin/api/v1/vendors/{id}/documents/status:
     put:
       tags:
         - admin
@@ -1350,13 +1348,54 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  admin/api/v1/vendors/{id}/messages:
+  /admin/api/v1/vendors/{id}/messages:
     post:
       tags:
         - admin
         - vendor
         - onboarding
+        - notifications
       summary: "Creates new message for vendor"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                message:
+                  type: string
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      tags:
+        - admin
+        - vendor
+        - onboarding
+        - notifications
+      summary: "Gets messages for vendor"
       parameters:
         - name: id
           in: path
@@ -1398,21 +1437,17 @@ paths:
           description: "Notifications requests name filter"
           schema:
             type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
       responses:
-        201:
-          description: Created
+        200:
+          description: OK
+          headers:
+            - name: X-Items-Count
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Notification'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
         400:
           $ref: '#/components/responses/BadRequest'
         401:
@@ -1422,7 +1457,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  admin/api/v1/vendors/{id}/documents:
+  /admin/api/v1/vendors/{id}/documents:
     get:
       tags:
         - admin
