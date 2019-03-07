@@ -55,6 +55,45 @@ func (suite *NotificationServiceTestSuite) SetupTest() {
 
 }
 
+func (suite *NotificationServiceTestSuite) TestNotificationsForWrongVendor() {
+	shouldBe := require.New(suite.T())
+	id, err := uuid.FromString(GameID)
+	anotherVendorId, err := uuid.FromString(vendorId)
+	shouldBe.Nil(err)
+
+	notification := &model.Notification{VendorID: id, Title: "Some title", Message: "ZZZ"}
+	notification.ID = uuid.NewV4()
+	notification.IsRead = true
+	shouldBe.Nil(suite.db.DB().Create(notification).Error)
+
+	res, err := suite.service.GetNotification(anotherVendorId, notification.ID)
+	shouldBe.Nil(res)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
+
+	err = suite.service.MarkAsRead(anotherVendorId, notification.ID)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
+
+	res, err = suite.service.GetNotification(uuid.NewV4(), notification.ID)
+	shouldBe.Nil(res)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
+
+	err = suite.service.MarkAsRead(uuid.NewV4(), notification.ID)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
+
+	err = suite.service.MarkAsRead(id, uuid.NewV4())
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
+
+	res, err = suite.service.GetNotification(id, uuid.NewV4())
+	shouldBe.Nil(res)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
+}
+
 func (suite *NotificationServiceTestSuite) TestGetNotifications() {
 	should := require.New(suite.T())
 	id, err := uuid.FromString(GameID)
@@ -186,14 +225,14 @@ func (suite *NotificationServiceTestSuite) TestMarkAsRead() {
 	notification := &model.Notification{VendorID: id, Title: "Test notification", Message: "Body notification"}
 	notification.ID = uuid.NewV4()
 	should.Nil(suite.db.DB().Create(notification).Error)
-	should.Nil(suite.service.MarkAsRead(notification.ID))
+	should.Nil(suite.service.MarkAsRead(id, notification.ID))
 	inDb := model.Notification{}
 	should.Nil(suite.db.DB().Model(inDb).Where("id = ?", notification.ID).First(&inDb).Error)
 	should.True(inDb.IsRead)
 
-	should.Nil(suite.service.MarkAsRead(notification.ID))
+	should.Nil(suite.service.MarkAsRead(id, notification.ID))
 
-	err = suite.service.MarkAsRead(uuid.NewV4())
+	err = suite.service.MarkAsRead(id, uuid.NewV4())
 	should.NotNil(err)
 	should.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
 }

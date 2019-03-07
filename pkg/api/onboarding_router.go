@@ -121,11 +121,16 @@ func (api *OnboardingClientRouter) getLastNotifications(ctx echo.Context) error 
 }
 
 func (api *OnboardingClientRouter) getNotification(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("messageId"))
+	vendorId, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
-	notification, err := api.notificationService.GetNotification(id)
+
+	messageId, err := uuid.FromString(ctx.Param("messageId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+	notification, err := api.notificationService.GetNotification(vendorId, messageId)
 	if err != nil {
 		return err
 	}
@@ -142,7 +147,7 @@ func (api *OnboardingClientRouter) getNotification(ctx echo.Context) error {
 }
 
 func (api *OnboardingClientRouter) markAsRead(ctx echo.Context) error {
-	_, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
@@ -152,7 +157,7 @@ func (api *OnboardingClientRouter) markAsRead(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
-	err = api.notificationService.MarkAsRead(id)
+	err = api.notificationService.MarkAsRead(vendorId, id)
 	if err != nil {
 		return err
 	}
