@@ -91,6 +91,10 @@ func (d DocumentsInfo) CanBeChanged() bool {
 	return d.Status == StatusDraft || d.Status == StatusDeclined
 }
 
+func (d DocumentsInfo) CanBeRevokedReview() bool {
+	return d.Status == StatusOnReview
+}
+
 func (d DocumentsInfo) CanBeSendToReview() bool {
 	return d.Status == StatusDraft
 }
