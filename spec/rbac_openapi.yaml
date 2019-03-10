@@ -8,7 +8,7 @@ servers:
     description: Master test server
 
 paths:
-  /api/v1/vendors/{id}/users:
+  /api/v1/vendors/{id}/memberships:
     get:
       tags:
         - "common"
@@ -62,7 +62,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/invites/{inviteId}:
+  /api/v1/vendors/{id}/memberships/invites/{inviteId}:
     put:
       summary: "Accept invite"
       parameters:
@@ -104,7 +104,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/invites:
+  /api/v1/vendors/{id}/memberships/invites:
     post:
       tags:
         - "common"
@@ -158,7 +158,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/{id}/users/{userId}:
+  /api/v1/vendors/{id}/memberships/{userId}:
     get:
       tags:
         - "common"
@@ -386,18 +386,6 @@ components:
         email:
           type: string
           format: email
-        games:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              image:
-                type: string
-              internalName:
-                type: string
         lastSeen:
           type: string
           format: 'date-time'
@@ -406,6 +394,10 @@ components:
           items:
             type: object
             properties:
+              domain:
+                type: string
+                enum:
+                  - vendor
               role:
                 type: string
                 enum:
@@ -414,6 +406,10 @@ components:
                   - pubisher
                   - store
                   - support
+              resource:
+                type: object
+                properties:
+
               game:
                 type: object
                 properties:
