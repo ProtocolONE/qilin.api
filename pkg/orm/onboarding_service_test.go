@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -140,4 +141,26 @@ func (suite *OnbardingServiceTestSuite) TestServiceMethods() {
 	should.Equal(docs.Contact, dbDoc2.Contact)
 	should.Equal(docs.ReviewStatus, dbDoc2.ReviewStatus)
 	should.Equal(docs.Status, dbDoc2.Status)
+
+	err = suite.service.RevokeReviewRequest(docs.VendorID)
+	should.NotNil(err)
+	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
+
+	err = suite.service.SendToReview(docs.VendorID)
+	should.Nil(err)
+
+	//twice send to review is not allowed
+	err = suite.service.SendToReview(docs.VendorID)
+	should.NotNil(err)
+	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
+
+	err = suite.service.RevokeReviewRequest(docs.VendorID)
+	should.Nil(err)
+
+	docs.Status = model.StatusApproved
+	should.Nil(suite.db.DB().Save(docs).Error)
+
+	err = suite.service.RevokeReviewRequest(docs.VendorID)
+	should.NotNil(err)
+	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
 }

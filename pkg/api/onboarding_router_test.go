@@ -682,3 +682,67 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotification() {
 	should.Nil(err)
 	should.True(createdAt.After(time.Now().Add(-time.Duration(1) * time.Minute)))
 }
+
+func (suite *OnboardingClientRouterTestSuite) TestRevokeReview() {
+	shouldBe := require.New(suite.T())
+
+	docs := model.DocumentsInfo{
+		VendorID:     uuid.FromStringOrNil(TestID),
+		Status:       model.StatusOnReview,
+		ReviewStatus: model.ReviewNew,
+	}
+	docs.ID = uuid.NewV4()
+
+	shouldBe.Nil(suite.db.DB().Create(&docs).Error, "Can't create vendor's docs")
+
+	req := httptest.NewRequest(http.MethodDelete, "/", strings.NewReader(""))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/documents/reviews")
+	c.SetParamNames("id")
+	c.SetParamValues(TestID)
+
+	// Assertions
+	shouldBe.Nil(suite.router.revokeReview(c))
+	shouldBe.Equal(http.StatusOK, rec.Code)
+
+	req = httptest.NewRequest(http.MethodDelete, "/", strings.NewReader(""))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/documents/reviews")
+	c.SetParamNames("id")
+	c.SetParamValues(TestID)
+
+	// Assertions
+	err := suite.router.revokeReview(c)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
+
+	req = httptest.NewRequest(http.MethodDelete, "/", strings.NewReader(""))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/documents/reviews")
+	c.SetParamNames("id")
+	c.SetParamValues("XXX")
+
+	// Assertions
+	err = suite.router.revokeReview(c)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
+
+	req = httptest.NewRequest(http.MethodDelete, "/", strings.NewReader(""))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/documents/reviews")
+	c.SetParamNames("id")
+	c.SetParamValues(uuid.NewV4().String())
+
+	// Assertions
+	err = suite.router.revokeReview(c)
+	shouldBe.NotNil(err)
+	shouldBe.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
+}

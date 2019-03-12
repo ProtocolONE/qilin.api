@@ -81,6 +81,7 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	r.GET("/documents", router.getDocument)
 	r.PUT("/documents", router.changeDocument)
 	r.POST("/documents/reviews", router.sendToReview)
+	r.DELETE("/documents/reviews", router.revokeReview)
 	r.GET("/messages", router.getNotifications)
 	r.GET("/messages/:messageId", router.getNotification)
 	r.PUT("/messages/:messageId/read", router.markAsRead)
@@ -277,4 +278,18 @@ func (api *OnboardingClientRouter) sendToReview(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, "")
+}
+
+func (api *OnboardingClientRouter) revokeReview(ctx echo.Context) error {
+	id, err := uuid.FromString(ctx.Param("id"))
+
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+	}
+
+	if err := api.service.RevokeReviewRequest(id); err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, "")
 }
