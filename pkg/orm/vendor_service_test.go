@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -29,8 +30,12 @@ func (suite *VendorServiceTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
-	db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		fmt.Println(err)
+	}
+	if err := db.Init(); err != nil {
+		fmt.Println(err)
+	}
 
 	suite.db = db
 }

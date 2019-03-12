@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -46,8 +47,12 @@ func (suite *DiscountRouterTestSuite) SetupTest() {
 	db, err := orm.NewDatabase(&config.Database)
 	should.Nil(err, "Unable to connect to database", "%v", err)
 
-	_ = db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		fmt.Println(err)
+	}
+	if err := db.Init(); err != nil {
+		fmt.Println(err)
+	}
 
 	id, _ := uuid.FromString(TestID)
 	err = db.DB().Save(&model.Game{

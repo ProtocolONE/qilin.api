@@ -54,8 +54,12 @@ func (suite *RatingRouterTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
-	db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		fmt.Println(err)
+	}
+	if err := db.Init(); err != nil {
+		fmt.Println(err)
+	}
 
 	id, _ := uuid.FromString(TestID)
 	err = db.DB().Save(&model.Game{

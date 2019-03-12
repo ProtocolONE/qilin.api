@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"fmt"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
@@ -33,8 +34,13 @@ func (suite *OnbardingServiceTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
-	db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		fmt.Println(err)
+	}
+	if err := db.Init(); err != nil {
+		fmt.Println(err)
+	}
+
 	id, _ := uuid.FromString(Id)
 
 	err = db.DB().Create(&model.Vendor{

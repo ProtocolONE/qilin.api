@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"fmt"
 	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/test"
@@ -37,8 +38,13 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 	if err != nil {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
-	_ = db.DropAllTables()
-	db.Init()
+
+	if err := db.DropAllTables(); err != nil {
+		fmt.Println(err)
+	}
+	if err := db.Init(); err != nil {
+		fmt.Println(err)
+	}
 
 	id, _ := uuid.FromString(ID)
 	err = db.DB().Save(&model.Game{

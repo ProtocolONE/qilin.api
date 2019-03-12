@@ -1,7 +1,7 @@
 package game
 
 import (
-	"encoding/base64"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
@@ -53,7 +53,10 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	if err != nil {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
-	db.Init()
+
+	if err := db.Init(); err != nil {
+		fmt.Println(err)
+	}
 
 	userUuid, _ := uuid.FromString(userId)
 	err = db.DB().Save(&model.User{
@@ -81,15 +84,16 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
 	groupApi := echoObj.Group("/api/v1")
 	service, err := orm.NewGameService(db)
-	router, err := InitRoutes(groupApi, service)
+	userService, err := orm.NewUserService(db, nil)
+	router, err := InitRoutes(groupApi, service, userService)
 	if err != nil {
 		suite.FailNow("Init routes fail", "%v", err)
 	}
 	suite.db = db
 	suite.router = router
 	suite.echo = echoObj
-	token, _ := uuid.FromString(userId)
-	suite.token = jwt.NewWithClaims(jwt.GetSigningMethod(config.Jwt.Algorithm), jwt.MapClaims{"id": base64.StdEncoding.EncodeToString(token[:])})
+	//token, _ := uuid.FromString(userId)
+	//suite.token = jwt.NewWithClaims(jwt.GetSigningMethod(config.Jwt.Algorithm), jwt.MapClaims{"id": base64.StdEncoding.EncodeToString(token[:])})
 }
 
 func (suite *GamesRouterTestSuite) TearDownTest() {

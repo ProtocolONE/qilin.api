@@ -37,8 +37,12 @@ func (suite *NotificationServiceTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
-	db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		fmt.Println(err)
+	}
+	if err := db.Init(); err != nil {
+		fmt.Println(err)
+	}
 
 	notifier, err := sys.NewNotifier(config.Notifier.ApiKey, config.Notifier.Host)
 
