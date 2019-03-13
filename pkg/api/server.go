@@ -71,6 +71,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		ExposeHeaders:    []string{"x-centrifugo-token"},
 		AllowHeaders:     []string{"authorization", "content-type"},
 		AllowOrigins:     opts.ServerConfig.AllowOrigins,
 		AllowCredentials: opts.ServerConfig.AllowCredentials,
