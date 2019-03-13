@@ -38,10 +38,10 @@ func (suite *NotificationServiceTestSuite) SetupTest() {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		suite.T().Log(err)
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
 	}
 	if err := db.Init(); err != nil {
-		suite.T().Log(err)
+		assert.FailNow(suite.T(), "Unable to init tables", err)
 	}
 
 	notifier, err := sys.NewNotifier(config.Notifier.ApiKey, config.Notifier.Host)

@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
@@ -34,10 +35,10 @@ func (suite *GameServiceTestSuite) SetupTest() {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		suite.T().Log(err)
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
 	}
 	if err := db.Init(); err != nil {
-		suite.T().Log(err)
+		assert.FailNow(suite.T(), "Unable to init tables", err)
 	}
 
 	suite.db = db

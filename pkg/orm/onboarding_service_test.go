@@ -35,10 +35,10 @@ func (suite *OnbardingServiceTestSuite) SetupTest() {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		suite.T().Log(err)
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
 	}
 	if err := db.Init(); err != nil {
-		suite.T().Log(err)
+		assert.FailNow(suite.T(), "Unable to init tables", err)
 	}
 
 	id, _ := uuid.FromString(Id)
