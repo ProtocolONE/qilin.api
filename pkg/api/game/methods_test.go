@@ -2,7 +2,7 @@ package game
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
@@ -31,7 +31,7 @@ type GamesRouterTestSuite struct {
 	db     *orm.Database
 	echo   *echo.Echo
 	router *Router
-	token  *jwt.Token
+	token  *jwtverifier.UserInfo
 }
 
 func Test_GamesRouter(t *testing.T) {
@@ -39,8 +39,9 @@ func Test_GamesRouter(t *testing.T) {
 }
 
 var (
-	userId             = `95a97684-9dad-11d1-80b4-00c04fd430c8`
-	vendorId           = `6ba97684-9dad-11d1-80b4-00c04fd430c8`
+	userId             = uuid.NewV4().String()
+	externalUserId     = uuid.NewV4().String()
+	vendorId           = uuid.NewV4().String()
 	createGamesPayload = `{"InternalName":"new_game", "vendorId": "` + vendorId + `"}`
 )
 
@@ -60,12 +61,13 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 
 	userUuid, _ := uuid.FromString(userId)
 	err = db.DB().Save(&model.User{
-		ID:       userUuid,
-		Nickname: "admin",
-		Login:    "admin@protocol.one",
-		Password: "123456",
-		Lang:     "en",
-		Currency: "usd",
+		ID:         userUuid,
+		ExternalID: externalUserId,
+		Nickname:   "admin",
+		Login:      "admin@protocol.one",
+		Password:   "123456",
+		Lang:       "en",
+		Currency:   "usd",
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
 	vendorUuid, _ := uuid.FromString(vendorId)
@@ -79,7 +81,6 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 		Users:           []model.User{{ID: userUuid}},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
-
 	echoObj := echo.New()
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
 	groupApi := echoObj.Group("/api/v1")
@@ -92,8 +93,6 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	suite.db = db
 	suite.router = router
 	suite.echo = echoObj
-	//token, _ := uuid.FromString(userId)
-	//suite.token = jwt.NewWithClaims(jwt.GetSigningMethod(config.Jwt.Algorithm), jwt.MapClaims{"id": base64.StdEncoding.EncodeToString(token[:])})
 }
 
 func (suite *GamesRouterTestSuite) TearDownTest() {
@@ -106,15 +105,26 @@ func (suite *GamesRouterTestSuite) TearDownTest() {
 }
 
 func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
+	userUuid, _ := uuid.FromString(userId)
+	err := suite.db.DB().Save(&model.User{
+		ID:         userUuid,
+		ExternalID: externalUserId,
+		Nickname:   "admin",
+		Login:      "admin@protocol.one",
+		Password:   "123456",
+		Lang:       "en",
+		Currency:   "usd",
+	}).Error
+
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(createGamesPayload))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games")
-	c.Set(context.TokenKey, suite.token)
+	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: externalUserId})
 
-	err := suite.router.Create(c)
+	err = suite.router.Create(c)
 	require.Nil(suite.T(), err, "Error while create game")
 
 	game := model.Game{}

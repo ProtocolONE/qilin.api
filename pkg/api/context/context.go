@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	TokenKey  = "app.token"
+	TokenKey  = "user"
 	LoggerKey = "app.logger"
 )
 
 func GetAuthExternalUserId(ctx echo.Context) (externalUserId string, err error) {
-	token := ctx.Get("user").(*jwtverifier.UserInfo)
+	token := ctx.Get(TokenKey).(*jwtverifier.UserInfo)
 	if token == nil {
 		return "", echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token: "+err.Error())
 	}

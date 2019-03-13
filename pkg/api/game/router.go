@@ -13,6 +13,7 @@ type Router struct {
 func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService) (*Router, error) {
 	Router := Router{
 		gameService: service,
+		userService: userService,
 	}
 
 	router.POST("/games", Router.Create)

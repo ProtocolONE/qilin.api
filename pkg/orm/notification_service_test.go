@@ -147,14 +147,14 @@ func (suite *NotificationServiceTestSuite) TestGetNotifications() {
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < len(notifications)-1; i++ {
-		should.True(notifications[i].CreatedAt.After(notifications[i+1].CreatedAt))
+		should.True(notifications[i].CreatedAt.After(notifications[i+1].CreatedAt) || notifications[i].CreatedAt.Equal(notifications[i+1].CreatedAt))
 	}
 
 	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+createdDate")
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < len(notifications)-1; i++ {
-		should.True(notifications[i].CreatedAt.Before(notifications[i+1].CreatedAt))
+		should.True(notifications[i].CreatedAt.Before(notifications[i+1].CreatedAt) || notifications[i].CreatedAt.Equal(notifications[i+1].CreatedAt))
 	}
 
 	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+title")
