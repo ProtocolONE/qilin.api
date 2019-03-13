@@ -1,7 +1,6 @@
 package orm_test
 
 import (
-	"fmt"
 	"net/http"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
@@ -36,10 +35,10 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 	if err := db.Init(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 
 	suite.db = db

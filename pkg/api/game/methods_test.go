@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
@@ -56,7 +55,7 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	}
 
 	if err := db.Init(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 
 	userUuid, _ := uuid.FromString(userId)

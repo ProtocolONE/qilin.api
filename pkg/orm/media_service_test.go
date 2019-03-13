@@ -1,7 +1,6 @@
 package orm_test
 
 import (
-	"fmt"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"math/rand"
@@ -39,10 +38,10 @@ func (suite *MediaServiceTestSuite) SetupTest() {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 	if err := db.Init(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 
 	id, _ := uuid.FromString(Id)

@@ -57,10 +57,10 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 	if err := db.Init(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 
 	id, _ := uuid.FromString(TestID)

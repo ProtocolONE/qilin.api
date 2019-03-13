@@ -1,7 +1,6 @@
 package utils_test
 
 import (
-	"fmt"
 	"github.com/satori/go.uuid"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -21,10 +20,10 @@ func TestCheckExists(t *testing.T) {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		fmt.Println(err)
+		t.Error(err)
 	}
 	if err := db.Init(); err != nil {
-		fmt.Println(err)
+		t.Error(err)
 	}
 
 	game := &model.Game{ID: uuid.NewV4(), Tags: []int64{1, 2}, GenreMain: 1, GenreAddition: []int64{2}, FeaturesCommon: []string{"1", "2"}, VendorID: uuid.NewV4(), CreatorID: uuid.NewV4(), Title: "asd"}

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"github.com/labstack/echo"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
@@ -48,10 +47,10 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 	if err := db.Init(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 
 	id, _ := uuid.FromString(TestID)

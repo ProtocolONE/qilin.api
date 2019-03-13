@@ -1,7 +1,6 @@
 package orm
 
 import (
-	"fmt"
 	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/test"
@@ -40,10 +39,10 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 	}
 
 	if err := db.DropAllTables(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 	if err := db.Init(); err != nil {
-		fmt.Println(err)
+		suite.T().Log(err)
 	}
 
 	id, _ := uuid.FromString(ID)
