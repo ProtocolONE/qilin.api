@@ -81,6 +81,7 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	r.GET("/documents", router.getDocument)
 	r.PUT("/documents", router.changeDocument)
 	r.POST("/documents/reviews", router.sendToReview)
+	r.DELETE("/documents/reviews", router.revokeReview)
 	r.GET("/messages", router.getNotifications)
 	r.GET("/messages/:messageId", router.getNotification)
 	r.PUT("/messages/:messageId/read", router.markAsRead)
@@ -121,11 +122,16 @@ func (api *OnboardingClientRouter) getLastNotifications(ctx echo.Context) error 
 }
 
 func (api *OnboardingClientRouter) getNotification(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("messageId"))
+	vendorId, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
-	notification, err := api.notificationService.GetNotification(id)
+
+	messageId, err := uuid.FromString(ctx.Param("messageId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+	notification, err := api.notificationService.GetNotification(vendorId, messageId)
 	if err != nil {
 		return err
 	}
@@ -142,7 +148,7 @@ func (api *OnboardingClientRouter) getNotification(ctx echo.Context) error {
 }
 
 func (api *OnboardingClientRouter) markAsRead(ctx echo.Context) error {
-	_, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
@@ -152,7 +158,7 @@ func (api *OnboardingClientRouter) markAsRead(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
-	err = api.notificationService.MarkAsRead(id)
+	err = api.notificationService.MarkAsRead(vendorId, id)
 	if err != nil {
 		return err
 	}
@@ -272,4 +278,18 @@ func (api *OnboardingClientRouter) sendToReview(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, "")
+}
+
+func (api *OnboardingClientRouter) revokeReview(ctx echo.Context) error {
+	id, err := uuid.FromString(ctx.Param("id"))
+
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+	}
+
+	if err := api.service.RevokeReviewRequest(id); err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, "")
 }
