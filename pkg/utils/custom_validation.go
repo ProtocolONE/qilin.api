@@ -8,13 +8,13 @@ import (
 type Currency string
 
 const (
-	Ruble    Currency = "RUR"
-	Euro     Currency = "EUR"
-	UsDollar Currency = "USD"
+	Ruble         Currency = "RUR"
+	Euro          Currency = "EUR"
+	UsDollar      Currency = "USD"
 	PoundSterling Currency = "GBP"
 )
 
-var currencyList = []Currency {
+var currencyList = []Currency{
 	Ruble,
 	Euro,
 	UsDollar,
@@ -30,7 +30,7 @@ func RegisterCustomValidations(v *validator.Validate) error {
 	return nil
 }
 
-func checkIsCurrency (fl validator.FieldLevel) bool {
+func checkIsCurrency(fl validator.FieldLevel) bool {
 	currency := fl.Field().String()
 	return IsCurrency(currency)
 }

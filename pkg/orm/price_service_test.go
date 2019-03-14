@@ -37,8 +37,13 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 	if err != nil {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
-	_ = db.DropAllTables()
-	db.Init()
+
+	if err := db.DropAllTables(); err != nil {
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
+	}
+	if err := db.Init(); err != nil {
+		assert.FailNow(suite.T(), "Unable to init tables", err)
+	}
 
 	id, _ := uuid.FromString(ID)
 	err = db.DB().Save(&model.Game{

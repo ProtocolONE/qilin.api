@@ -55,8 +55,12 @@ func (suite *OnboardingAdminRouterTestSuite) SetupTest() {
 	db, err := orm.NewDatabase(&config.Database)
 	should.Nil(err, "Unable to connect to database", "%v", err)
 
-	db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
+	}
+	if err := db.Init(); err != nil {
+		assert.FailNow(suite.T(), "Unable to init tables", err)
+	}
 
 	id, _ := uuid.FromString(TestID)
 	should.Nil(db.DB().Create(&model.Vendor{ID: id, Email: "example@example.ru", Name: "Test", Domain3: "test"}).Error, "Can't create vendor")

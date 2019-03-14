@@ -26,7 +26,7 @@ func NewDiscountService(db *Database) (*DiscountService, error) {
 func (s *DiscountService) GetDiscountsForGame(id uuid.UUID) ([]model.Discount, error) {
 	if exists, err := utils.CheckExists(s.db, &model.Game{}, id); !(exists && err == nil) {
 		if err != nil {
-			return nil, NewServiceError(http.StatusInternalServerError,  errors.Wrap(err, "search game by id"))
+			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search game by id"))
 		}
 		return nil, NewServiceError(http.StatusNotFound, "Game not found")
 	}
@@ -36,7 +36,7 @@ func (s *DiscountService) GetDiscountsForGame(id uuid.UUID) ([]model.Discount, e
 	err := s.db.First(&game).Related(&result).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, NewServiceError(http.StatusInternalServerError,  errors.Wrapf(err, "search discounts for game with id %s", id))
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "search discounts for game with id %s", id))
 	}
 
 	if result == nil {
@@ -50,7 +50,7 @@ func (s *DiscountService) GetDiscountsForGame(id uuid.UUID) ([]model.Discount, e
 func (s *DiscountService) AddDiscountForGame(id uuid.UUID, discount *model.Discount) (uuid.UUID, error) {
 	if exists, err := utils.CheckExists(s.db, &model.Game{}, id); !(exists && err == nil) {
 		if err != nil {
-			return uuid.Nil, NewServiceError(http.StatusInternalServerError,  errors.Wrap(err, "search game by id"))
+			return uuid.Nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search game by id"))
 		}
 		return uuid.Nil, NewServiceError(http.StatusNotFound, "Game not found")
 	}

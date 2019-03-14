@@ -6,10 +6,11 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID  `gorm:"type:uuid; primary_key; default:gen_random_uuid()"`
-	CreatedAt time.Time  `gorm:"default:now()"`
-	UpdatedAt time.Time  `gorm:"default:now()"`
-	DeletedAt *time.Time `sql:"index"`
+	ID         uuid.UUID  `gorm:"type:uuid; primary_key; default:gen_random_uuid()"`
+	ExternalID string     `gorm:"type:varchar(64); unique_index"`
+	CreatedAt  time.Time  `gorm:"default:now()"`
+	UpdatedAt  time.Time  `gorm:"default:now()"`
+	DeletedAt  *time.Time `sql:"index"`
 
 	// User nickname for public display
 	Nickname string
@@ -41,9 +42,7 @@ type AppState struct {
 
 // UserService is a helper service class to interact with User.
 type UserService interface {
-	UpdateUser(g *User) error
 	FindByID(id *uuid.UUID) (User, error)
-	Login(login, pass string) (LoginResult, error)
-	Register(login, pass, lang string) (uuid.UUID, error)
-	ResetPassw(email string) error
+	FindByExternalID(id string) (User, error)
+	Create(id string, lang string) (User, error)
 }

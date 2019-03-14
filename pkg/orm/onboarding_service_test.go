@@ -16,10 +16,9 @@ import (
 
 type OnbardingServiceTestSuite struct {
 	suite.Suite
-	db *orm.Database
+	db      *orm.Database
 	service *orm.OnboardingService
 }
-
 
 func Test_OnbardingService(t *testing.T) {
 	suite.Run(t, new(OnbardingServiceTestSuite))
@@ -35,14 +34,19 @@ func (suite *OnbardingServiceTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
-	db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
+	}
+	if err := db.Init(); err != nil {
+		assert.FailNow(suite.T(), "Unable to init tables", err)
+	}
+
 	id, _ := uuid.FromString(Id)
 
 	err = db.DB().Create(&model.Vendor{
-		ID: id,
-		Email: "test@test.com",
-		Name: "Test",
+		ID:              id,
+		Email:           "test@test.com",
+		Name:            "Test",
 		HowManyProducts: "10+",
 	}).Error
 	assert.Nil(suite.T(), err, "Unable to make vendor")
@@ -54,7 +58,7 @@ func (suite *OnbardingServiceTestSuite) SetupTest() {
 		GenreAddition:  pq.Int64Array{},
 		Tags:           pq.Int64Array{},
 		FeaturesCommon: pq.StringArray{},
-		VendorID:		id,
+		VendorID:       id,
 	}).Error
 	assert.Nil(suite.T(), err, "Unable to make game")
 
@@ -110,10 +114,10 @@ func (suite *OnbardingServiceTestSuite) TestServiceMethods() {
 	should.Nil(err)
 	should.NotNil(docs)
 	docs = &model.DocumentsInfo{
-		VendorID: id,
-		Status: model.StatusDraft,
+		VendorID:     id,
+		Status:       model.StatusDraft,
 		ReviewStatus: model.ReviewNew,
-		Contact: model.JSONB{"name": "TEST"},
+		Contact:      model.JSONB{"name": "TEST"},
 	}
 	docs.ID = uuid.NewV4()
 
@@ -159,6 +163,3 @@ func (suite *OnbardingServiceTestSuite) TestServiceMethods() {
 	should.NotNil(err)
 	should.Equal(http.StatusBadRequest, err.(*orm.ServiceError).Code)
 }
-
-
-

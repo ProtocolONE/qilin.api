@@ -4,7 +4,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"net/http"
-	"qilin-api/pkg/api/context"
 	"strconv"
 )
 
@@ -26,8 +25,7 @@ func (api *Router) GetList(ctx echo.Context) error {
 	price, _ := strconv.ParseFloat(ctx.QueryParam("price"), 64)
 	releaseDate := ctx.QueryParam("releaseDate")
 	sort := ctx.QueryParam("sort")
-
-	userId, err := context.GetAuthUUID(ctx)
+	userId, err := api.getUserId(ctx)
 	if err != nil {
 		return err
 	}
@@ -40,18 +38,18 @@ func (api *Router) GetList(ctx echo.Context) error {
 	for _, game := range games {
 		prices := GamePriceDTO{
 			Currency: game.Price.Currency,
-			Price: float64(game.Price.Price),
+			Price:    float64(game.Price.Price),
 		}
 		dto = append(dto, ShortGameInfoDTO{
 			ID:           game.Game.ID,
 			InternalName: game.InternalName,
 			Icon:         "",
-			Genres:       GameGenreDTO{
-				Main:       game.GenreMain,
-				Addition:   game.GenreAddition,
+			Genres: GameGenreDTO{
+				Main:     game.GenreMain,
+				Addition: game.GenreAddition,
 			},
-			ReleaseDate:  game.ReleaseDate,
-			Prices:       prices,
+			ReleaseDate: game.ReleaseDate,
+			Prices:      prices,
 		})
 	}
 

@@ -46,8 +46,12 @@ func (suite *DiscountRouterTestSuite) SetupTest() {
 	db, err := orm.NewDatabase(&config.Database)
 	should.Nil(err, "Unable to connect to database", "%v", err)
 
-	_ = db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
+	}
+	if err := db.Init(); err != nil {
+		assert.FailNow(suite.T(), "Unable to init tables", err)
+	}
 
 	id, _ := uuid.FromString(TestID)
 	err = db.DB().Save(&model.Game{

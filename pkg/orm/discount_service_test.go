@@ -42,8 +42,12 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 		suite.Fail("Unable to connect to database:", "%v", err)
 	}
 
-	_ = db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
+	}
+	if err := db.Init(); err != nil {
+		assert.FailNow(suite.T(), "Unable to init tables", err)
+	}
 
 	suite.db = db
 
@@ -114,7 +118,7 @@ func (suite *DiscountServiceTestSuite) TearDownTest() {
 	}
 }
 
-func (suite  *DiscountServiceTestSuite) TestGetDiscountShouldReturnObject() {
+func (suite *DiscountServiceTestSuite) TestGetDiscountShouldReturnObject() {
 	should := require.New(suite.T())
 	id, _ := uuid.FromString(GameID)
 
@@ -147,14 +151,14 @@ func (suite  *DiscountServiceTestSuite) TestGetDiscountShouldReturnObject() {
 	discounts, err = suite.service.GetDiscountsForGame(id)
 	should.Nil(err)
 	should.Equal(1, len(discounts))
-	should.Equal(discount.Title, discounts[0].Title )
-	should.Equal(id, discounts[0].GameID )
+	should.Equal(discount.Title, discounts[0].Title)
+	should.Equal(id, discounts[0].GameID)
 	should.True(discount.DateStart.Equal(discounts[0].DateStart))
 	should.True(discount.DateEnd.Equal(discounts[0].DateEnd))
-	should.Equal(discount.Rate, discounts[0].Rate )
+	should.Equal(discount.Rate, discounts[0].Rate)
 }
 
-func (suite  *DiscountServiceTestSuite) TestDiscountShouldReturnNotFoundError() {
+func (suite *DiscountServiceTestSuite) TestDiscountShouldReturnNotFoundError() {
 	should := require.New(suite.T())
 
 	discounts, err := suite.service.GetDiscountsForGame(uuid.NewV4())

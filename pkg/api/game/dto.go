@@ -85,8 +85,8 @@ type (
 	}
 
 	GameGenreDTO struct {
-		Main        int64        `json:"main"`
-		Addition    []int64      `json:"addition" validate:"required"`
+		Main     int64   `json:"main"`
+		Addition []int64 `json:"addition" validate:"required"`
 	}
 
 	GameDTO struct {
@@ -108,12 +108,12 @@ type (
 	}
 
 	ShortGameInfoDTO struct {
-		ID           uuid.UUID     `json:"id"`
-		InternalName string        `json:"internalName"`
-		Icon         string        `json:"icon"`
-		Genres       GameGenreDTO  `json:"genres"`
-		ReleaseDate  time.Time     `json:"releaseDate"`
-		Prices       GamePriceDTO  `json:"prices"`
+		ID           uuid.UUID    `json:"id"`
+		InternalName string       `json:"internalName"`
+		Icon         string       `json:"icon"`
+		Genres       GameGenreDTO `json:"genres"`
+		ReleaseDate  time.Time    `json:"releaseDate"`
+		Prices       GamePriceDTO `json:"prices"`
 	}
 
 	DescrReview struct {
@@ -200,10 +200,10 @@ func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err
 			},
 		},
 		Genres: GameGenreDTO{
-			Main: game.GenreMain,
+			Main:     game.GenreMain,
 			Addition: game.GenreAddition,
 		},
-		Tags:  game.Tags,
+		Tags: game.Tags,
 	}, nil
 }
 
@@ -238,8 +238,8 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 			EN: bto.Langs{game.Languages.EN.Voice, game.Languages.EN.Interface, game.Languages.EN.Subtitles},
 			RU: bto.Langs{game.Languages.RU.Voice, game.Languages.RU.Interface, game.Languages.RU.Subtitles},
 		},
-		GenreMain: game.Genres.Main,
+		GenreMain:     game.Genres.Main,
 		GenreAddition: game.Genres.Addition,
-		Tags:  game.Tags,
+		Tags:          game.Tags,
 	}
 }

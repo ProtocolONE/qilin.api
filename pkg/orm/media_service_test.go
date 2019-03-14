@@ -37,8 +37,12 @@ func (suite *MediaServiceTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
-	db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
+	}
+	if err := db.Init(); err != nil {
+		assert.FailNow(suite.T(), "Unable to init tables", err)
+	}
 
 	id, _ := uuid.FromString(Id)
 	err = db.DB().Save(&model.Game{

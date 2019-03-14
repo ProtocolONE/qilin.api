@@ -37,7 +37,7 @@ var (
 	badCERO      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":""},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":"XXX"}}`
 	badBBFC      = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":null,"rating":"3"},"ESRB":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":15,"descriptors":null,"rating":""},"BBFC":{"displayOnlineNotice":true,"showAgeRestrict":true,"ageRestrict":10,"descriptors":null,"rating":"XXX"},"USK":{"displayOnlineNotice":false,"showAgeRestrict":true,"ageRestrict":5,"descriptors":null,"rating":""},"CERO":{"displayOnlineNotice":false,"showAgeRestrict":false,"ageRestrict":21,"descriptors":null,"rating":""}}`
 
-	ratingsWithWrongDescriptors  = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":[666],"rating":"3"}}`
+	ratingsWithWrongDescriptors = `{"PEGI":{"displayOnlineNotice":true,"showAgeRestrict":false,"ageRestrict":3,"descriptors":[666],"rating":"3"}}`
 )
 
 func Test_RatingRouter(t *testing.T) {
@@ -54,8 +54,12 @@ func (suite *RatingRouterTestSuite) SetupTest() {
 		suite.FailNow("Unable to connect to database", "%v", err)
 	}
 
-	db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
+	}
+	if err := db.Init(); err != nil {
+		assert.FailNow(suite.T(), "Unable to init tables", err)
+	}
 
 	id, _ := uuid.FromString(TestID)
 	err = db.DB().Save(&model.Game{
@@ -123,7 +127,7 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnEmptyObject() {
 	}
 }
 
-func (suite *RatingRouterTestSuite) TestPutRatingsShouldReturnError ()  {
+func (suite *RatingRouterTestSuite) TestPutRatingsShouldReturnError() {
 	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(ratingsWithWrongDescriptors))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -266,7 +270,6 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnNotFound() {
 		assert.Equal(suite.T(), http.StatusNotFound, he.Code)
 	}
 }
-
 
 func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnRightObject() {
 	id, _ := uuid.FromString(TestID)

@@ -7,11 +7,13 @@ import (
 
 type Router struct {
 	gameService model.GameService
+	userService model.UserService
 }
 
-func InitRoutes(router *echo.Group, service model.GameService) (*Router, error) {
+func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService) (*Router, error) {
 	Router := Router{
 		gameService: service,
+		userService: userService,
 	}
 
 	router.POST("/games", Router.Create)

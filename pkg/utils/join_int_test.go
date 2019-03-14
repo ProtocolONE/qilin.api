@@ -1,10 +1,10 @@
 package utils_test
 
 import (
-	"qilin-api/pkg/utils"
-	"testing"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"qilin-api/pkg/utils"
+	"testing"
 )
 
 type JoinIntTestSuite struct {
@@ -16,5 +16,5 @@ func Test_JoinInt(t *testing.T) {
 }
 
 func (suite *JoinIntTestSuite) TestGames() {
-	require.Equal(suite.T(), utils.JoinInt([]int64{1,2,3,-45}, ","), "1,2,3,-45")
+	require.Equal(suite.T(), utils.JoinInt([]int64{1, 2, 3, -45}, ","), "1,2,3,-45")
 }

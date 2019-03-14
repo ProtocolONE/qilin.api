@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
@@ -34,8 +35,12 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 		suite.Fail("Unable to connect to database:", "%v", err)
 	}
 
-	_ = db.DropAllTables()
-	db.Init()
+	if err := db.DropAllTables(); err != nil {
+		assert.FailNow(suite.T(), "Unable to drop tables", err)
+	}
+	if err := db.Init(); err != nil {
+		assert.FailNow(suite.T(), "Unable to init tables", err)
+	}
 
 	suite.db = db
 
@@ -94,8 +99,8 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 	game.Languages = bto.GameLangs{}
 	game.FeaturesCommon = []string{}
 	game.GenreMain = 1
-	game.GenreAddition = []int64 {1,2}
-	game.Tags = []int64 {1,2}
+	game.GenreAddition = []int64{1, 2}
+	game.Tags = []int64{1, 2}
 	game.VendorID = vendor.ID
 	game.CreatorID = userId
 

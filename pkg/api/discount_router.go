@@ -96,18 +96,18 @@ func (router *DiscountsRouter) get(ctx echo.Context) error {
 	dto := make([]Discount, len(discounts))
 	err = mapper.Map(discounts, &dto)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, errors.Wrap(err,"Can't decode domain to dto"))
+		return echo.NewHTTPError(http.StatusInternalServerError, errors.Wrap(err, "Can't decode domain to dto"))
 	}
 
 	if dto == nil {
 		return ctx.JSON(http.StatusOK, make([]Discount, 0))
 	}
 
-	for i,d := range discounts {
+	for i, d := range discounts {
 		dto[i].ID = d.ID.String()
 		dto[i].Date = DateRange{
 			Start: d.DateStart,
-			End: d.DateEnd,
+			End:   d.DateEnd,
 		}
 	}
 
