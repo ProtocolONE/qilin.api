@@ -39,13 +39,13 @@ func (p *notificationService) GetUserToken(id uuid.UUID) string {
 }
 
 //GetNotifications is method for retrieving
-func (p *notificationService) GetNotifications(vendorId uuid.UUID, limit int, offset int, search string, sort string) ([]model.Notification, error) {
+func (p *notificationService) GetNotifications(vendorId uuid.UUID, limit int, offset int, search string, sort string) ([]model.Notification, int, error) {
 	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, vendorId); exist == false || err != nil {
 		if err != nil {
-			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Checking vendor existing"))
+			return nil, 0, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Checking vendor existing"))
 		}
 
-		return nil, NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", vendorId)
+		return nil, 0, NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", vendorId)
 	}
 
 	query := p.db.Model(&model.Notification{}).Where("vendor_id = ?", vendorId).Limit(limit).Offset(offset)
@@ -78,7 +78,7 @@ func (p *notificationService) GetNotifications(vendorId uuid.UUID, limit int, of
 			case "+unread":
 				query = query.Order("is_read ASC")
 			default:
-				return nil, NewServiceErrorf(http.StatusBadRequest, "Unknown sort `%s`", cur)
+				return nil, 0, NewServiceErrorf(http.StatusBadRequest, "Unknown sort `%s`", cur)
 			}
 		}
 	}
@@ -86,26 +86,21 @@ func (p *notificationService) GetNotifications(vendorId uuid.UUID, limit int, of
 	var notifications []model.Notification
 	err := query.Find(&notifications).Error
 	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Searching notifications"))
+		return nil, 0, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Searching notifications"))
 	}
 
 	if notifications == nil {
 		notifications = make([]model.Notification, 0)
 	}
 
-	return notifications, nil
-}
-
-func (p *notificationService) GetNotificationsCount(vendorId uuid.UUID) (result int, err error) {
-
-	err = p.db.Model(&model.Notification{}).Where("vendor_id = ?", vendorId).Count(&result).Error
+	count := 0
+	err = query.Limit(nil).Offset(nil).Count(&count).Error
 	if err != nil {
-		return 0, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Counting notifications"))
+		return nil, 0, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Counting notifications"))
 	}
 
-	return
+	return notifications, count, nil
 }
-
 
 //MarkAsRead is method for marking notification as read
 func (p *notificationService) MarkAsRead(vendorId uuid.UUID, messageId uuid.UUID) error {

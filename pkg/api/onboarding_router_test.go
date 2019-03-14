@@ -553,6 +553,10 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	var notifications []NotificationDTO
 	should.Nil(json.Unmarshal(rec.Body.Bytes(), &notifications))
 	should.Equal(20, len(notifications))
+	countStr := rec.Header().Get("X-Items-Count")
+	count, err := strconv.Atoi(countStr)
+	should.Nil(err)
+	should.Equal(101, count)
 
 	req = httptest.NewRequest(http.MethodGet, "/?limit=100&offset=0&sort=-title&query=Some", strings.NewReader(emptyObject))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -567,6 +571,10 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	should.Equal(http.StatusOK, rec.Code)
 	should.Nil(json.Unmarshal(rec.Body.Bytes(), &notifications))
 	should.Equal(1, len(notifications))
+	countStr = rec.Header().Get("X-Items-Count")
+	count, err = strconv.Atoi(countStr)
+	should.Nil(err)
+	should.Equal(1, count)
 
 	req = httptest.NewRequest(http.MethodGet, "/?limit=XXX", strings.NewReader(emptyObject))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -619,24 +627,6 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 		should.NotEmpty(n.Title)
 		should.NotEmpty(n.ID)
 	}
-
-	req = httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec = httptest.NewRecorder()
-	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages/count")
-	c.SetParamNames("id")
-	c.SetParamValues(TestID)
-
-	err = suite.router.getNotificationsCount(c)
-	should.Nil(err)
-	should.Equal(http.StatusOK, rec.Code)
-	should.NotNil(rec.Body)
-
-	countStr := rec.Body.String()
-	count, err := strconv.Atoi(countStr)
-	should.Nil(err)
-	should.Equal(101, count)
 }
 
 func (suite *OnboardingClientRouterTestSuite) TestGetNotification() {

@@ -100,96 +100,97 @@ func (suite *NotificationServiceTestSuite) TestGetNotifications() {
 	should.Nil(err)
 	suite.generateNotifications(id)
 
-	notifications, err := suite.service.GetNotifications(id, 10, 0, "", "")
+	notifications, count, err := suite.service.GetNotifications(id, 10, 0, "", "")
 	should.Nil(err)
 	should.NotNil(notifications)
 	should.Equal(10, len(notifications))
+	should.Equal(101, count)
 	for _, n := range notifications {
 		should.Equal(id, n.VendorID)
 	}
 
-	notifications, err = suite.service.GetNotifications(uuid.NewV4(), 1000, 0, "", "")
+	notifications, count, err = suite.service.GetNotifications(uuid.NewV4(), 1000, 0, "", "")
 	should.NotNil(err)
 	should.Equal(http.StatusNotFound, err.(*orm.ServiceError).Code)
 	should.Nil(notifications)
 	should.Equal(0, len(notifications))
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "")
 	should.Nil(err)
 	should.NotNil(notifications)
 	should.Equal(101, len(notifications))
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 90, "", "")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 90, "", "")
 	should.Nil(err)
 	should.NotNil(notifications)
 	should.Equal(11, len(notifications))
 
-	notifications, err = suite.service.GetNotifications(id, 10, 0, "Some", "")
+	notifications, count, err = suite.service.GetNotifications(id, 10, 0, "Some", "")
 	should.Nil(err)
 	should.NotNil(notifications)
 	should.Equal(1, len(notifications))
 	should.Equal("Some title", notifications[0].Title)
 
-	notifications, err = suite.service.GetNotifications(id, 10, 0, "Test", "")
+	notifications, count, err = suite.service.GetNotifications(id, 10, 0, "Test", "")
 	should.Nil(err)
 	should.NotNil(notifications)
 	should.Equal(10, len(notifications))
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "Test", "")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "Test", "")
 	should.Nil(err)
 	should.NotNil(notifications)
 	should.Equal(100, len(notifications))
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "-createdDate")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "-createdDate")
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < len(notifications) - 1; i++ {
 		should.True(notifications[i].CreatedAt.After(notifications[i+1].CreatedAt))
 	}
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+createdDate")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "+createdDate")
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < len(notifications) - 1; i++ {
 		should.True(notifications[i].CreatedAt.Before(notifications[i+1].CreatedAt))
 	}
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+title")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "+title")
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < len(notifications) - 1; i++ {
 		should.Equal(-1, strings.Compare(notifications[i].Title, notifications[i+1].Title), "%d %s > %s", i, notifications[i].Title, notifications[i+1].Title)
 	}
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "-title")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "-title")
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < len(notifications) - 1; i++ {
 		should.Equal(1, strings.Compare(notifications[i].Title, notifications[i+1].Title), "%d %s > %s", i, notifications[i].Title, notifications[i+1].Title)
 	}
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+message")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "+message")
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < len(notifications) - 1; i++ {
 		should.Equal(-1, strings.Compare(notifications[i].Message, notifications[i+1].Message), "%d %s > %s", i, notifications[i].Message, notifications[i+1].Message)
 	}
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "-message")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "-message")
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < len(notifications) - 1; i++ {
 		should.Equal(1, strings.Compare(notifications[i].Message, notifications[i+1].Message), "%d %s > %s", i, notifications[i].Message, notifications[i+1].Message)
 	}
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "+unread")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "+unread")
 	should.Nil(err)
 	should.NotNil(notifications)
 	for i := 0; i < 100; i++ {
 		should.False(notifications[i].IsRead, "%d %s %b", i, notifications[i].ID, notifications[i].IsRead)
 	}
 
-	notifications, err = suite.service.GetNotifications(id, 1000, 0, "", "-unread")
+	notifications, count, err = suite.service.GetNotifications(id, 1000, 0, "", "-unread")
 	should.Nil(err)
 	should.NotNil(notifications)
 	should.True(notifications[0].IsRead)
@@ -250,8 +251,4 @@ func (suite *NotificationServiceTestSuite) TestSendNotification() {
 	should.Nil(suite.db.DB().Model(model.Notification{}).Where("id = ? ", notification.ID).First(&inDb).Error)
 	should.Equal("Test notification", inDb.Title)
 	should.Equal("Body notification", inDb.Message)
-
-	count, err := suite.service.GetNotificationsCount(id)
-	should.Nil(err)
-	should.Equal(1, count)
 }

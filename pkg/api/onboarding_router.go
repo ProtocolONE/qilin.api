@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
@@ -86,7 +87,6 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	r.GET("/messages/:messageId", router.getNotification)
 	r.PUT("/messages/:messageId/read", router.markAsRead)
 	r.GET("/messages/short", router.getLastNotifications)
-	r.GET("/messages/count", router.getNotificationsCount)
 
 	return &router, nil
 }
@@ -97,7 +97,7 @@ func (api *OnboardingClientRouter) getLastNotifications(ctx echo.Context) error 
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
-	notifications, err := api.notificationService.GetNotifications(id, 3, 0, "", "")
+	notifications, _, err := api.notificationService.GetNotifications(id, 3, 0, "", "")
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (api *OnboardingClientRouter) getNotifications(ctx echo.Context) error {
 	query := ctx.QueryParam("query")
 	sort := ctx.QueryParam("sort")
 
-	notifications, err := api.notificationService.GetNotifications(id, limit, offset, query, sort)
+	notifications, count, err := api.notificationService.GetNotifications(id, limit, offset, query, sort)
 	if err != nil {
 		return err
 	}
@@ -211,21 +211,9 @@ func (api *OnboardingClientRouter) getNotifications(ctx echo.Context) error {
 		result[i].CreatedAt = n.CreatedAt.Format(time.RFC3339)
 	}
 
+	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", count))
+
 	return ctx.JSON(http.StatusOK, result)
-}
-
-func (api *OnboardingClientRouter) getNotificationsCount(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
-	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, err)
-	}
-
-	count, err := api.notificationService.GetNotificationsCount(id)
-	if err != nil {
-		return err
-	}
-
-	return ctx.JSON(http.StatusOK, count)
 }
 
 func (api *OnboardingClientRouter) changeDocument(ctx echo.Context) error {

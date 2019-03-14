@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
@@ -195,7 +196,7 @@ func (api *OnboardingAdminRouter) getNotifications(ctx echo.Context) error {
 	query := ctx.QueryParam("query")
 	sort := ctx.QueryParam("sort")
 
-	notifications, err := api.notificationService.GetNotifications(id, limit, offset, query, sort)
+	notifications, count, err := api.notificationService.GetNotifications(id, limit, offset, query, sort)
 	if err != nil {
 		return err
 	}
@@ -210,6 +211,8 @@ func (api *OnboardingAdminRouter) getNotifications(ctx echo.Context) error {
 		result[i].ID = n.ID.String()
 		result[i].CreatedAt = n.CreatedAt.Format(time.RFC3339)
 	}
+
+	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", count))
 
 	return ctx.JSON(http.StatusOK, result)
 }
