@@ -96,6 +96,17 @@ func (p *notificationService) GetNotifications(vendorId uuid.UUID, limit int, of
 	return notifications, nil
 }
 
+func (p *notificationService) GetNotificationsCount(vendorId uuid.UUID) (result int, err error) {
+
+	err = p.db.Model(&model.Notification{}).Where("vendor_id = ?", vendorId).Count(&result).Error
+	if err != nil {
+		return 0, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Counting notifications"))
+	}
+
+	return
+}
+
+
 //MarkAsRead is method for marking notification as read
 func (p *notificationService) MarkAsRead(vendorId uuid.UUID, messageId uuid.UUID) error {
 	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, vendorId); exist == false || err != nil {

@@ -10,6 +10,7 @@ import (
 	"qilin-api/pkg/sys"
 	"qilin-api/pkg/test"
 	"qilin-api/pkg/utils"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -618,6 +619,24 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 		should.NotEmpty(n.Title)
 		should.NotEmpty(n.ID)
 	}
+
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec = httptest.NewRecorder()
+	c = suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:id/messages/count")
+	c.SetParamNames("id")
+	c.SetParamValues(TestID)
+
+	err = suite.router.getNotificationsCount(c)
+	should.Nil(err)
+	should.Equal(http.StatusOK, rec.Code)
+	should.NotNil(rec.Body)
+
+	countStr := rec.Body.String()
+	count, err := strconv.Atoi(countStr)
+	should.Nil(err)
+	should.Equal(101, count)
 }
 
 func (suite *OnboardingClientRouterTestSuite) TestGetNotification() {

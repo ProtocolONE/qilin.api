@@ -86,6 +86,7 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	r.GET("/messages/:messageId", router.getNotification)
 	r.PUT("/messages/:messageId/read", router.markAsRead)
 	r.GET("/messages/short", router.getLastNotifications)
+	r.GET("/messages/count", router.getNotificationsCount)
 
 	return &router, nil
 }
@@ -211,6 +212,20 @@ func (api *OnboardingClientRouter) getNotifications(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, result)
+}
+
+func (api *OnboardingClientRouter) getNotificationsCount(ctx echo.Context) error {
+	id, err := uuid.FromString(ctx.Param("id"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+
+	count, err := api.notificationService.GetNotificationsCount(id)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, count)
 }
 
 func (api *OnboardingClientRouter) changeDocument(ctx echo.Context) error {

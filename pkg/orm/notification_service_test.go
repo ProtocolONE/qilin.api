@@ -250,4 +250,8 @@ func (suite *NotificationServiceTestSuite) TestSendNotification() {
 	should.Nil(suite.db.DB().Model(model.Notification{}).Where("id = ? ", notification.ID).First(&inDb).Error)
 	should.Equal("Test notification", inDb.Title)
 	should.Equal("Body notification", inDb.Message)
+
+	count, err := suite.service.GetNotificationsCount(id)
+	should.Nil(err)
+	should.Equal(1, count)
 }
