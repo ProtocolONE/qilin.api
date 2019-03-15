@@ -160,20 +160,20 @@ func (api *OnboardingAdminRouter) getReviews(ctx echo.Context) error {
 		return err
 	}
 
-	var dto []ShortDocumentsInfoDTO
+	var dto = make([]ShortDocumentsInfoDTO, len(requests))
 
 	for i, doc := range requests {
-		if name, ok := doc.Company["name"]; ok {
+		if name, ok := doc.Company["Name"]; ok {
 			dto[i].Name = name.(string)
 		}
 
-		if country, ok := doc.Company["country"]; ok {
+		if country, ok := doc.Company["Country"]; ok {
 			dto[i].Country = country.(string)
 		}
 
-		if contact, ok := doc.Contact["authorized"]; ok {
-			contactMap := contact.(map[string]string)
-			dto[i].Person = contactMap["fullName"]
+		if contact, ok := doc.Contact["Authorized"]; ok {
+			contactMap := contact.(map[string]interface{})
+			dto[i].Person = contactMap["FullName"].(string)
 		}
 
 		dto[i].VendorID = doc.VendorID.String()
