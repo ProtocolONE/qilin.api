@@ -66,10 +66,10 @@ type (
 	}
 
 	DocumentsInfoResponseDTO struct {
-		Company CompanyDTO `json:"company" validate:"required,dive"`
-		Contact ContactDTO `json:"contact" validate:"required,dive"`
-		Banking BankingDTO `json:"banking" validate:"required,dive"`
-		Status  string     `json:"status"`
+		Company  CompanyDTO `json:"company" validate:"required,dive"`
+		Contact  ContactDTO `json:"contact" validate:"required,dive"`
+		Banking  BankingDTO `json:"banking" validate:"required,dive"`
+		Status   string     `json:"status"`
 	}
 )
 

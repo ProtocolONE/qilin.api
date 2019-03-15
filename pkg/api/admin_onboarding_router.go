@@ -45,6 +45,15 @@ type ShortNotificationDTO struct {
 	HaveMsg   bool   `json:"haveMsg"`
 }
 
+type ShortDocumentsInfoDTO struct {
+	VendorID  string `json:"vendor_id"`
+	Name      string `json:"name"`
+	Country   string `json:"country"`
+	Person    string `json:"person"`
+	UpdatedAt string `json:"updatedAt"`
+	Status    string `json:"status"`
+}
+
 func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingService, notificationService model.NotificationService) (*OnboardingAdminRouter, error) {
 	router := OnboardingAdminRouter{
 		service:             service,
@@ -151,18 +160,29 @@ func (api *OnboardingAdminRouter) getReviews(ctx echo.Context) error {
 		return err
 	}
 
-	var dto []DocumentsInfoResponseDTO
-	err = mapper.Map(requests, &dto)
-	if err != nil {
-		return orm.NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Dto mapping error"))
-	}
+	var dto []ShortDocumentsInfoDTO
 
 	for i, doc := range requests {
+		if name, ok := doc.Company["name"]; ok {
+			dto[i].Name = name.(string)
+		}
+
+		if country, ok := doc.Company["country"]; ok {
+			dto[i].Country = country.(string)
+		}
+
+		if contact, ok := doc.Contact["authorized"]; ok {
+			contactMap := contact.(map[string]string)
+			dto[i].Person = contactMap["fullName"]
+		}
+
+		dto[i].VendorID = doc.VendorID.String()
 		dto[i].Status = doc.ReviewStatus.ToString()
+		dto[i].UpdatedAt = doc.UpdatedAt.Format(time.RFC3339)
 	}
 
 	if dto == nil {
-		dto = make([]DocumentsInfoResponseDTO, 0)
+		dto = make([]ShortDocumentsInfoDTO, 0)
 	}
 
 	return ctx.JSON(http.StatusOK, dto)
