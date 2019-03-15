@@ -41,7 +41,7 @@ type (
 	}
 )
 
-//InitPriceRouter is initialization method for router
+//InitPriceRouter is initialization method for group
 func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *PriceRouter, err error) {
 	priceRouter := PriceRouter{
 		service: service,

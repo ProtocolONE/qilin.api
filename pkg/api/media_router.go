@@ -12,7 +12,7 @@ import (
 )
 
 type (
-	//MediaRouter is router struct
+	//MediaRouter is group struct
 	MediaRouter struct {
 		mediaService model.MediaService
 	}
@@ -53,7 +53,7 @@ type (
 	}
 )
 
-//InitMediaRouter is initializing router method
+//InitMediaRouter is initializing group method
 func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRouter, error) {
 	mediaRouter := MediaRouter{
 		mediaService: service,

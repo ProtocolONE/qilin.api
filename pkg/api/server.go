@@ -5,9 +5,11 @@ import (
 	jwt_middleware "github.com/ProtocolONE/authone-jwt-verifier-golang/middleware/echo"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/shersh/rbac"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 	"qilin-api/pkg/api/game"
+	qilin_middleware "qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
@@ -22,6 +24,7 @@ type ServerOptions struct {
 	Mailer           sys.Mailer
 	Notifier         sys.Notifier
 	CentrifugoSecret string
+	Enforcer         *rbac.Enforcer
 }
 
 type Server struct {
@@ -30,6 +33,7 @@ type Server struct {
 	serverConfig     *conf.ServerConfig
 	notifier         sys.Notifier
 	centrifugoSecret string
+	enforcer         *rbac.Enforcer
 
 	Router      *echo.Group
 	AdminRouter *echo.Group
@@ -51,6 +55,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		db:               opts.Database,
 		notifier:         opts.Notifier,
 		centrifugoSecret: opts.CentrifugoSecret,
+		enforcer:         opts.Enforcer,
 	}
 
 	server.echo.HideBanner = true
@@ -58,6 +63,9 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.Debug = opts.ServerConfig.Debug
 
 	server.echo.Use(ZapLogger(zap.L())) // logs all http requests
+	server.echo.Use(middleware.Recover())
+	server.echo.Use(qilin_middleware.QilinContextMiddleware(server.db, server.enforcer))
+
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
 
 	validate := validator.New()
@@ -68,7 +76,6 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.echo.Validator = &QilinValidator{validator: validate}
 
-	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		ExposeHeaders:    []string{"x-centrifugo-token", "x-items-count"},
 		AllowHeaders:     []string{"authorization", "content-type"},
@@ -181,6 +188,11 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 		return err
 	}
 	if _, err := InitAdminOnboardingRouter(s.AdminRouter, adminClientOnboarding, notificationService); err != nil {
+		return err
+	}
+
+	membershipService := orm.NewMembershipService(s.db, s.enforcer)
+	if err := membershipService.Init(); err != nil {
 		return err
 	}
 

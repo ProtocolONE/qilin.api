@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/kelseyhightower/envconfig"
+	"github.com/shersh/rbac"
 	"go.uber.org/zap"
 	"log"
 	"qilin-api/pkg/api"
@@ -49,6 +50,8 @@ func main() {
 		logger.Fatal("Failed to create notifier", zap.Error(err))
 	}
 
+	enf := rbac.NewEnforcer()
+
 	serverOptions := api.ServerOptions{
 		Auth1:            &config.Auth1,
 		ServerConfig:     &config.Server,
@@ -56,6 +59,7 @@ func main() {
 		Mailer:           mailer,
 		Notifier:         notifier,
 		CentrifugoSecret: config.Notifier.Secret,
+		Enforcer:         enf,
 	}
 
 	server, err := api.NewServer(&serverOptions)

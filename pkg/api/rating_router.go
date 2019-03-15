@@ -33,7 +33,7 @@ type (
 	}
 )
 
-//InitRatingsRouter is initialization method for router
+//InitRatingsRouter is initialization method for group
 func InitRatingsRouter(group *echo.Group, service *orm.RatingService) (*RatingsRouter, error) {
 	ratingRouter := RatingsRouter{
 		service: service,
