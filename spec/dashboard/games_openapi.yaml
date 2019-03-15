@@ -1295,6 +1295,9 @@ paths:
                 items:
                   type: object
                   properties:
+                    vendorId:
+                      type: string
+                      format: uuid
                     name:
                       type: string
                     country:

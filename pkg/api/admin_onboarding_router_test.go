@@ -499,7 +499,7 @@ func (suite *OnboardingAdminRouterTestSuite) TestGetReviews() {
 	if assert.NoError(suite.T(), suite.router.getReviews(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 		assert.NotEqual(suite.T(), "[]", rec.Body.String())
-		var reviews []DocumentsInfoResponseDTO
+		var reviews []ShortDocumentsInfoDTO
 		should.Nil(json.Unmarshal(rec.Body.Bytes(), &reviews))
 		should.Equal(13, len(reviews))
 	}
