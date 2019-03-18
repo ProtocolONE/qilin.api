@@ -50,7 +50,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UserShort"
+                  $ref: "#/components/schemas/User"
         400:
           $ref: '#/components/responses/BadRequest'
         401:
@@ -121,32 +121,52 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              type: array
               properties:
                 email:
                   type: string
                   format: email
                   example: "example@example.com"
-                gameId:
-                  type: string
-                  format: uuid
                 roles:
                   type: array
                   items:
-                    type: string
-                    enum:
-                      - manager
-                      - accountant
-                      - pubisher
-                      - store
-                      - support
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum:
+                          - manager
+                          - accountant
+                          - pubisher
+                          - store
+                          - support
+                      resource:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          type:
+                            type: string
+                            enum:
+                              - global
+                              - game
+                          domain:
+                            type: string
+                            enum:
+                              - vendor
       responses:
         201:
           description: Created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserShort"
+                type: object
+                properties:
+                  id:
+                   type: string
+                   format: uuid
+                   description: "Invite id"
         400:
           $ref: '#/components/responses/BadRequest'
         401:
@@ -155,6 +175,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         404:
           $ref: '#/components/responses/NotFound'
+        422:
+            $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'
 
@@ -178,17 +200,6 @@ paths:
             type: string
             format: uuid
           in: path
-        - name: sort
-          in: query
-          description: "Order by field"
-          required: false
-          schema:
-            type: string
-            enum:
-              - +internalName
-              - -internalName
-        - $ref: '#/components/parameters/Offset'
-        - $ref: '#/components/parameters/Limit'
       responses:
         200:
           description: OK
@@ -291,6 +302,96 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
+
+  /api/v1/vendors/{id}/memberships/{userId}/permissions:
+    get:
+      tags:
+        - "common"
+      summary: "Get permissions and restrictions for user"
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: "ID of vendor"
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          description: "user ID"
+          required: true
+          schema:
+            type: string
+            format: uuid
+          in: path
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: string
+                    format: uuid
+                  domain:
+                    type: string
+                    enum:
+                      - vendor
+                  unmatchedRestrictions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        owner:
+                          type: string
+                        role:
+                          type: role
+                        uuid:
+                          type: uuid
+                  permissions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        role:
+                          type: string
+                        domain:
+                          type: string
+                        resource:
+                          type: string
+                          enum:
+                            - global
+                            - game
+                        uuid:
+                          type: string
+                          format: uuid
+                        action:
+                          type: string
+                        allowed:
+                          type: boolean
+                        restrictions:
+                          type: object
+                          properties:
+                            owner:
+                              type: string
+                            role:
+                              type: string
+                            uuid:
+                              type: string
+                              format: uuid
+
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -375,52 +476,6 @@ components:
         - code
         - message
 
-    UserShort:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        lastSeen:
-          type: string
-          format: 'date-time'
-        roles:
-          type: array
-          items:
-            type: object
-            properties:
-              domain:
-                type: string
-                enum:
-                  - vendor
-              role:
-                type: string
-                enum:
-                  - manager
-                  - accountant
-                  - pubisher
-                  - store
-                  - support
-              resource:
-                type: object
-                properties:
-
-              game:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  image:
-                    type: string
-                  internalName:
-                    type: string
-
     User:
       type: object
       properties:
@@ -430,29 +485,47 @@ components:
         email:
           type: string
           format: email
-        permissions:
+        name:
+          type: string
+          format: email
+        roles:
           type: array
           items:
             type: object
             properties:
+              role:
+                type: string
+                enum:
+                  - admin
+                  - accountant
+                  - manager
+                  - support
+                  - store
+              domain:
+                type: string
+                enum:
+                  - vendor
               resource:
                 type: object
                 properties:
                   id:
                     type: string
                     format: uuid
-                  isGlobal:
-                    type: boolean
-                    description: "Flag indicates that this permission is global for user with vendor context"
-                  internalName:
+                  type:
                     type: string
-                  image:
-                    type: string
-              roles:
-                type: array
-                items:
-                  type: string
-
+                    enum:
+                      - global
+                      - game
+                  meta:
+                    type: object
+                    properties:
+                      preview:
+                        type: string
+                      internalName:
+                        type: string
+        lastSeen:
+          type: string
+          format: 'date-time'
 
 security:
   - bearerAuth: []
