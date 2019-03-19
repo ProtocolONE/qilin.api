@@ -38,7 +38,7 @@ func (c *QilinContext) GetUserIdByExternal(id string) (string, error) {
 	return orm.GetUserId(c.db.DB(), id)
 }
 
-func CheckPermissions(router RbacRouter) echo.MiddlewareFunc {
+func CheckPermissions(group RbacGroup, router RbacRouter) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			qilinCtx := c.(QilinContext)
@@ -48,12 +48,12 @@ func CheckPermissions(router RbacRouter) echo.MiddlewareFunc {
 				return err
 			}
 
-			id, err := context.GetAuthUserId(c)
+			userId, err := context.GetAuthUserId(c)
 			if err != nil {
 				return err
 			}
 
-			paths := router.GetPermissionsMap()
+			paths := group.paths
 			perm, ok := paths[c.Path()]
 			if !ok {
 				return orm.NewServiceError(http.StatusForbidden, "")
@@ -63,8 +63,6 @@ func CheckPermissions(router RbacRouter) echo.MiddlewareFunc {
 			if perm[0] != "*" {
 				resourceId = c.Param(perm[0])
 			}
-
-			userId, err := qilinCtx.GetUserIdByExternal(id)
 
 			action := "any"
 			switch c.Request().Method {

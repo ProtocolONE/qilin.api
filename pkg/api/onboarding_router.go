@@ -100,10 +100,6 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	return &router, nil
 }
 
-func (r *OnboardingClientRouter) GetPermissionsMap() map[string][]string {
-	return r.group.Paths()
-}
-
 func (r *OnboardingClientRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
 	return GetOwnerForVendor(ctx)
 }

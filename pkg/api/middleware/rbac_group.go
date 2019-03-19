@@ -7,10 +7,6 @@ type RbacGroup struct {
 	paths map[string][]string
 }
 
-func (g *RbacGroup) Paths() map[string][]string {
-	return g.paths
-}
-
 // DELETE implements `Echo#DELETE()` for sub-routes within the Group.
 func (g *RbacGroup) DELETE(path string, h echo.HandlerFunc, permissions []string, m ...echo.MiddlewareFunc) *RbacGroup {
 	p := g.group.DELETE(path, h, m...)
