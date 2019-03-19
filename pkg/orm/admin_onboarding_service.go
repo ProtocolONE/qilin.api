@@ -7,6 +7,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/orm/utils"
 	"strings"
 )
 
@@ -65,7 +66,14 @@ func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string,
 	return documents, nil
 }
 
-func (p *AdminOnboardingService) GetForVendor( /*userId uuid.UUID, */ vendorId uuid.UUID) (*model.DocumentsInfo, error) {
+func (p *AdminOnboardingService) GetForVendor(vendorId uuid.UUID) (*model.DocumentsInfo, error) {
+	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, vendorId); !(exist && err == nil) {
+		if err != nil {
+			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Check vendor existing"))
+		}
+		return nil, NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", vendorId)
+	}
+
 	result := model.DocumentsInfo{}
 	err := p.db.Where("vendor_id = ?", vendorId).First(&result).Error
 
