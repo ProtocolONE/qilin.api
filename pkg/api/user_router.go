@@ -20,12 +20,12 @@ func InitUserRoutes(api *Server, service model.UserService) error {
 }
 
 func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
-	externalUserId, err := context.GetAuthExternalUserId(ctx)
+	externalUserId, err := context.GetAuthUserId(ctx)
 	if err != nil {
 		return err
 	}
 
-	userObj, err := api.service.FindByExternalID(externalUserId)
+	userObj, err := api.service.FindByID(externalUserId)
 	if err != nil {
 		userObj, err = api.service.Create(externalUserId, ctx.Request().Header.Get("Accept-Language"))
 		if err != nil {

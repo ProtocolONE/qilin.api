@@ -38,7 +38,7 @@ func (p *VendorService) validate(item *model.Vendor) error {
 	if strings.Index("0123456789", string(item.Domain3[0])) > -1 {
 		return NewServiceError(http.StatusBadRequest, "Domain is invalid")
 	}
-	if uuid.Equal(item.ManagerID, uuid.Nil) {
+	if item.ManagerID == "" {
 		return NewServiceError(http.StatusBadRequest, errVendorManagerId)
 	}
 	return nil

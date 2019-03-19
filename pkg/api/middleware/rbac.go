@@ -1,12 +1,11 @@
 package middleware
 
 import (
+	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/ProtocolONE/rbac"
 	"net/http"
 	"qilin-api/pkg/api/context"
-	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 )
 
@@ -14,12 +13,6 @@ type QilinContext struct {
 	echo.Context
 	enf *rbac.Enforcer
 	db  *orm.Database
-}
-
-type RbacPathPermission struct {
-	Type            model.ResourceType
-	Domain          model.Domain
-	ResourceIDQuery string
 }
 
 func (c *QilinContext) CheckPermissions(userId, domain, resource, resourceId, owner, action string) error {
@@ -37,11 +30,11 @@ func (c *QilinContext) CheckPermissions(userId, domain, resource, resourceId, ow
 	return nil
 }
 
-func (c *QilinContext) GetOwnerForVendor(uuid uuid.UUID) (uuid.UUID, error) {
+func (c *QilinContext) GetOwnerForVendor(uuid uuid.UUID) (string, error) {
 	return orm.GetOwnerForVendor(c.db.DB(), uuid)
 }
 
-func (c *QilinContext) GetUserIdByExternal(id string) (uuid.UUID, error) {
+func (c *QilinContext) GetUserIdByExternal(id string) (string, error) {
 	return orm.GetUserId(c.db.DB(), id)
 }
 
@@ -55,7 +48,7 @@ func CheckPermissions(router RbacRouter) echo.MiddlewareFunc {
 				return err
 			}
 
-			id, err := context.GetAuthExternalUserId(c)
+			id, err := context.GetAuthUserId(c)
 			if err != nil {
 				return err
 			}
@@ -84,7 +77,7 @@ func CheckPermissions(router RbacRouter) echo.MiddlewareFunc {
 				action = "write"
 			}
 
-			err = qilinCtx.CheckPermissions(userId.String(), perm[2], perm[1], resourceId, owner, action)
+			err = qilinCtx.CheckPermissions(userId, perm[2], perm[1], resourceId, owner, action)
 			if err != nil {
 				return err
 			}

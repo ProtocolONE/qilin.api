@@ -1,29 +1,20 @@
 package model
 
-import "github.com/satori/go.uuid"
-
-type GameRole string
-
-type Domain string
+import (
+	"github.com/ProtocolONE/rbac"
+	"github.com/satori/go.uuid"
+)
 
 const (
-	Admin      GameRole = "admin"
-	Manager    GameRole = "manager"
-	Support    GameRole = "support"
-	Accountant GameRole = "accountant"
-	Store      GameRole = "store"
-	Publisher  GameRole = "publisher"
+	Admin      string = "admin"
+	Manager    string = "manager"
+	Support    string = "support"
+	Accountant string = "accountant"
+	Store      string = "store"
+	Publisher  string = "publisher"
 
 	VendorDomain string = "vendor"
 )
-
-func (role GameRole) String() string {
-	return string(role)
-}
-
-func (domain Domain) String() string {
-	return string(domain)
-}
 
 type UserRole struct {
 	Email string            `json:"email"`
@@ -36,8 +27,6 @@ type RoleRestriction struct {
 	Domain   string              `json:"domain"`
 	Resource ResourceRestriction `json:"resource"`
 }
-
-type ResourceType string
 
 const GameType string = "game"
 const DocumentsType string = "documents"
@@ -58,12 +47,10 @@ type ResourceRestriction struct {
 type MembershipService interface {
 	Init() error
 	GetUsers(vendorId uuid.UUID) ([]UserRole, error)
-	GetUser(vendorId uuid.UUID, userId uuid.UUID) (*UserRole, error)
-	AddRoleToUserInGame(vendorId uuid.UUID, userId uuid.UUID, gameId uuid.UUID, role GameRole) error
-	SendInvite(vendorId uuid.UUID, userId uuid.UUID) error
+	GetUser(vendorId uuid.UUID, userId string) (*UserRole, error)
+	GetUserPermissions(vendorId uuid.UUID, userId string) (*rbac.UserPermissions, error)
+	AddRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error
+	RemoveRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error
+	SendInvite(vendorId uuid.UUID, userId string) error
 	AcceptInvite(inviteId uuid.UUID) error
-}
-
-func (t ResourceType) String() string {
-	return string(t)
 }

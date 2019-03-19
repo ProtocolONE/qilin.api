@@ -20,5 +20,5 @@ func GetOwnerForVendor(ctx middleware.QilinContext) (string, error) {
 		return "", err
 	}
 
-	return owner.String(), nil
+	return owner, nil
 }

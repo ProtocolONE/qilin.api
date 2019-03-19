@@ -3,7 +3,6 @@ package orm
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
 	"html/template"
 	"net/http"
 	"path"
@@ -20,7 +19,6 @@ type UserService struct {
 }
 
 func NewUserService(db *Database, mailer sys.Mailer) (*UserService, error) {
-
 	_, moduleFile, _, _ := runtime.Caller(0)
 	rootProj := path.Dir(moduleFile) + "/../.."
 
@@ -42,8 +40,8 @@ func NewUserService(db *Database, mailer sys.Mailer) (*UserService, error) {
 		langMap}, nil
 }
 
-func (p *UserService) FindByID(id *uuid.UUID) (user model.User, err error) {
-	err = p.db.First(&user, model.User{ID: *id}).Error
+func (p *UserService) FindByID(id string) (user model.User, err error) {
+	err = p.db.First(&user, model.User{ID: id}).Error
 	if err == gorm.ErrRecordNotFound {
 		return user, NewServiceError(http.StatusNotFound, "User not found")
 	} else if err != nil {
@@ -52,20 +50,9 @@ func (p *UserService) FindByID(id *uuid.UUID) (user model.User, err error) {
 	return
 }
 
-func (p *UserService) FindByExternalID(id string) (user model.User, err error) {
-	err = p.db.First(&user, model.User{ExternalID: id}).Error
-	if err == gorm.ErrRecordNotFound {
-		return user, NewServiceError(http.StatusNotFound, "User not found")
-	} else if err != nil {
-		return user, errors.Wrap(err, "search user by external id")
-	}
-	return
-}
-
 func (p *UserService) Create(id string, lang string) (user model.User, err error) {
 	user = model.User{
-		ID:         uuid.NewV4(),
-		ExternalID: id,
+		ID:         id,
 		Lang:       lang,
 	}
 

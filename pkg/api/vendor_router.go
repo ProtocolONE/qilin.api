@@ -22,7 +22,7 @@ type (
 		Name            string    `json:"name" validate:"required,min=2"`
 		Domain3         string    `json:"domain3" validate:"required,min=2"`
 		Email           string    `json:"email" validate:"required,email"`
-		ManagerId       uuid.UUID `json:"manager_id"`
+		ManagerId       string    `json:"manager_id"`
 		HowManyProducts string    `json:"howmanyproducts"`
 	}
 )
@@ -163,14 +163,14 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 	})
 }
 
-func (api *VendorRouter) getUserId(ctx echo.Context) (uuid.UUID, error) {
-	extUserId, err := context.GetAuthExternalUserId(ctx)
+func (api *VendorRouter) getUserId(ctx echo.Context) (string, error) {
+	extUserId, err := context.GetAuthUserId(ctx)
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
-	user, err := api.userService.FindByExternalID(extUserId)
+	user, err := api.userService.FindByID(extUserId)
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
 
 	return user.ID, nil

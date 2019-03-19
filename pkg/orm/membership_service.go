@@ -19,12 +19,12 @@ func NewMembershipService(db *Database, enforcer *rbac.Enforcer) model.Membershi
 }
 
 func (service *membershipService) Init() error {
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Manager.String(), Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Accountant.String(), Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Publisher.String(), Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Store.String(), Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support.String(), Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin.String(), Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Manager, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Accountant, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Publisher, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Store, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
 
 	return nil
 }
@@ -39,16 +39,16 @@ func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]model.UserRole
 	enf := service.enforcer
 
 	//Retrieve all users that have membership for vendor
-	roles := []model.GameRole{model.Admin, model.Manager, model.Support, model.Accountant, model.Store}
+	roles := []string{model.Admin, model.Manager, model.Support, model.Accountant, model.Store}
 	users := make([]string, 0)
 	for _, role := range roles {
-		result := enf.GetUsersForRole(role.String(), model.VendorDomain, ownerId.String())
+		result := enf.GetUsersForRole(role, model.VendorDomain, ownerId)
 		users = appendIfMissing(users, result)
 	}
 
 	usersRoles := make([]model.UserRole, 0)
 	for _, userId := range users {
-		userPermissions := enf.GetPermissionsForUser(userId, model.VendorDomain, ownerId.String())
+		userPermissions := enf.GetPermissionsForUser(userId, model.VendorDomain, ownerId)
 		if userPermissions == nil {
 			return nil, NewServiceErrorf(http.StatusInternalServerError, "Could not find permissions for userId `%s` and vendor `%s`", userId, vendorId)
 		}
@@ -73,7 +73,7 @@ func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]model.UserRole
 					{
 						UUID:  role.UUID,
 						Role:  role.Role,
-						Owner: ownerId.String(),
+						Owner: ownerId,
 					},
 				}
 			}
@@ -105,7 +105,7 @@ func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]model.UserRole
 					Resource: model.ResourceRestriction{
 						Id:    rest.UUID,
 						Type:  resType,
-						Owner: ownerId.String(),
+						Owner: ownerId,
 						Meta:  meta,
 					},
 				})
@@ -121,11 +121,11 @@ func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]model.UserRole
 	return usersRoles, nil
 }
 
-func (service *membershipService) GetUser(vendorId uuid.UUID, userId uuid.UUID) (*model.UserRole, error) {
+func (service *membershipService) GetUser(vendorId uuid.UUID, userId string) (*model.UserRole, error) {
 	return nil, errors.New("Not implemented yet")
 }
 
-func (service *membershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId uuid.UUID, gameId uuid.UUID, role model.GameRole) error {
+func (service *membershipService) RemoveRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error {
 	if exist, err := utils.CheckExists(service.db.DB(), &model.User{}, userId); !(exist && err == nil) {
 		if err != nil {
 			return NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get user by id `%s`", userId))
@@ -133,7 +133,7 @@ func (service *membershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId
 		return NewServiceErrorf(http.StatusNotFound, "User `%s` not found", userId)
 	}
 
-	isGlobal := gameId == uuid.Nil
+	isGlobal := gameId == "" || gameId == "*"
 	var restrict []string
 
 	if !isGlobal {
@@ -143,7 +143,7 @@ func (service *membershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId
 			}
 			return NewServiceErrorf(http.StatusNotFound, "Game `%s` not found", gameId)
 		}
-		restrict = []string{gameId.String()}
+		restrict = []string{gameId}
 	}
 
 	owner, err := GetOwnerForVendor(service.db.DB(), vendorId)
@@ -151,19 +151,70 @@ func (service *membershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId
 		return err
 	}
 
-	if service.enforcer.AddRole(rbac.Role{Role: role.String(), User: userId.String(), Owner: owner.String(), Domain: model.VendorDomain, RestrictedResourceId: restrict}) == false {
-		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role.String(), userId.String())
+	if service.enforcer.RemoveRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: restrict}) == false {
+		return NewServiceErrorf(http.StatusInternalServerError, "Could not remove role `%s` to user `%s`", role, userId)
 	}
 
 	return nil
 }
 
-func (service *membershipService) SendInvite(vendorId uuid.UUID, userId uuid.UUID) error {
+func (service *membershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.User{}, userId); !(exist && err == nil) {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get user by id `%s`", userId))
+		}
+		return NewServiceErrorf(http.StatusNotFound, "User `%s` not found", userId)
+	}
+
+	isGlobal := gameId == "" || gameId == "*"
+	var restrict []string
+
+	if !isGlobal {
+		if exist, err := utils.CheckExists(service.db.DB(), &model.Game{}, gameId); !(exist && err == nil) {
+			if err != nil {
+				return NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get game by id `%s`", gameId))
+			}
+			return NewServiceErrorf(http.StatusNotFound, "Game `%s` not found", gameId)
+		}
+		restrict = []string{gameId}
+	}
+
+	owner, err := GetOwnerForVendor(service.db.DB(), vendorId)
+	if err != nil {
+		return err
+	}
+
+	if service.enforcer.AddRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: restrict}) == false {
+		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role, userId)
+	}
+
+	return nil
+}
+
+func (service *membershipService) SendInvite(vendorId uuid.UUID, userId string) error {
 	return errors.New("Not implemented yet")
 }
 
 func (service *membershipService) AcceptInvite(inviteId uuid.UUID) error {
 	return errors.New("Not implemented yet")
+}
+
+func (service *membershipService) GetUserPermissions(vendorId uuid.UUID, userId string) (*rbac.UserPermissions, error) {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.Vendor{}, vendorId); !(exist && err == nil) {
+		if err != nil {
+			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Check vendor exist"))
+		}
+		return nil, NewServiceError(http.StatusNotFound, "Vendor not found")
+	}
+
+	if exist, err := utils.CheckExists(service.db.DB(), &model.User{}, userId); !(exist && err == nil) {
+		if err != nil {
+			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Check user exist"))
+		}
+		return nil, NewServiceError(http.StatusNotFound, "User not found")
+	}
+
+	return service.enforcer.GetPermissionsForUser(userId, "vendor", vendorId.String()), nil
 }
 
 func appendIfMissing(slice []string, users []string) []string {

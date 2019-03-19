@@ -276,14 +276,14 @@ func (api *Router) GetRatingDescriptors(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, dto)
 }
 
-func (api *Router) getUserId(ctx echo.Context) (uuid.UUID, error) {
-	extUserId, err := context.GetAuthExternalUserId(ctx)
+func (api *Router) getUserId(ctx echo.Context) (string, error) {
+	extUserId, err := context.GetAuthUserId(ctx)
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
-	user, err := api.userService.FindByExternalID(extUserId)
+	user, err := api.userService.FindByID(extUserId)
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
 
 	return user.ID, nil

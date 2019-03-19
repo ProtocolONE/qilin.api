@@ -11,7 +11,7 @@ const (
 	LoggerKey = "app.logger"
 )
 
-func GetAuthExternalUserId(ctx echo.Context) (externalUserId string, err error) {
+func GetAuthUserId(ctx echo.Context) (externalUserId string, err error) {
 	token := ctx.Get(TokenKey).(*jwtverifier.UserInfo)
 	if token == nil {
 		return "", echo.NewHTTPError(http.StatusUnauthorized, "Invalid auth token: "+err.Error())

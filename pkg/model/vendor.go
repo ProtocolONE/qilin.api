@@ -19,7 +19,7 @@ type Vendor struct {
 	HowManyProducts string `gorm:"column:howmanyproducts; not null;"`
 
 	Manager   *User
-	ManagerID uuid.UUID
+	ManagerID string
 
 	Users []User `gorm:"many2many:vendor_users;"`
 }
