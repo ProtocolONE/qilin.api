@@ -13,7 +13,7 @@ import (
 
 // AdminOnboardingService is service to interact with vendor requests objects with admin rights
 type AdminOnboardingService struct {
-	db       *gorm.DB
+	db *gorm.DB
 }
 
 func NewAdminOnboardingService(db *Database) (*AdminOnboardingService, error) {

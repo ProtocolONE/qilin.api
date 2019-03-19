@@ -46,7 +46,7 @@ type (
 		Vendor    *Vendor   /// VendorID is foreignKey for Vendor
 		VendorID  uuid.UUID `gorm:"type:uuid"`
 		Creator   *User     /// CreatorID is foreignKey for Creator
-		CreatorID string `gorm:"type:uuid"`
+		CreatorID string    `gorm:"type:uuid"`
 
 		CreatedAt time.Time  `gorm:"default:now()"`
 		UpdatedAt time.Time  `gorm:"default:now()"`

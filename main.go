@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/kelseyhightower/envconfig"
 	"github.com/ProtocolONE/rbac"
+	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 	"log"
 	"qilin-api/pkg/api"

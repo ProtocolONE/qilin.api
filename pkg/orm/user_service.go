@@ -52,8 +52,8 @@ func (p *UserService) FindByID(id string) (user model.User, err error) {
 
 func (p *UserService) Create(id string, lang string) (user model.User, err error) {
 	user = model.User{
-		ID:         id,
-		Lang:       lang,
+		ID:   id,
+		Lang: lang,
 	}
 
 	err = p.db.Create(&user).Error

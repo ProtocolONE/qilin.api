@@ -137,4 +137,3 @@ func (suite *MemershipServiceTestSuite) TestGetUsers() {
 		shouldBe.NotEmpty(u.Name)
 	}
 }
-
