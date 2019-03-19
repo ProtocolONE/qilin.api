@@ -17,7 +17,7 @@ import (
 type GameServiceTestSuite struct {
 	suite.Suite
 	db     *orm.Database
-	userId uuid.UUID
+	userId string
 }
 
 func Test_GameService(t *testing.T) {
@@ -295,7 +295,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Equal(gameDescr2.GameSite, gameDescr.GameSite, "Same value")
 	require.Equal(gameDescr2.Description.EN, gameDescr.Description.EN, "Same value")
 
-	suite.T().Log("Retrive tags with user", user.ID.String())
+	suite.T().Log("Retrive tags with user", user.ID)
 	tags, err := gameService.FindTags(user.ID, "Стрелялки", 20, 0)
 	require.Equal(len(tags), 1, "Must be one match")
 	require.Equal(tags[0].ID, 1, "Same value")

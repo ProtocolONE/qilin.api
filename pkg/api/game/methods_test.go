@@ -58,10 +58,8 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 		suite.T().Log(err)
 	}
 
-	userUuid, _ := uuid.FromString(userId)
 	err = db.DB().Save(&model.User{
-		ID:         userUuid,
-		ExternalID: externalUserId,
+		ID:         userId,
 		Nickname:   "admin",
 		Login:      "admin@protocol.one",
 		Password:   "123456",
@@ -76,8 +74,8 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 		Domain3:         "domino",
 		Email:           "domine@ya.ru",
 		HowManyProducts: "+10",
-		ManagerID:       userUuid,
-		Users:           []model.User{{ID: userUuid}},
+		ManagerID:       userId,
+		Users:           []model.User{{ID: userId}},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
 	echoObj := echo.New()
@@ -104,10 +102,8 @@ func (suite *GamesRouterTestSuite) TearDownTest() {
 }
 
 func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
-	userUuid, _ := uuid.FromString(userId)
 	err := suite.db.DB().Save(&model.User{
-		ID:         userUuid,
-		ExternalID: externalUserId,
+		ID:         userId,
 		Nickname:   "admin",
 		Login:      "admin@protocol.one",
 		Password:   "123456",
@@ -121,7 +117,7 @@ func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/games")
-	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: externalUserId})
+	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: userId})
 
 	err = suite.router.Create(c)
 	require.Nil(suite.T(), err, "Error while create game")

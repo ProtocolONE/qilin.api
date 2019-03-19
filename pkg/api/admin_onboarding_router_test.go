@@ -617,7 +617,7 @@ func (suite *OnboardingAdminRouterTestSuite) generateReviews(db *orm.Database) {
 	game.GenreMain = 1
 	game.GenreAddition = []int64{1, 2}
 	game.Tags = []int64{1, 2}
-	game.CreatorID = id
+	game.CreatorID = id.String()
 
 	err := db.DB().Create(&game).Error
 

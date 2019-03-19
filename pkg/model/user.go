@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	ID        string     `gorm:"type:varchar(64); unique_index"`
+	ID        string     `gorm:"type:varchar(64); primary_key"`
 	CreatedAt time.Time  `gorm:"default:now()"`
 	UpdatedAt time.Time  `gorm:"default:now()"`
 	DeletedAt *time.Time `sql:"index"`

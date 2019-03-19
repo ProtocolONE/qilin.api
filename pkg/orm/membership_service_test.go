@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/satori/go.uuid"
-	"github.com/shersh/rbac"
+	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -49,15 +49,11 @@ func (suite *MemershipServiceTestSuite) SetupTest() {
 	userId2 := uuid.NewV4()
 	userId3 := uuid.NewV4()
 
-	externalId1 := RandStringRunes(5)
-	externalId2 := RandStringRunes(5)
-	externalId3 := RandStringRunes(5)
+	shouldBe.Nil(db.DB().Create(&model.User{Email: "owner@example.com", ID: ownerId.String(), FullName: "Owner Test", Login: "owner", Password: "test"}).Error)
+	shouldBe.Nil(db.DB().Create(&model.User{Email: "admin@example.com", ID: userId2.String(), FullName: "Admin Test", Login: "admin", Password: "test"}).Error)
+	shouldBe.Nil(db.DB().Create(&model.User{Email: "support@example.com", ID: userId3.String(), FullName: "Support Test", Login: "support", Password: "test"}).Error)
 
-	shouldBe.Nil(db.DB().Create(&model.User{ExternalID: externalId1, Email: "owner@example.com", ID: ownerId, FullName: "Owner Test", Login: "owner", Password: "test"}).Error)
-	shouldBe.Nil(db.DB().Create(&model.User{ExternalID: externalId2, Email: "admin@example.com", ID: userId2, FullName: "Admin Test", Login: "admin", Password: "test"}).Error)
-	shouldBe.Nil(db.DB().Create(&model.User{ExternalID: externalId3, Email: "support@example.com", ID: userId3, FullName: "Support Test", Login: "support", Password: "test"}).Error)
-
-	shouldBe.Nil(db.DB().Create(&model.Vendor{Name: "Test Vendor", ID: uuid.FromStringOrNil(vendorId), Email: "WTF@example.com", Domain3: "somedomain", HowManyProducts: "0", ManagerID: ownerId}).Error)
+	shouldBe.Nil(db.DB().Create(&model.Vendor{Name: "Test Vendor", ID: uuid.FromStringOrNil(vendorId), Email: "WTF@example.com", Domain3: "somedomain", HowManyProducts: "0", ManagerID: ownerId.String()}).Error)
 
 	shouldBe.True(enf.AddRole(rbac.Role{Role: "admin", User: userId2.String(), Domain: "vendor", RestrictedResourceId: nil, Owner: ownerId.String()}))
 	shouldBe.True(enf.AddRole(rbac.Role{Role: "support", User: userId3.String(), Domain: "vendor", RestrictedResourceId: nil, Owner: ownerId.String()}))
@@ -76,31 +72,29 @@ func (suite *MemershipServiceTestSuite) TestAddRoleToUser() {
 	shouldBe := require.New(suite.T())
 	vId := uuid.FromStringOrNil(vendorId)
 
-	userId3 := uuid.NewV4()
+	userId3 := uuid.NewV4().String()
 
-	externalId3 := RandStringRunes(5)
+	shouldBe.Nil(suite.db.DB().Create(&model.User{Email: "new_admin@example.com", ID: userId3, FullName: "Admin New Test", Login: "new_admin", Password: "test"}).Error)
 
-	shouldBe.Nil(suite.db.DB().Create(&model.User{ExternalID: externalId3, Email: "new_admin@example.com", ID: userId3, FullName: "Admin New Test", Login: "new_admin", Password: "test"}).Error)
-
-	err := suite.service.AddRoleToUserInGame(vId, userId3, uuid.Nil, model.Admin)
+	err := suite.service.AddRoleToUserInGame(vId, userId3, "", model.Admin)
 	shouldBe.Nil(err)
 
-	err = suite.service.AddRoleToUserInGame(vId, userId3, uuid.Nil, model.Admin)
+	err = suite.service.AddRoleToUserInGame(vId, userId3, "", model.Admin)
 	shouldBe.NotNil(err)
 
 	gameId := uuid.FromStringOrNil(Id)
 	shouldBe.Nil(suite.db.DB().Create(&model.Game{ID: gameId, InternalName: "Test Internal Name", VendorID: vId, Title: "Test title"}).Error)
 
-	err = suite.service.AddRoleToUserInGame(vId, userId3, gameId, model.Support)
+	err = suite.service.AddRoleToUserInGame(vId, userId3, gameId.String(), model.Support)
 	shouldBe.Nil(err)
 
-	err = suite.service.AddRoleToUserInGame(vId, userId3, uuid.NewV4(), model.Support)
+	err = suite.service.AddRoleToUserInGame(vId, userId3, uuid.NewV4().String(), model.Support)
 	shouldBe.NotNil(err)
 
-	err = suite.service.AddRoleToUserInGame(vId, uuid.NewV4(), gameId, model.Support)
+	err = suite.service.AddRoleToUserInGame(vId, uuid.NewV4().String(), gameId.String(), model.Support)
 	shouldBe.NotNil(err)
 
-	err = suite.service.AddRoleToUserInGame(uuid.NewV4(), userId3, gameId, model.Support)
+	err = suite.service.AddRoleToUserInGame(uuid.NewV4(), userId3, gameId.String(), model.Support)
 	shouldBe.NotNil(err)
 
 	users, err := suite.service.GetUsers(vId)

@@ -59,7 +59,7 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 	suite.service = service
 
 	user := model.User{
-		ID:       uuid.NewV4(),
+		ID:       uuid.NewV4().String(),
 		Login:    "test@protocol.one",
 		Password: "megapass",
 		Nickname: "Test",

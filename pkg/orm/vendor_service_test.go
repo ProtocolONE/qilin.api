@@ -54,7 +54,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 
 	vendorService, err := orm.NewVendorService(suite.db)
 
-	userId := uuid.NamespaceDNS
+	userId := uuid.NamespaceDNS.String()
 
 	vendor := model.Vendor{
 		ID:        uuid.NewV4(),
