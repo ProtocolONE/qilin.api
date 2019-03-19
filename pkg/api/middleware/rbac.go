@@ -3,7 +3,7 @@ package middleware
 import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/shersh/rbac"
+	"github.com/ProtocolONE/rbac"
 	"net/http"
 	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/model"

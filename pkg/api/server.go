@@ -5,7 +5,7 @@ import (
 	jwt_middleware "github.com/ProtocolONE/authone-jwt-verifier-golang/middleware/echo"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/shersh/rbac"
+	"github.com/ProtocolONE/rbac"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 	"qilin-api/pkg/api/game"

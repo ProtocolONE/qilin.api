@@ -3,6 +3,7 @@ module qilin-api
 require (
 	cloud.google.com/go v0.34.0 // indirect
 	github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190306075438-fae68b84f58d
+	github.com/ProtocolONE/rbac v0.0.0-20190318075816-19010b8e6f04
 	github.com/centrifugal/gocent v2.0.2+incompatible
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
@@ -28,7 +29,6 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/satori/go.uuid v1.2.0
-	github.com/shersh/rbac v0.0.0-20190312123807-e692c914250b
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/wsxiaoys/terminal v0.0.0-20160513160801-0940f3fc43a0 // indirect

@@ -3,7 +3,7 @@ package orm
 import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
-	"github.com/shersh/rbac"
+	"github.com/ProtocolONE/rbac"
 	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm/utils"
