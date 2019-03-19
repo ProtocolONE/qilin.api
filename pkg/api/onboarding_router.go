@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -17,6 +18,7 @@ type (
 	OnboardingClientRouter struct {
 		service             *orm.OnboardingService
 		notificationService model.NotificationService
+		group               *middleware.RbacGroup
 	}
 
 	ContactDTO struct {
@@ -66,29 +68,44 @@ type (
 	}
 
 	DocumentsInfoResponseDTO struct {
-		Company  CompanyDTO `json:"company" validate:"required,dive"`
-		Contact  ContactDTO `json:"contact" validate:"required,dive"`
-		Banking  BankingDTO `json:"banking" validate:"required,dive"`
-		Status   string     `json:"status"`
+		Company CompanyDTO `json:"company" validate:"required,dive"`
+		Contact ContactDTO `json:"contact" validate:"required,dive"`
+		Banking BankingDTO `json:"banking" validate:"required,dive"`
+		Status  string     `json:"status"`
 	}
 )
 
 func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingService, notificationService model.NotificationService) (*OnboardingClientRouter, error) {
+	r := &middleware.RbacGroup{}
+
 	router := OnboardingClientRouter{
 		service:             service,
 		notificationService: notificationService,
+		group:               r,
 	}
-	r := group.Group("/vendors/:id")
-	r.GET("/documents", router.getDocument)
-	r.PUT("/documents", router.changeDocument)
-	r.POST("/documents/reviews", router.sendToReview)
-	r.DELETE("/documents/reviews", router.revokeReview)
-	r.GET("/messages", router.getNotifications)
-	r.GET("/messages/:messageId", router.getNotification)
-	r.PUT("/messages/:messageId/read", router.markAsRead)
-	r.GET("/messages/short", router.getLastNotifications)
+
+	r = r.Group(group, "/vendors/:id", &router)
+
+	common := []string{"*", model.DocumentsType, model.VendorDomain}
+	r.GET("/documents", router.getDocument, common)
+	r.PUT("/documents", router.changeDocument, common)
+	r.POST("/documents/reviews", router.sendToReview, common)
+	r.DELETE("/documents/reviews", router.revokeReview, common)
+
+	r.GET("/messages", router.getNotifications, common)
+	r.GET("/messages/:messageId", router.getNotification, []string{"messageId", model.DocumentsType, model.VendorDomain})
+	r.PUT("/messages/:messageId/read", router.markAsRead, []string{"messageId", model.DocumentsType, model.VendorDomain})
+	r.GET("/messages/short", router.getLastNotifications, common)
 
 	return &router, nil
+}
+
+func (r *OnboardingClientRouter) GetPermissionsMap() map[string][]string {
+	return r.group.Paths()
+}
+
+func (r *OnboardingClientRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+	return GetOwnerForVendor(ctx)
 }
 
 func (api *OnboardingClientRouter) getLastNotifications(ctx echo.Context) error {

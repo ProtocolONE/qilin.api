@@ -18,8 +18,12 @@ type User struct {
 	Password string
 	Lang     string `gorm:"default:'ru'"`
 	Currency string `gorm:"default:'usd'"`
+	Email    string
+	FullName string
 
-	Vendors []Vendor `gorm:"many2many:vendor_users;"`
+	LastSeen *time.Time
+
+	Vendors  []Vendor `gorm:"many2many:vendor_users;"`
 }
 
 type UserInfo struct {

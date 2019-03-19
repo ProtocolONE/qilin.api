@@ -7,13 +7,12 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
-	"qilin-api/pkg/orm/utils"
 	"strings"
 )
 
 // AdminOnboardingService is service to interact with vendor requests objects with admin rights
 type AdminOnboardingService struct {
-	db *gorm.DB
+	db       *gorm.DB
 }
 
 func NewAdminOnboardingService(db *Database) (*AdminOnboardingService, error) {
@@ -21,6 +20,7 @@ func NewAdminOnboardingService(db *Database) (*AdminOnboardingService, error) {
 }
 
 func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string, status model.ReviewStatus, sort string) ([]model.DocumentsInfo, error) {
+
 	var documents []model.DocumentsInfo
 	query := p.db.Where("status <> ?", model.StatusDraft).Limit(limit).Offset(offset)
 	if name != "" {
@@ -65,19 +65,12 @@ func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string,
 	return documents, nil
 }
 
-func (p *AdminOnboardingService) GetForVendor(id uuid.UUID) (*model.DocumentsInfo, error) {
-	if exists, err := utils.CheckExists(p.db, &model.Vendor{}, id); !(exists && err == nil) {
-		if err != nil {
-			return nil, NewServiceError(http.StatusInternalServerError, err)
-		}
-		return nil, NewServiceError(http.StatusNotFound)
-	}
-
+func (p *AdminOnboardingService) GetForVendor( /*userId uuid.UUID, */ vendorId uuid.UUID) (*model.DocumentsInfo, error) {
 	result := model.DocumentsInfo{}
-	err := p.db.Where("vendor_id = ?", id).First(&result).Error
+	err := p.db.Where("vendor_id = ?", vendorId).First(&result).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Get vendor's documents with vendor id: %s", id)))
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Get vendor's documents with vendor vendorId: %s", vendorId)))
 	}
 
 	return &result, nil
