@@ -89,10 +89,6 @@ paths:
                 internalName:
                   type: string
                   example: "MEGA_PUBG_CLONE"
-                vendorId:
-                  type: string
-                  format: uuid
-                  description: "Vendor who owns the game"
       responses:
         201:
           description: Created

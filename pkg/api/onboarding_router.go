@@ -11,7 +11,6 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"strconv"
-	"testing"
 	"time"
 )
 
@@ -75,13 +74,6 @@ type (
 		Status  string     `json:"status"`
 	}
 )
-
-func testAccess(t *testing.T, path string, vendor string, roel string, owner string, res, id string, result bool) {
-	//CREATE USER
-	//Add ROLES
-	//Echo call
-	//
-}
 
 func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingService, notificationService model.NotificationService) (*OnboardingClientRouter, error) {
 	r := &middleware.RbacGroup{}

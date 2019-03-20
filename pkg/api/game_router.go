@@ -289,7 +289,6 @@ func InitRoutes(router *echo.Group, service model.GameService, userService model
 
 type CreateGameDTO struct {
 	InternalName string
-	VendorId     string
 }
 
 func (api *GameRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
@@ -367,7 +366,7 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Wrong parameters in body")
 	}
-	vendorId, err := uuid.FromString(params.VendorId)
+	vendorId, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendorId")
 	}
