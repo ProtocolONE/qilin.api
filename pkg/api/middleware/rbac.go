@@ -30,15 +30,15 @@ func (c *QilinContext) CheckPermissions(userId, domain, resource, resourceId, ow
 	return nil
 }
 
+func (c *QilinContext) GetOwnerForGame(uuid uuid.UUID) (string, error) {
+	return orm.GetOwnerForGame(c.db.DB(), uuid)
+}
+
 func (c *QilinContext) GetOwnerForVendor(uuid uuid.UUID) (string, error) {
 	return orm.GetOwnerForVendor(c.db.DB(), uuid)
 }
 
-func (c *QilinContext) GetUserIdByExternal(id string) (string, error) {
-	return orm.GetUserId(c.db.DB(), id)
-}
-
-func CheckPermissions(group RbacGroup, router RbacRouter) echo.MiddlewareFunc {
+func CheckPermissions(group *RbacGroup, router RbacRouter) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			qilinCtx := c.(QilinContext)

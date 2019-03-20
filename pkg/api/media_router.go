@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
@@ -53,16 +54,23 @@ type (
 	}
 )
 
+
 //InitMediaRouter is initializing group method
 func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRouter, error) {
 	mediaRouter := MediaRouter{
 		mediaService: service,
 	}
-	router := group.Group("/games/:id")
-	router.GET("/media", mediaRouter.get)
-	router.PUT("/media", mediaRouter.put)
+
+	router := &middleware.RbacGroup{}
+	router = router.Group(group, "/games/:id", &mediaRouter)
+	router.GET("/media", mediaRouter.get, []string{"*", model.GameType, model.VendorDomain})
+	router.PUT("/media", mediaRouter.put, []string{"*", model.GameType, model.VendorDomain})
 
 	return &mediaRouter, nil
+}
+
+func (api *MediaRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+	return GetOwnerForGame(ctx)
 }
 
 // @Summary Change media for game
@@ -73,7 +81,7 @@ func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRoute
 // @Failure 404 {object} "Not found"
 // @Failure 422 {object} "Unprocessable object"
 // @Failure 500 {object} "Internal server error"
-// @Router /api/v1/games/:id/media [put]
+// @GameRouter /api/v1/games/:id/media [put]
 func (api *MediaRouter) put(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 
@@ -114,7 +122,7 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 // @Failure 403 {object} "Forbidden"
 // @Failure 404 {object} "Not found"
 // @Failure 500 {object} "Internal server error"
-// @Router /api/v1/games/:id/media [get]
+// @GameRouter /api/v1/games/:id/media [get]
 func (api *MediaRouter) get(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("id"))
 

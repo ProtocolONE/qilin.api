@@ -8,6 +8,21 @@ import (
 	"qilin-api/pkg/orm"
 )
 
+func GetOwnerForGame(ctx middleware.QilinContext) (string, error) {
+	gameIdParam := ctx.Param("id")
+	gameId, err := uuid.FromString(gameIdParam)
+	if err != nil {
+		return "", orm.NewServiceError(http.StatusBadRequest, errors.Wrapf(err, "Game id `%s` is incorrect", gameIdParam))
+	}
+
+	owner, err := ctx.GetOwnerForVendor(gameId)
+	if err != nil {
+		return "", err
+	}
+
+	return owner, nil
+}
+
 func GetOwnerForVendor(ctx middleware.QilinContext) (string, error) {
 	vendorIdParam := ctx.Param("id")
 	vendorId, err := uuid.FromString(vendorIdParam)

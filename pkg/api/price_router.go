@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/utils"
@@ -47,14 +48,19 @@ func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *Pric
 		service: service,
 	}
 
-	r := group.Group("/games/:id")
+	r := &middleware.RbacGroup{}
+	r = r.Group(group,"/games/:id", &priceRouter)
 
-	r.GET("/prices", priceRouter.getBase)
-	r.PUT("/prices", priceRouter.putBase)
-	r.PUT("/prices/:currency", priceRouter.updatePrice)
-	r.DELETE("/prices/:currency", priceRouter.deletePrice)
+	r.GET("/prices", priceRouter.getBase, []string{"*", model.GameType, model.VendorDomain})
+	r.PUT("/prices", priceRouter.putBase, []string{"*", model.GameType, model.VendorDomain})
+	r.PUT("/prices/:currency", priceRouter.updatePrice, []string{"*", model.GameType, model.VendorDomain})
+	r.DELETE("/prices/:currency", priceRouter.deletePrice, []string{"*", model.GameType, model.VendorDomain})
 
 	return &priceRouter, nil
+}
+
+func (router *PriceRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+	return GetOwnerForGame(ctx)
 }
 
 func (router *PriceRouter) getBase(ctx echo.Context) error {

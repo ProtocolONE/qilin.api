@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 )
@@ -23,14 +24,21 @@ type UserRoleDTO struct {
 	Roles []string `json:"roles"`
 }
 
-func InitClientMembershipRouter(group *echo.Group) (*MembershipRouter, error) {
-	res := &MembershipRouter{}
+func InitClientMembershipRouter(group *echo.Group, service model.MembershipService) (*MembershipRouter, error) {
+	res := &MembershipRouter{
+		service: service,
+	}
 
-	route := group.Group("/vendors/:id")
-	route.GET("/memberships", res.getUsers)
-	route.PUT("/memberships/:userId", res.changeUserRoles)
+	route := &middleware.RbacGroup{}
+	route = route.Group(group, "/vendors/:id", res)
+	route.GET("/memberships", res.getUsers, []string{"*", model.RolesType, model.VendorDomain})
+	route.PUT("/memberships/:userId", res.changeUserRoles, []string{"userId", model.RolesType, model.VendorDomain})
 
 	return res, nil
+}
+
+func (api *MembershipRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+	return GetOwnerForVendor(ctx)
 }
 
 func (api *MembershipRouter) getUsers(ctx echo.Context) error {

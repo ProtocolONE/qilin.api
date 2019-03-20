@@ -58,6 +58,6 @@ func (g *RbacGroup) PUT(path string, h echo.HandlerFunc, permissions []string, m
 
 func (g *RbacGroup) Group(group *echo.Group, prefix string, router RbacRouter) *RbacGroup {
 	g.paths = map[string][]string{}
-	g.group = group.Group(prefix, CheckPermissions(router))
+	g.group = group.Group(prefix, CheckPermissions(g, router))
 	return g
 }

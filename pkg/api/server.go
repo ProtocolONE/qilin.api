@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/middleware"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
-	"qilin-api/pkg/api/game"
 	qilin_middleware "qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/conf"
 	"qilin-api/pkg/orm"
@@ -147,7 +146,7 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
-	if _, err := game.InitRoutes(s.Router, gameService, userService); err != nil {
+	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
 		return err
 	}
 
@@ -193,6 +192,10 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 
 	membershipService := orm.NewMembershipService(s.db, s.enforcer)
 	if err := membershipService.Init(); err != nil {
+		return err
+	}
+
+	if _, err := InitClientMembershipRouter(s.Router, membershipService); err != nil {
 		return err
 	}
 

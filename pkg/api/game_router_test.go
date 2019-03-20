@@ -1,4 +1,4 @@
-package game
+package api
 
 import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
@@ -17,19 +17,11 @@ import (
 	"testing"
 )
 
-type QilinValidator struct {
-	validator *validator.Validate
-}
-
-func (cv *QilinValidator) Validate(i interface{}) error {
-	return cv.validator.Struct(i)
-}
-
 type GamesRouterTestSuite struct {
 	suite.Suite
 	db     *orm.Database
 	echo   *echo.Echo
-	router *Router
+	router *GameRouter
 	token  *jwtverifier.UserInfo
 }
 
@@ -39,7 +31,6 @@ func Test_GamesRouter(t *testing.T) {
 
 var (
 	userId             = uuid.NewV4().String()
-	externalUserId     = uuid.NewV4().String()
 	vendorId           = uuid.NewV4().String()
 	createGamesPayload = `{"InternalName":"new_game", "vendorId": "` + vendorId + `"}`
 )

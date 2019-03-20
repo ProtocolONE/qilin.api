@@ -22,6 +22,22 @@ func GetUserId(db *gorm.DB, id string) (string, error) {
 	return user.ID, nil
 }
 
+
+func GetOwnerForGame(db *gorm.DB, gameId uuid.UUID) (string, error) {
+	vendor := model.Vendor{}
+	game := model.Game{}
+	err := db.Model(&model.Game{}).Where("id = ?", gameId).Related(&vendor).First(&game).Error
+
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return "", NewServiceErrorf(http.StatusNotFound, "Game `%s` not found ", gameId)
+		}
+		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get game"))
+	}
+
+	return vendor.ManagerID, nil
+}
+
 //GetOwnerForVendor is method for getting owner of vendor
 func GetOwnerForVendor(db *gorm.DB, vendorId uuid.UUID) (string, error) {
 	vendor := model.Vendor{}

@@ -72,7 +72,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/games:
+  /api/v1/vendor/:id/games:
     post:
       tags:
         - "game"
@@ -113,7 +113,6 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendor/:id/games:
     get:
       tags:
         - "game"

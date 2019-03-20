@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/pkg/errors"
 	"net/http"
+	"qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
@@ -39,13 +40,18 @@ func InitDiscountsRouter(group *echo.Group, service *orm.DiscountService) (*Disc
 		service: service,
 	}
 
-	r := group.Group("/games/:id")
-	r.GET("/discounts", router.get)
-	r.POST("/discounts", router.post)
-	r.PUT("/discounts/:discountId", router.put)
-	r.DELETE("/discounts/:discountId", router.delete)
+	r := &middleware.RbacGroup{}
+	r = r.Group(group,"/games/:id", &router)
+	r.GET("/discounts", router.get, []string{"*", model.GameType, model.VendorDomain})
+	r.POST("/discounts", router.post, []string{"*", model.GameType, model.VendorDomain})
+	r.PUT("/discounts/:discountId", router.put, []string{"discountId", model.GameType, model.VendorDomain})
+	r.DELETE("/discounts/:discountId", router.delete, []string{"discountId", model.GameType, model.VendorDomain})
 
 	return &router, nil
+}
+
+func (router *DiscountsRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+	return GetOwnerForGame(ctx)
 }
 
 func (router *DiscountsRouter) post(ctx echo.Context) error {

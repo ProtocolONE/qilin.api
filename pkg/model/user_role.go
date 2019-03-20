@@ -30,6 +30,7 @@ type RoleRestriction struct {
 
 const GameType string = "game"
 const DocumentsType string = "documents"
+const RolesType string = "roles"
 const GlobalType string = "global"
 
 type ResourceMeta struct {
