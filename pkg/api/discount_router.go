@@ -42,10 +42,10 @@ func InitDiscountsRouter(group *echo.Group, service *orm.DiscountService) (*Disc
 
 	r := &middleware.RbacGroup{}
 	r = r.Group(group,"/games/:id", &router)
-	r.GET("/discounts", router.get, []string{"*", model.GameType, model.VendorDomain})
-	r.POST("/discounts", router.post, []string{"*", model.GameType, model.VendorDomain})
-	r.PUT("/discounts/:discountId", router.put, []string{"discountId", model.GameType, model.VendorDomain})
-	r.DELETE("/discounts/:discountId", router.delete, []string{"discountId", model.GameType, model.VendorDomain})
+	r.GET("/discounts", router.get, []string{"id", model.GameType, model.VendorDomain})
+	r.POST("/discounts", router.post, []string{"id", model.GameType, model.VendorDomain})
+	r.PUT("/discounts/:discountId", router.put, []string{"id", model.GameType, model.VendorDomain})
+	r.DELETE("/discounts/:discountId", router.delete, []string{"id", model.GameType, model.VendorDomain})
 
 	return &router, nil
 }

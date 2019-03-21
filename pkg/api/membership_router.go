@@ -31,8 +31,8 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 
 	route := &middleware.RbacGroup{}
 	route = route.Group(group, "/vendors/:id", res)
-	route.GET("/memberships", res.getUsers, []string{"*", model.RolesType, model.VendorDomain})
-	route.PUT("/memberships/:userId", res.changeUserRoles, []string{"userId", model.RolesType, model.VendorDomain})
+	route.GET("/memberships", res.getUsers, []string{"id", model.RolesType, model.VendorDomain})
+	route.PUT("/memberships/:userId", res.changeUserRoles, []string{"id", model.RolesType, model.VendorDomain})
 
 	return res, nil
 }

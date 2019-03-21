@@ -26,13 +26,20 @@ func GetUserId(db *gorm.DB, id string) (string, error) {
 func GetOwnerForGame(db *gorm.DB, gameId uuid.UUID) (string, error) {
 	vendor := model.Vendor{}
 	game := model.Game{}
-	err := db.Model(&model.Game{}).Where("id = ?", gameId).Related(&vendor).First(&game).Error
+	err := db.Model(&model.Game{}).Where("id = ?", gameId).First(&game).Error
 
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return "", NewServiceErrorf(http.StatusNotFound, "Game `%s` not found ", gameId)
 		}
 		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get game"))
+	}
+
+	if err := db.Model(&model.Vendor{}).Where("id = ?", game.VendorID).First(&vendor).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found ", gameId)
+		}
+		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get vendor"))
 	}
 
 	return vendor.ManagerID, nil

@@ -43,14 +43,14 @@ func InitRatingsRouter(group *echo.Group, service *orm.RatingService) (*RatingsR
 	r := &middleware.RbacGroup{}
 	r = r.Group(group, "/games/:id", &ratingRouter)
 
-	r.GET("/ratings", ratingRouter.get, []string{"*", model.GameType, model.VendorDomain})
-	r.PUT("/ratings", ratingRouter.put, []string{"*", model.GameType, model.VendorDomain})
+	r.GET("/ratings", ratingRouter.get, []string{"id", model.GameType, model.VendorDomain})
+	r.PUT("/ratings", ratingRouter.put, []string{"id", model.GameType, model.VendorDomain})
 
 	return &ratingRouter, nil
 }
 
 func (router *RatingsRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
-	panic("implement me")
+	return GetOwnerForGame(ctx)
 }
 
 func (router *RatingsRouter) get(ctx echo.Context) error {

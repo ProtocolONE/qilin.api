@@ -7,6 +7,7 @@ import (
 	"github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"net/http"
+	"qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -59,14 +60,21 @@ func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingSe
 		service:             service,
 		notificationService: notificationService,
 	}
-	r := group.Group("/vendors")
-	r.GET("/reviews", router.getReviews)
-	r.GET("/:id/documents", router.getDocument)
-	r.PUT("/:id/documents/status", router.changeStatus)
-	r.POST("/:id/messages", router.sendNotification)
-	r.GET("/:id/messages", router.getNotifications)
+
+	r := &middleware.RbacGroup{}
+	r = r.Group(group,"/vendors", &router)
+	common :=  []string{"id", model.AdminDocumentsType, model.VendorDomain}
+	r.GET("/reviews", router.getReviews, common)
+	r.GET("/:id/documents", router.getDocument, common)
+	r.PUT("/:id/documents/status", router.changeStatus, common)
+	r.POST("/:id/messages", router.sendNotification, common)
+	r.GET("/:id/messages", router.getNotifications, common)
 
 	return &router, nil
+}
+
+func (api *OnboardingAdminRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+	return GetOwnerForVendor(ctx)
 }
 
 func (api *OnboardingAdminRouter) changeStatus(ctx echo.Context) error {

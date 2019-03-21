@@ -92,10 +92,11 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 	r.POST("/documents/reviews", router.sendToReview, common)
 	r.DELETE("/documents/reviews", router.revokeReview, common)
 
-	r.GET("/messages", router.getNotifications, common)
-	r.GET("/messages/:messageId", router.getNotification, []string{"messageId", model.DocumentsType, model.VendorDomain})
-	r.PUT("/messages/:messageId/read", router.markAsRead, []string{"messageId", model.DocumentsType, model.VendorDomain})
-	r.GET("/messages/short", router.getLastNotifications, common)
+	messagesCommon := []string{"*", model.MessagesType, model.VendorDomain}
+	r.GET("/messages", router.getNotifications, messagesCommon)
+	r.GET("/messages/:messageId", router.getNotification, messagesCommon)
+	r.PUT("/messages/:messageId/read", router.markAsRead, messagesCommon)
+	r.GET("/messages/short", router.getLastNotifications, messagesCommon)
 
 	return &router, nil
 }

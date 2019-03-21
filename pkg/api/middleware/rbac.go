@@ -43,6 +43,13 @@ func CheckPermissions(group *RbacGroup, router RbacRouter) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			qilinCtx := c.(QilinContext)
 
+			paths := group.paths
+			path := c.Path()
+			perm, ok := paths[path]
+			if !ok {
+				return orm.NewServiceErrorf(http.StatusForbidden, "Could not map `%s` in paths", path)
+			}
+
 			owner, err := router.GetOwner(qilinCtx)
 			if err != nil {
 				return err
@@ -53,11 +60,7 @@ func CheckPermissions(group *RbacGroup, router RbacRouter) echo.MiddlewareFunc {
 				return err
 			}
 
-			paths := group.paths
-			perm, ok := paths[c.Path()]
-			if !ok {
-				return orm.NewServiceError(http.StatusForbidden, "")
-			}
+
 
 			resourceId := "*"
 			if perm[0] != "*" {
@@ -65,7 +68,8 @@ func CheckPermissions(group *RbacGroup, router RbacRouter) echo.MiddlewareFunc {
 			}
 
 			action := "any"
-			switch c.Request().Method {
+			method := c.Request().Method
+			switch method {
 			case echo.GET:
 				action = "read"
 			case echo.PUT:

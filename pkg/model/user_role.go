@@ -7,8 +7,10 @@ import (
 
 const (
 	Admin      string = "admin"
+	SuperAdmin string = "super_admin"
 	Manager    string = "manager"
 	Support    string = "support"
+	Developer  string = "developer"
 	Accountant string = "accountant"
 	Store      string = "store"
 	Publisher  string = "publisher"
@@ -28,8 +30,11 @@ type RoleRestriction struct {
 	Resource ResourceRestriction `json:"resource"`
 }
 
-const GameType string = "game"
-const DocumentsType string = "documents"
+const GameType string = "games"
+const GameListType string = "vendor.games"
+const DocumentsType string = "vendor.documents"
+const MessagesType string = "vendor.messages"
+const AdminDocumentsType string = "admin.vendor.documents"
 const RolesType string = "roles"
 const GlobalType string = "global"
 
@@ -47,7 +52,7 @@ type ResourceRestriction struct {
 
 type MembershipService interface {
 	Init() error
-	GetUsers(vendorId uuid.UUID) ([]UserRole, error)
+	GetUsers(vendorId uuid.UUID) ([]*UserRole, error)
 	GetUser(vendorId uuid.UUID, userId string) (*UserRole, error)
 	GetUserPermissions(vendorId uuid.UUID, userId string) (*rbac.UserPermissions, error)
 	AddRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error

@@ -7,34 +7,48 @@ import (
 	"net/http"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
+	utils2 "qilin-api/pkg/orm/utils"
 	"qilin-api/pkg/utils"
 	"strings"
 	"time"
 )
 
-// GameService is service to interact with database and Game object.
-type GameService struct {
+// gameService is service to interact with database and Game object.
+type gameService struct {
 	db *gorm.DB
 }
 
 // NewGameService initialize this service.
-func NewGameService(db *Database) (*GameService, error) {
-	return &GameService{db.database}, nil
+func NewGameService(db *Database) (model.GameService, error) {
+	return &gameService{db.database}, nil
 }
 
-func (p *GameService) verify_UserAndVendor(userId string, vendorId uuid.UUID) (err error) {
-	foundVendor := -1
-	err = p.db.Table("vendor_users").Where("user_id = ? and vendor_id = ?", userId, vendorId).Count(&foundVendor).Error
-	if err != nil {
-		return errors.Wrap(err, "Verify vendor")
-	}
-	if foundVendor == 0 {
+func (p *gameService) verifyVendor(vendorId uuid.UUID) error {
+	if exist, err := utils2.CheckExists(p.db, &model.Vendor{}, vendorId); !(exist && err == nil) {
+		if err != nil {
+			return errors.Wrap(err, "Verify vendor")
+		}
 		return NewServiceError(404, "Vendor not found")
 	}
-	return
+	return nil
 }
 
-func (p *GameService) GetTags(ids []string) (tags []model.GameTag, err error) {
+func (p *gameService) verifyUserAndVendor(userId string, vendorId uuid.UUID) error {
+	if err := p.verifyVendor(vendorId); err != nil {
+		return err
+	}
+
+	if exist, err := utils2.CheckExists(p.db, &model.User{}, userId); !(exist && err == nil) {
+		if err != nil {
+			return errors.Wrap(err, "Verify user")
+		}
+		return NewServiceError(404, "User not found")
+	}
+
+	return nil
+}
+
+func (p *gameService) GetTags(ids []string) (tags []model.GameTag, err error) {
 	stmt := p.db
 	if ids != nil && len(ids) > 0 {
 		stmt = stmt.Where("ID in (?)", ids)
@@ -46,7 +60,7 @@ func (p *GameService) GetTags(ids []string) (tags []model.GameTag, err error) {
 	return
 }
 
-func (p *GameService) GetGenres(ids []string) (genres []model.GameGenre, err error) {
+func (p *gameService) GetGenres(ids []string) (genres []model.GameGenre, err error) {
 	stmt := p.db
 	if ids != nil && len(ids) > 0 {
 		stmt = stmt.Where("ID in (?)", ids)
@@ -58,7 +72,7 @@ func (p *GameService) GetGenres(ids []string) (genres []model.GameGenre, err err
 	return
 }
 
-func (p *GameService) GetRatingDescriptors(system string) (items []model.Descriptor, err error) {
+func (p *gameService) GetRatingDescriptors(system string) (items []model.Descriptor, err error) {
 	query := p.db.Order("title ->> 'en'")
 
 	if system != "" {
@@ -72,7 +86,7 @@ func (p *GameService) GetRatingDescriptors(system string) (items []model.Descrip
 	return
 }
 
-func (p *GameService) FindTags(userId string, title string, limit, offset int) (tags []model.GameTag, err error) {
+func (p *gameService) FindTags(userId string, title string, limit, offset int) (tags []model.GameTag, err error) {
 	stmt := p.db
 	if title != "" {
 		user := model.User{}
@@ -91,7 +105,7 @@ func (p *GameService) FindTags(userId string, title string, limit, offset int) (
 	}
 	return
 }
-func (p *GameService) FindGenres(userId string, title string, limit, offset int) (genres []model.GameGenre, err error) {
+func (p *gameService) FindGenres(userId string, title string, limit, offset int) (genres []model.GameGenre, err error) {
 	stmt := p.db
 	if title != "" {
 		user := model.User{}
@@ -112,9 +126,8 @@ func (p *GameService) FindGenres(userId string, title string, limit, offset int)
 }
 
 // Creates new Game object in database
-func (p *GameService) Create(userId string, vendorId uuid.UUID, internalName string) (item *model.Game, err error) {
-
-	if err := p.verify_UserAndVendor(userId, vendorId); err != nil {
+func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName string) (item *model.Game, err error) {
+	if err := p.verifyUserAndVendor(userId, vendorId); err != nil {
 		return nil, err
 	}
 
@@ -159,10 +172,10 @@ func (p *GameService) Create(userId string, vendorId uuid.UUID, internalName str
 	return
 }
 
-func (p *GameService) GetList(userId string, vendorId uuid.UUID,
+func (p *gameService) GetList(userId string, vendorId uuid.UUID,
 	offset, limit int, internalName, genre, releaseDate, sort string, price float64) (list []*model.ShortGameInfo, err error) {
 
-	if err := p.verify_UserAndVendor(userId, vendorId); err != nil {
+	if err := p.verifyUserAndVendor(userId, vendorId); err != nil {
 		return nil, err
 	}
 
@@ -250,10 +263,10 @@ func (p *GameService) GetList(userId string, vendorId uuid.UUID,
 	return
 }
 
-func (p *GameService) GetInfo(userId string, gameId uuid.UUID) (game *model.Game, err error) {
+func (p *gameService) GetInfo(gameId uuid.UUID) (game *model.Game, err error) {
 
 	game = &model.Game{}
-	err = p.db.First(game, `id = ? and vendor_id in (select vendor_id from vendor_users where user_id = ?)`, gameId, userId).Error
+	err = p.db.First(game, `id = ?`, gameId).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, NewServiceError(404, "Game not found")
 	} else if err != nil {
@@ -263,9 +276,8 @@ func (p *GameService) GetInfo(userId string, gameId uuid.UUID) (game *model.Game
 	return game, nil
 }
 
-func (p *GameService) Delete(userId string, gameId uuid.UUID) (err error) {
-
-	game, err := p.GetInfo(userId, gameId)
+func (p *gameService) Delete(userId string, gameId uuid.UUID) (err error) {
+	game, err := p.GetInfo(gameId)
 	if err != nil {
 		return err
 	}
@@ -278,9 +290,8 @@ func (p *GameService) Delete(userId string, gameId uuid.UUID) (err error) {
 	return nil
 }
 
-func (p *GameService) UpdateInfo(userId string, game *model.Game) (err error) {
-
-	gameSrc, err := p.GetInfo(userId, game.ID)
+func (p *gameService) UpdateInfo(game *model.Game) (err error) {
+	gameSrc, err := p.GetInfo(game.ID)
 	if err != nil {
 		return err
 	}
@@ -331,8 +342,8 @@ func (p *GameService) UpdateInfo(userId string, game *model.Game) (err error) {
 	return nil
 }
 
-func (p *GameService) GetDescr(userId string, gameId uuid.UUID) (descr *model.GameDescr, err error) {
-	game, err := p.GetInfo(userId, gameId)
+func (p *gameService) GetDescr(gameId uuid.UUID) (descr *model.GameDescr, err error) {
+	game, err := p.GetInfo(gameId)
 	if err != nil {
 		return nil, err
 	}
@@ -341,13 +352,16 @@ func (p *GameService) GetDescr(userId string, gameId uuid.UUID) (descr *model.Ga
 	}
 	err = p.db.Model(game).Related(descr).Error
 	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, NewServiceError(http.StatusNotFound, "Fetch game descr")
+		}
 		return nil, errors.Wrap(err, "Fetch game descr")
 	}
 	return descr, nil
 }
 
-func (p *GameService) UpdateDescr(userId string, descr *model.GameDescr) (err error) {
-	game, err := p.GetInfo(userId, descr.GameID)
+func (p *gameService) UpdateDescr(descr *model.GameDescr) (err error) {
+	game, err := p.GetInfo(descr.GameID)
 	if err != nil {
 		return err
 	}
@@ -372,7 +386,7 @@ func (p *GameService) UpdateDescr(userId string, descr *model.GameDescr) (err er
 	return
 }
 
-func (p *GameService) CreateTags(tags []model.GameTag) (err error) {
+func (p *gameService) CreateTags(tags []model.GameTag) (err error) {
 	for _, t := range tags {
 		err = p.db.Create(&t).Error
 		if err != nil {
@@ -382,7 +396,7 @@ func (p *GameService) CreateTags(tags []model.GameTag) (err error) {
 	return
 }
 
-func (p *GameService) CreateGenres(genres []model.GameGenre) (err error) {
+func (p *gameService) CreateGenres(genres []model.GameGenre) (err error) {
 	for _, g := range genres {
 		err = p.db.Create(&g).Error
 		if err != nil {

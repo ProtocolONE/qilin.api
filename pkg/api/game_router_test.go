@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
+	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -19,10 +21,10 @@ import (
 
 type GamesRouterTestSuite struct {
 	suite.Suite
-	db     *orm.Database
-	echo   *echo.Echo
-	router *GameRouter
-	token  *jwtverifier.UserInfo
+	db       *orm.Database
+	echo     *echo.Echo
+	router   *GameRouter
+	enforcer *rbac.Enforcer
 }
 
 func Test_GamesRouter(t *testing.T) {
@@ -50,12 +52,12 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	}
 
 	err = db.DB().Save(&model.User{
-		ID:         userId,
-		Nickname:   "admin",
-		Login:      "admin@protocol.one",
-		Password:   "123456",
-		Lang:       "en",
-		Currency:   "usd",
+		ID:       userId,
+		Nickname: "admin",
+		Login:    "admin@protocol.one",
+		Password: "123456",
+		Lang:     "en",
+		Currency: "usd",
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
 	vendorUuid, _ := uuid.FromString(vendorId)
@@ -69,8 +71,19 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 		Users:           []model.User{{ID: userId}},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
+
 	echoObj := echo.New()
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
+
+	enforcer := rbac.NewEnforcer()
+	echoObj.Use(middleware.QilinContextMiddleware(db, enforcer))
+
+	membership := orm.NewMembershipService(db, enforcer)
+	err = membership.Init()
+	if err != nil {
+		suite.FailNow("Membership fail", "%v", err)
+	}
+
 	groupApi := echoObj.Group("/api/v1")
 	service, err := orm.NewGameService(db)
 	userService, err := orm.NewUserService(db, nil)
@@ -81,10 +94,11 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	suite.db = db
 	suite.router = router
 	suite.echo = echoObj
+	suite.enforcer = enforcer
 }
 
 func (suite *GamesRouterTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Game{}, model.User{}, model.Vendor{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {
@@ -94,12 +108,12 @@ func (suite *GamesRouterTestSuite) TearDownTest() {
 
 func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
 	err := suite.db.DB().Save(&model.User{
-		ID:         userId,
-		Nickname:   "admin",
-		Login:      "admin@protocol.one",
-		Password:   "123456",
-		Lang:       "en",
-		Currency:   "usd",
+		ID:       userId,
+		Nickname: "admin",
+		Login:    "admin@protocol.one",
+		Password: "123456",
+		Lang:     "en",
+		Currency: "usd",
 	}).Error
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(createGamesPayload))

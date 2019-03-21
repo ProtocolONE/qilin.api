@@ -19,17 +19,23 @@ func NewMembershipService(db *Database, enforcer *rbac.Enforcer) model.Membershi
 }
 
 func (service *membershipService) Init() error {
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Manager, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Accountant, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Publisher, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Store, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: "game", ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "read", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "read", Effect: "allow"})
+
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.MessagesType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.DocumentsType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.RolesType, ResourceId: "skip", Action: "read", Effect: "allow"})
+
+	service.enforcer.LinkRoles(model.SuperAdmin, model.Admin, "vendor")
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.SuperAdmin, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.SuperAdmin, Domain: "vendor", ResourceType: model.RolesType, ResourceId: "skip", Action: "any", Effect: "allow"})
 
 	return nil
 }
 
-func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]model.UserRole, error) {
+func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]*model.UserRole, error) {
 	ownerId, err := GetOwnerForVendor(service.db.DB(), vendorId)
 
 	if err != nil {
@@ -46,83 +52,97 @@ func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]model.UserRole
 		users = appendIfMissing(users, result)
 	}
 
-	usersRoles := make([]model.UserRole, 0)
+	usersRoles := make([]*model.UserRole, 0)
 	for _, userId := range users {
-		userPermissions := enf.GetPermissionsForUser(userId, model.VendorDomain, ownerId)
-		if userPermissions == nil {
-			return nil, NewServiceErrorf(http.StatusInternalServerError, "Could not find permissions for userId `%s` and vendor `%s`", userId, vendorId)
-		}
-		user := model.User{}
-		err := service.db.DB().Model(&model.User{}).Where("id = ?", userId).First(&user).Error
+		user, err := service.getUser(userId, ownerId)
 		if err != nil {
-			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get info about userId `%s`", userId))
+			return nil, err
 		}
-
-		roles := make([]model.RoleRestriction, 0)
-		gamesCache := make(map[string]model.ResourceMeta)
-
-		gamesCache["*"] = model.ResourceMeta{
-			InternalName: "global",
-			Preview:      "",
-		}
-
-		for _, role := range userPermissions.Permissions {
-			restrictions := role.Restrictions
-			if restrictions == nil {
-				restrictions = []*rbac.Restriction{
-					{
-						UUID:  role.UUID,
-						Role:  role.Role,
-						Owner: ownerId,
-					},
-				}
-			}
-
-			for _, rest := range restrictions {
-				meta, ok := gamesCache[rest.UUID]
-				if !ok {
-					game := model.Game{}
-					err = service.db.DB().Model(&model.Game{}).Where("id = ?", rest.UUID).First(&game).Error
-					if err != nil {
-						return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Get game by id"))
-					}
-					meta = model.ResourceMeta{
-						InternalName: game.InternalName,
-						//TODO: add new field to game object
-						//Preview: game.Icon
-					}
-					gamesCache[rest.UUID] = meta
-				}
-
-				resType := model.GlobalType
-				if rest.UUID != "*" {
-					resType = model.GameType
-				}
-
-				roles = append(roles, model.RoleRestriction{
-					Role:   rest.Role,
-					Domain: model.VendorDomain,
-					Resource: model.ResourceRestriction{
-						Id:    rest.UUID,
-						Type:  resType,
-						Owner: ownerId,
-						Meta:  meta,
-					},
-				})
-			}
-		}
-		usersRoles = append(usersRoles, model.UserRole{
-			Email: user.Email,
-			Name:  user.FullName,
-			Roles: roles,
-		})
+		usersRoles = append(usersRoles, user)
 	}
 
 	return usersRoles, nil
 }
 
+func (service *membershipService) getUser(userId string, ownerId string) (*model.UserRole, error) {
+	userPermissions := service.enforcer.GetPermissionsForUser(userId, model.VendorDomain, ownerId)
+	if userPermissions == nil {
+		return nil, NewServiceErrorf(http.StatusInternalServerError, "Could not find permissions for userId `%s`", userId)
+	}
+	user := model.User{}
+	err := service.db.DB().Model(&model.User{}).Where("id = ?", userId).First(&user).Error
+	if err != nil {
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get info about userId `%s`", userId))
+	}
+
+	roles := make([]model.RoleRestriction, 0)
+	gamesCache := make(map[string]model.ResourceMeta)
+
+	gamesCache["*"] = model.ResourceMeta{
+		InternalName: "global",
+		Preview:      "",
+	}
+
+	for _, role := range userPermissions.Permissions {
+		restrictions := role.Restrictions
+		if restrictions == nil {
+			restrictions = []*rbac.Restriction{
+				{
+					UUID:  role.UUID,
+					Role:  role.Role,
+					Owner: ownerId,
+				},
+			}
+		}
+
+		for _, rest := range restrictions {
+			meta, ok := gamesCache[rest.UUID]
+			if !ok {
+				game := model.Game{}
+				err = service.db.DB().Model(&model.Game{}).Where("id = ?", rest.UUID).First(&game).Error
+				if err != nil {
+					return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Get game by id"))
+				}
+				meta = model.ResourceMeta{
+					InternalName: game.InternalName,
+					//TODO: add new field to game object
+					//Preview: game.Icon
+				}
+				gamesCache[rest.UUID] = meta
+			}
+
+			resType := model.GlobalType
+			if rest.UUID != "*" {
+				resType = model.GameType
+			}
+
+			roles = append(roles, model.RoleRestriction{
+				Role:   rest.Role,
+				Domain: model.VendorDomain,
+				Resource: model.ResourceRestriction{
+					Id:    rest.UUID,
+					Type:  resType,
+					Owner: ownerId,
+					Meta:  meta,
+				},
+			})
+		}
+	}
+
+	return &model.UserRole{
+		Email: user.Email,
+		Name:  user.FullName,
+		Roles: roles,
+	}, nil
+}
+
 func (service *membershipService) GetUser(vendorId uuid.UUID, userId string) (*model.UserRole, error) {
-	return nil, errors.New("Not implemented yet")
+	ownerId, err := GetOwnerForVendor(service.db.DB(), vendorId)
+	if err != nil {
+		return nil, err
+	}
+
+	return service.getUser(userId, ownerId)
 }
 
 func (service *membershipService) RemoveRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error {
@@ -134,7 +154,7 @@ func (service *membershipService) RemoveRoleToUserInGame(vendorId uuid.UUID, use
 	}
 
 	isGlobal := gameId == "" || gameId == "*"
-	var restrict []string
+	restrict := []string{"*"}
 
 	if !isGlobal {
 		if exist, err := utils.CheckExists(service.db.DB(), &model.Game{}, gameId); !(exist && err == nil) {
@@ -167,7 +187,7 @@ func (service *membershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId
 	}
 
 	isGlobal := gameId == "" || gameId == "*"
-	var restrict []string
+	restrict := []string{"*"}
 
 	if !isGlobal {
 		if exist, err := utils.CheckExists(service.db.DB(), &model.Game{}, gameId); !(exist && err == nil) {

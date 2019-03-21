@@ -267,17 +267,17 @@ func InitRoutes(router *echo.Group, service model.GameService, userService model
 	}
 
 	r := &middleware.RbacGroup{}
-	r.Group(router, "/vendor/:id", &Router)
-	r.GET("/games", Router.GetList, []string{"*", model.GameType, model.VendorDomain})
-	r.POST("/games", Router.Create, []string{"*", model.GameType, model.VendorDomain})
+	r.Group(router, "/vendors/:id", &Router)
+	r.GET("/games", Router.GetList, []string{"*", model.GameListType, model.VendorDomain})
+	r.POST("/games", Router.Create, []string{"*", model.GameListType, model.VendorDomain})
 
 	gameGroup := &middleware.RbacGroup{}
 	gameGroup = gameGroup.Group(router, "/games", &Router)
-	gameGroup.GET("/:id", Router.GetInfo, []string{"*", model.GameType, model.VendorDomain})
-	gameGroup.DELETE("/:id", Router.Delete, []string{"*", model.GameType, model.VendorDomain})
-	gameGroup.PUT("/:id", Router.UpdateInfo, []string{"*", model.GameType, model.VendorDomain})
-	gameGroup.GET("/:id/descriptions", Router.GetDescr, []string{"*", model.GameType, model.VendorDomain})
-	gameGroup.PUT("/:id/descriptions", Router.UpdateDescr, []string{"*", model.GameType, model.VendorDomain})
+	gameGroup.GET("/:id", Router.GetInfo, []string{"id", model.GameType, model.VendorDomain})
+	gameGroup.DELETE("/:id", Router.Delete, []string{"id", model.GameType, model.VendorDomain})
+	gameGroup.PUT("/:id", Router.UpdateInfo, []string{"id", model.GameType, model.VendorDomain})
+	gameGroup.GET("/:id/descriptions", Router.GetDescr, []string{"id", model.GameType, model.VendorDomain})
+	gameGroup.PUT("/:id/descriptions", Router.UpdateDescr, []string{"id", model.GameType, model.VendorDomain})
 
 	router.GET("/genre", Router.GetGenres) // TODO: Remove after some time
 	router.GET("/genres", Router.GetGenres)
@@ -292,7 +292,8 @@ type CreateGameDTO struct {
 }
 
 func (api *GameRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
-	if strings.Contains(ctx.Path(), "/vendor/:id") {
+	path := ctx.Path()
+	if strings.Contains(path, "/vendors/:id") {
 		return GetOwnerForVendor(ctx)
 	}
 	return GetOwnerForGame(ctx)
@@ -321,40 +322,52 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 		return err
 	}
 
-	games, err := api.gameService.GetList(userId, vendorId, offset, limit, internalName, genre, releaseDate, sort, price)
-	if err != nil {
-		return err
-	}
-
-	qilinCtx := ctx.(middleware.QilinContext)
 	var dto []ShortGameInfoDTO
-	for _, game := range games {
-		prices := GamePriceDTO{
-			Currency: game.Price.Currency,
-			Price:    float64(game.Price.Price),
-		}
+	qilinCtx := ctx.(middleware.QilinContext)
+	shouldBreak := false
+	localOffset := offset
 
-		owner, err := qilinCtx.GetOwnerForGame(game.ID)
+	//CURSOR solution
+	for len(dto) <= limit && shouldBreak == false{
+		localLimit := limit - len(dto)
+
+		games, err := api.gameService.GetList(userId, vendorId, localOffset, localLimit, internalName, genre, releaseDate, sort, price)
 		if err != nil {
 			return err
 		}
 
-		// filter games that user do not have rights
-		if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.GameType, game.ID.String(), owner, "read") != nil {
-			continue
-		}
+		// we do not have enough items in DB
+		shouldBreak = len(games) < localLimit
 
-		dto = append(dto, ShortGameInfoDTO{
-			ID:           game.Game.ID,
-			InternalName: game.InternalName,
-			Icon:         "",
-			Genres: GameGenreDTO{
-				Main:     game.GenreMain,
-				Addition: game.GenreAddition,
-			},
-			ReleaseDate: game.ReleaseDate,
-			Prices:      prices,
-		})
+		for _, game := range games {
+			prices := GamePriceDTO{
+				Currency: game.Price.Currency,
+				Price:    float64(game.Price.Price),
+			}
+
+			owner, err := qilinCtx.GetOwnerForGame(game.ID)
+			if err != nil {
+				return err
+			}
+
+			// filter games that user do not have rights
+			if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.GameType, game.ID.String(), owner, "read") != nil {
+				continue
+			}
+
+			dto = append(dto, ShortGameInfoDTO{
+				ID:           game.Game.ID,
+				InternalName: game.InternalName,
+				Icon:         "",
+				Genres: GameGenreDTO{
+					Main:     game.GenreMain,
+					Addition: game.GenreAddition,
+				},
+				ReleaseDate: game.ReleaseDate,
+				Prices:      prices,
+			})
+		}
+		localOffset = localOffset + len(games)
 	}
 
 	return ctx.JSON(http.StatusOK, dto)
@@ -390,11 +403,8 @@ func (api *GameRouter) GetInfo(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
-	userId, err := api.getUserId(ctx)
-	if err != nil {
-		return err
-	}
-	game, err := api.gameService.GetInfo(userId, gameId)
+
+	game, err := api.gameService.GetInfo(gameId)
 	if err != nil {
 		return err
 	}
@@ -426,10 +436,7 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
-	userId, err := api.getUserId(ctx)
-	if err != nil {
-		return err
-	}
+
 	dto := &UpdateGameDTO{}
 	if err := ctx.Bind(dto); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -439,7 +446,7 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 	}
 	game := mapGameInfoBTO(dto)
 	game.ID = gameId
-	err = api.gameService.UpdateInfo(userId, &game)
+	err = api.gameService.UpdateInfo(&game)
 	if err != nil {
 		return err
 	}
@@ -451,11 +458,8 @@ func (api *GameRouter) GetDescr(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
 	}
-	userId, err := api.getUserId(ctx)
-	if err != nil {
-		return err
-	}
-	descr, err := api.gameService.GetDescr(userId, gameId)
+
+	descr, err := api.gameService.GetDescr(gameId)
 	if err != nil {
 		return err
 	}
@@ -495,10 +499,7 @@ func (api *GameRouter) UpdateDescr(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
 	}
-	userId, err := api.getUserId(ctx)
-	if err != nil {
-		return err
-	}
+
 	dto := &GameDescrDTO{}
 	if err := ctx.Bind(dto); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -531,7 +532,7 @@ func (api *GameRouter) UpdateDescr(ctx echo.Context) error {
 		field.SetString(markdown)
 	}
 
-	err = api.gameService.UpdateDescr(userId, &model.GameDescr{
+	err = api.gameService.UpdateDescr(&model.GameDescr{
 		GameID:                gameId,
 		Tagline:               dto.Tagline,
 		Description:           dto.Description,

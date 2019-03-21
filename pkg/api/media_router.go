@@ -63,8 +63,8 @@ func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRoute
 
 	router := &middleware.RbacGroup{}
 	router = router.Group(group, "/games/:id", &mediaRouter)
-	router.GET("/media", mediaRouter.get, []string{"*", model.GameType, model.VendorDomain})
-	router.PUT("/media", mediaRouter.put, []string{"*", model.GameType, model.VendorDomain})
+	router.GET("/media", mediaRouter.get, []string{"id", model.GameType, model.VendorDomain})
+	router.PUT("/media", mediaRouter.put, []string{"id", model.GameType, model.VendorDomain})
 
 	return &mediaRouter, nil
 }

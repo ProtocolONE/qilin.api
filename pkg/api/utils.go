@@ -15,7 +15,7 @@ func GetOwnerForGame(ctx middleware.QilinContext) (string, error) {
 		return "", orm.NewServiceError(http.StatusBadRequest, errors.Wrapf(err, "Game id `%s` is incorrect", gameIdParam))
 	}
 
-	owner, err := ctx.GetOwnerForVendor(gameId)
+	owner, err := ctx.GetOwnerForGame(gameId)
 	if err != nil {
 		return "", err
 	}

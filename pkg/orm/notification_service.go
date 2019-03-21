@@ -156,7 +156,9 @@ func (p *notificationService) SendNotification(notification *model.Notification)
 		DateTime: time.Now().UTC().Format(time.RFC3339),
 	}
 
-	_ = p.notifier.SendMessage(fmt.Sprintf(notificationMask, notification.VendorID), message)
+	if p.notifier != nil {
+		_ = p.notifier.SendMessage(fmt.Sprintf(notificationMask, notification.VendorID), message)
+	}
 
 	return res.Value.(*model.Notification), nil
 }

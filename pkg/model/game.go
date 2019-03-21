@@ -85,10 +85,10 @@ type (
 		Create(userId string, vendorId uuid.UUID, internalName string) (*Game, error)
 		Delete(userId string, gameId uuid.UUID) error
 		GetList(userId string, vendorId uuid.UUID, offset, limit int, internalName, genre, releaseDate, sort string, price float64) ([]*ShortGameInfo, error)
-		GetInfo(userId string, gameId uuid.UUID) (*Game, error)
-		UpdateInfo(userId string, game *Game) error
-		GetDescr(userId string, gameId uuid.UUID) (*GameDescr, error)
-		UpdateDescr(userId string, descr *GameDescr) error
+		GetInfo(gameId uuid.UUID) (*Game, error)
+		UpdateInfo(game *Game) error
+		GetDescr(gameId uuid.UUID) (*GameDescr, error)
+		UpdateDescr(descr *GameDescr) error
 	}
 )
 
