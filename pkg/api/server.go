@@ -142,14 +142,6 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 		return err
 	}
 
-	gameService, err := orm.NewGameService(s.db)
-	if err != nil {
-		return err
-	}
-	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
-		return err
-	}
-
 	priceService, err := orm.NewPriceService(s.db)
 	if err != nil {
 		return err
@@ -196,6 +188,14 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 	}
 
 	if _, err := InitClientMembershipRouter(s.Router, membershipService); err != nil {
+		return err
+	}
+
+	gameService, err := orm.NewGameService(s.db)
+	if err != nil {
+		return err
+	}
+	if _, err := game.InitRoutes(s.Router, gameService, userService); err != nil {
 		return err
 	}
 
