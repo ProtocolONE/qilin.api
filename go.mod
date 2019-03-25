@@ -4,7 +4,7 @@ require (
 	cloud.google.com/go v0.34.0 // indirect
 	github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190306075438-fae68b84f58d
 	github.com/ProtocolONE/rbac v0.0.0-20190318075816-19010b8e6f04
-	github.com/casbin/redis-adapter v0.0.0-20190105032110-b36d844dade5 // indirect
+	github.com/casbin/redis-adapter v0.0.0-20190105032110-b36d844dade5
 	github.com/centrifugal/gocent v2.0.2+incompatible
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect

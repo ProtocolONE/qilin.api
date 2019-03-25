@@ -120,10 +120,6 @@ func (suite *GameServiceTestSuite) TestGames() {
 
 	suite.userId = user.ID
 
-	suite.T().Log("Register second user")
-	user2, err := userService.Create("test@protocol2.one", "en")
-	require.Nil(err, "Unable to register user2")
-
 	suite.T().Log("Create vendor")
 	vendor := model.Vendor{
 		Name:            "domino",
@@ -177,7 +173,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Equal(game.InternalName, gameName, "Incorrect Game Name from DB")
 
 	suite.T().Log("Fetch created game")
-	game2, err := gameService.GetInfo(user.ID, game.ID)
+	game2, err := gameService.GetInfo(game.ID)
 	require.Nil(err, "Get exists game")
 	require.Equal(game2.InternalName, gameName, "Incorrect Game Name from DB")
 
@@ -211,17 +207,12 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Equal(len(games3), 1, "Only 1 retrivied")
 	require.Equal(games3[0].InternalName, game2Name, "Second game name")
 
-	suite.T().Log("Get game list with anther user")
-	games4, err := gameService.GetList(user2.ID, vendor2.ID, 0, 20, "", "", "", "name+", 0)
-	require.NotNil(err, "Must be error")
-	require.Nil(games4, "Retrieved games is null")
-
 	suite.T().Log("Delete first game")
 	err = gameService.Delete(user.ID, game.ID)
 	require.Nil(err, "Game deletion must be without error")
 
 	suite.T().Log("Try to fetch deleted game")
-	game4, err := gameService.GetInfo(user.ID, game.ID)
+	game4, err := gameService.GetInfo(game.ID)
 	require.NotNil(err, "Rise error because game already removed")
 	require.Nil(game4, "Game must be null")
 
@@ -242,11 +233,11 @@ func (suite *GameServiceTestSuite) TestGames() {
 	game3.GenreMain = 1
 	game3.GenreAddition = []int64{2, 3}
 
-	err = gameService.UpdateInfo(user.ID, game3)
+	err = gameService.UpdateInfo(game3)
 	require.Nil(err, "Must be save without error")
 
 	suite.T().Log("Retrive updated game")
-	game5, err := gameService.GetInfo(user.ID, game3.ID)
+	game5, err := gameService.GetInfo(game3.ID)
 	require.Nil(err, "Error must be null")
 	require.Equal(game5.Developers, game3.Developers, "Must be same")
 	require.Equal(game5.InternalName, game3.InternalName, "Must be same")
@@ -259,7 +250,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Equal(game5.GenreMain, int64(1), "Genre with id 1")
 
 	suite.T().Log("Get game descriptions")
-	gameDescr, err := gameService.GetDescr(user.ID, game5.ID)
+	gameDescr, err := gameService.GetDescr(game5.ID)
 	require.Nil(err, "Error must be null")
 	require.Equal(gameDescr.GameID, game5.ID, "Same as game")
 
@@ -282,11 +273,11 @@ func (suite *GameServiceTestSuite) TestGames() {
 		EN: "eng-descr",
 		RU: "ru-descr",
 	}
-	err = gameService.UpdateDescr(user.ID, gameDescr)
+	err = gameService.UpdateDescr(gameDescr)
 	require.Nil(err, "Error must be null")
 
 	suite.T().Log("Get updated game description")
-	gameDescr2, err := gameService.GetDescr(user.ID, game5.ID)
+	gameDescr2, err := gameService.GetDescr(game5.ID)
 	require.Nil(err, "Error must be null")
 	require.Equal(len(gameDescr2.Reviews), 2, "Must be two review")
 	require.Equal(gameDescr2.Reviews[0].Link, "Link", "Same value")

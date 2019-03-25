@@ -34,7 +34,7 @@ func Test_GamesRouter(t *testing.T) {
 var (
 	userId             = uuid.NewV4().String()
 	vendorId           = uuid.NewV4().String()
-	createGamesPayload = `{"InternalName":"new_game", "vendorId": "` + vendorId + `"}`
+	createGamesPayload = `{"InternalName":"new_game"}`
 )
 
 func (suite *GamesRouterTestSuite) SetupTest() {
@@ -121,7 +121,9 @@ func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
 
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games")
+	c.SetPath("/api/v1/vendors/:id/games")
+	c.SetParamNames("id")
+	c.SetParamValues(vendorId)
 	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: userId})
 
 	err = suite.router.Create(c)

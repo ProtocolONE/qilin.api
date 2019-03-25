@@ -88,6 +88,11 @@ func (service *membershipService) getUser(userId string, ownerId string) (*model
 		Preview:      "",
 	}
 
+	gamesCache["skip"] = model.ResourceMeta{
+		InternalName: "global",
+		Preview:      "",
+	}
+
 	for _, role := range userPermissions.Permissions {
 		restrictions := role.Restrictions
 		if restrictions == nil {

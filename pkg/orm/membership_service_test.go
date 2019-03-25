@@ -106,7 +106,7 @@ func (suite *MemershipServiceTestSuite) TestAddRoleToUser() {
 			continue
 		}
 
-		shouldBe.Equal(2, len(user.Roles))
+		shouldBe.Equal(7, len(user.Roles))
 		for _, role := range user.Roles {
 			shouldBe.NotEmpty(role.Resource.Meta.InternalName)
 		}
