@@ -31,8 +31,12 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 
 	route := &middleware.RbacGroup{}
 	route = route.Group(group, "/vendors/:id", res)
-	route.GET("/memberships", res.getUsers, []string{"id", model.RolesType, model.VendorDomain})
-	route.PUT("/memberships/:userId", res.changeUserRoles, []string{"id", model.RolesType, model.VendorDomain})
+	permissions := []string{"*", model.RolesType, model.VendorDomain}
+
+	route.GET("/memberships", res.getUsers, permissions)
+	route.GET("/memberships/:userId", res.getUser, permissions)
+	route.PUT("/memberships/:userId", res.changeUserRoles, permissions)
+	route.GET("/memberships/:userId/permissions", res.getUserPermissions, permissions)
 
 	return res, nil
 }
@@ -110,7 +114,7 @@ func (api *MembershipRouter) getUser(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
 	}
 
-	userId := ctx.Param("id")
+	userId := ctx.Param("userId")
 	if userId == "" {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad user id"))
 	}
@@ -121,4 +125,23 @@ func (api *MembershipRouter) getUser(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, userRole)
+}
+
+func (api *MembershipRouter) getUserPermissions(ctx echo.Context) error {
+	vendorId, err := uuid.FromString(ctx.Param("id"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
+	}
+
+	userId := ctx.Param("userId")
+	if userId == "" {
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad user id"))
+	}
+
+	permissions, err := api.service.GetUserPermissions(vendorId, userId)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, permissions)
 }

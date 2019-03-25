@@ -2,6 +2,7 @@ package orm
 
 import (
 	"github.com/ProtocolONE/rbac"
+	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
@@ -45,11 +46,12 @@ func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]*model.UserRol
 	enf := service.enforcer
 
 	//Retrieve all users that have membership for vendor
-	roles := []string{model.Admin, model.Manager, model.Support, model.Accountant, model.Store}
+	roles := []string{model.Admin, model.Manager, model.Support, model.Accountant, model.Store, model.Developer, model.Publisher}
+	namesToSkip := []string{model.Admin, model.Manager, model.Support, model.Accountant, model.Store, model.Developer, model.Publisher, model.SuperAdmin}
 	users := make([]string, 0)
 	for _, role := range roles {
 		result := enf.GetUsersForRole(role, model.VendorDomain, ownerId)
-		users = appendIfMissing(users, result)
+		users = appendIfMissing(users, result, namesToSkip)
 	}
 
 	usersRoles := make([]*model.UserRole, 0)
@@ -65,14 +67,17 @@ func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]*model.UserRol
 }
 
 func (service *membershipService) getUser(userId string, ownerId string) (*model.UserRole, error) {
+	user := model.User{}
+	err := service.db.DB().Model(&model.User{}).Where("id = ?", userId).First(&user).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, NewServiceErrorf(http.StatusNotFound, "User %s not found", userId)
+	} else if err != nil {
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get info about userId `%s`", userId))
+	}
+
 	userPermissions := service.enforcer.GetPermissionsForUser(userId, model.VendorDomain, ownerId)
 	if userPermissions == nil {
 		return nil, NewServiceErrorf(http.StatusInternalServerError, "Could not find permissions for userId `%s`", userId)
-	}
-	user := model.User{}
-	err := service.db.DB().Model(&model.User{}).Where("id = ?", userId).First(&user).Error
-	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get info about userId `%s`", userId))
 	}
 
 	roles := make([]model.RoleRestriction, 0)
@@ -237,9 +242,21 @@ func (service *membershipService) GetUserPermissions(vendorId uuid.UUID, userId 
 	return service.enforcer.GetPermissionsForUser(userId, "vendor", vendorId.String()), nil
 }
 
-func appendIfMissing(slice []string, users []string) []string {
+func appendIfMissing(slice []string, users []string, skipNames []string) []string {
 	for _, user := range users {
 		exist := false
+		skip := false
+		for _, ele := range skipNames {
+			if ele == user {
+				skip = true
+				break
+			}
+		}
+
+		if skip {
+			continue
+		}
+
 		for _, ele := range slice {
 			if ele == user {
 				exist = true
