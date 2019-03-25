@@ -10,6 +10,8 @@ github.com/billcobbler/casbin-redis-watcher v0.0.0-20180829182704-69cab1cdcf44 h
 github.com/billcobbler/casbin-redis-watcher v0.0.0-20180829182704-69cab1cdcf44/go.mod h1:7gAaWqZ3MW7v5114HJaUNsNxaVCV6LHknrrwQtnjGX4=
 github.com/casbin/casbin v1.8.1 h1:BVvL6H0nc+1y68nwIe8ZxwMIOEVUgg9y00yeD3GTDCc=
 github.com/casbin/casbin v1.8.1/go.mod h1:z8uPsfBJGUsnkagrt3G8QvjgTKFMBJ32UP8HpZllfog=
+github.com/casbin/redis-adapter v0.0.0-20190105032110-b36d844dade5 h1:PQ6misBBeWZD+KH5wlefuZwHyxoi27U8qkq9q/gIff0=
+github.com/casbin/redis-adapter v0.0.0-20190105032110-b36d844dade5/go.mod h1:/24TmweFhs/gtowqy3/EyDrhZ2SsldJ8mC0L/4ClfVk=
 github.com/centrifugal/gocent v2.0.2+incompatible h1:kVsJ2kPBzbOkLmArU+CvDHxCFIbLAv5Z2E6bhtyI0Xs=
 github.com/centrifugal/gocent v2.0.2+incompatible/go.mod h1:gtbj3+fMApCIcaGmGvk2BinwEauUtGeu8YZPLcedOvQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

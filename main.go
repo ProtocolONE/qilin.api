@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/ProtocolONE/rbac"
+	"github.com/casbin/redis-adapter"
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 	"log"
@@ -50,7 +52,8 @@ func main() {
 		logger.Fatal("Failed to create notifier", zap.Error(err))
 	}
 
-	enf := rbac.NewEnforcer()
+	adapter := redisadapter.NewAdapter("tcp", fmt.Sprintf("%s:%d", config.Enforcer.Host, config.Enforcer.Port))
+	enf := rbac.NewEnforcer(adapter)
 
 	serverOptions := api.ServerOptions{
 		Auth1:            &config.Auth1,
