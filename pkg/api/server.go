@@ -195,7 +195,7 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 	if err != nil {
 		return err
 	}
-	if _, err := game.InitRoutes(s.Router, gameService, userService); err != nil {
+	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
 		return err
 	}
 
