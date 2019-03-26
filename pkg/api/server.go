@@ -126,14 +126,6 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 		return err
 	}
 
-	vendorService, err := orm.NewVendorService(s.db)
-	if err != nil {
-		return err
-	}
-	if err := InitVendorRoutes(s, vendorService, userService); err != nil {
-		return err
-	}
-
 	mediaService, err := orm.NewMediaService(s.db)
 	if err != nil {
 		return err
@@ -196,6 +188,14 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 		return err
 	}
 	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
+		return err
+	}
+
+	vendorService, err := orm.NewVendorService(s.db)
+	if err != nil {
+		return err
+	}
+	if err := InitVendorRoutes(s.Router, vendorService, userService); err != nil {
 		return err
 	}
 

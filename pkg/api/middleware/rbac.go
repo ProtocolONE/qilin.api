@@ -60,8 +60,6 @@ func CheckPermissions(group *RbacGroup, router RbacRouter) echo.MiddlewareFunc {
 				return err
 			}
 
-
-
 			resourceId := "*"
 			if perm[0] != "*" {
 				resourceId = c.Param(perm[0])

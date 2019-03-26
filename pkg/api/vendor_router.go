@@ -6,6 +6,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/api/middleware"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"strconv"
@@ -27,22 +28,28 @@ type (
 	}
 )
 
-func InitVendorRoutes(api *Server, service model.VendorService, userService model.UserService) error {
+func InitVendorRoutes(group *echo.Group, service model.VendorService, userService model.UserService) error {
 	vendorRouter := VendorRouter{
 		vendorService: service,
 		userService:   userService,
 	}
 
-	api.Router.GET("/vendors", vendorRouter.getAll)
-	api.Router.GET("/vendors/:id", vendorRouter.get)
-	api.Router.POST("/vendors", vendorRouter.create)
-	api.Router.PUT("/vendors/:id", vendorRouter.update)
+	router := &middleware.RbacGroup{}
+	router = router.Group(group, "/vendors", &vendorRouter)
+	router.GET("/:id", vendorRouter.get, []string{"*", model.VendorType, model.VendorDomain})
+	router.PUT("/:id", vendorRouter.update, []string{"*", model.VendorType, model.VendorDomain})
+
+	group.GET("/vendors", vendorRouter.getAll)
+	group.POST("/vendors", vendorRouter.create)
 
 	return nil
 }
 
-func (api *VendorRouter) getAll(ctx echo.Context) error {
+func (api *VendorRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+	return GetOwnerForVendor(ctx)
+}
 
+func (api *VendorRouter) getAll(ctx echo.Context) error {
 	limit, err := strconv.Atoi(ctx.QueryParam("limit"))
 	if err != nil {
 		limit = 20
@@ -51,21 +58,42 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 	if err != nil {
 		offset = 0
 	}
-	vendors, err := api.vendorService.GetAll(limit, offset)
-	if err != nil {
-		return err
-	}
 
-	dto := []VendorDTO{}
-	for _, v := range vendors {
-		dto = append(dto, VendorDTO{
-			Id:              v.ID,
-			Name:            v.Name,
-			Domain3:         v.Domain3,
-			Email:           v.Email,
-			ManagerId:       v.ManagerID,
-			HowManyProducts: v.HowManyProducts,
-		})
+	qilinCtx := ctx.(middleware.QilinContext)
+	userId, err := api.getUserId(ctx)
+	shouldBreak := false
+	localOffset := offset
+	var dto []VendorDTO
+
+	for len(dto) <= limit && shouldBreak == false {
+		localLimit := limit - len(dto)
+		vendors, err := api.vendorService.GetAll(localLimit, localOffset)
+		if err != nil {
+			return err
+		}
+
+		// we do not have enough items in DB
+		shouldBreak = len(vendors) < localLimit
+
+		for _, v := range vendors {
+			owner := v.ManagerID
+
+			// filter games that user do not have rights
+			if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.GameType, "*", owner, "read") != nil {
+				continue
+			}
+
+			dto = append(dto, VendorDTO{
+				Id:              v.ID,
+				Name:            v.Name,
+				Domain3:         v.Domain3,
+				Email:           v.Email,
+				ManagerId:       v.ManagerID,
+				HowManyProducts: v.HowManyProducts,
+			})
+		}
+
+		localOffset = localOffset + len(vendors)
 	}
 
 	return ctx.JSON(http.StatusOK, dto)
@@ -93,7 +121,7 @@ func (api *VendorRouter) get(ctx echo.Context) error {
 func (api *VendorRouter) create(ctx echo.Context) error {
 	dto := &VendorDTO{}
 	if err := ctx.Bind(dto); err != nil {
-		return errors.Wrap(err, "Bind vendor obj")
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bind vendor obj"))
 	}
 
 	if errs := ctx.Validate(dto); errs != nil {
@@ -130,7 +158,7 @@ func (api *VendorRouter) create(ctx echo.Context) error {
 func (api *VendorRouter) update(ctx echo.Context) error {
 	dto := &VendorDTO{}
 	if err := ctx.Bind(dto); err != nil {
-		return errors.Wrap(err, "Bind vendor obj")
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bind vendor obj"))
 	}
 	vendorId, err := uuid.FromString(ctx.Param("id"))
 	if err != nil {

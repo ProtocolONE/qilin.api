@@ -130,15 +130,6 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	gameService, err := mock.NewGameService(s.db)
-	if err != nil {
-		return err
-	}
-
-	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
-		return err
-	}
-
 	clientOnboarding, err := orm.NewOnboardingService(s.db)
 	if err != nil {
 		return err
@@ -161,6 +152,23 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
+	gameService, err := mock.NewGameService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
+		return err
+	}
+
+	vendorService, err := orm.NewVendorService(s.db)
+	if err != nil {
+		return err
+	}
+
+	if err := InitVendorRoutes(s.Router, vendorService, userService); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -197,17 +205,12 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 		body := key.body
 
 		suite.checkAccess("owner", method, url, body, owner, true)
-		suite.checkAccess("anotherOwner", method, url, body, anotherOwner, false)
+		suite.checkAccess("anotherOwner", method, url, body, anotherOwner, contains(values, model.AnyRole))
 		suite.checkAccess("superAdmin", method, url, body, superAdmin, true)
 
 		for _, role := range roles {
-			accept := false
-			for _, v := range values {
-				if v == role {
-					accept = true
-					break
-				}
-			}
+			accept := contains(values, role) || contains(values, model.AnyRole)
+
 			// 1. Создатель может выполнить действие
 			// 2. Другой Создатель не може выполнить действие
 			// 3. Супер (наш) админ моет выполнить действие
@@ -225,10 +228,19 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 			shouldBe.Nil(suite.service.RemoveRoleToUserInGame(vendor, testUser, gameId, role))
 
 			shouldBe.Nil(suite.service.AddRoleToUserInGame(anotherVendor, testUser, anotherGame, role))
-			suite.checkAccess(role, method, url, body, testUser, false)
+			suite.checkAccess(role, method, url, body, testUser, contains(values, model.AnyRole))
 			shouldBe.Nil(suite.service.RemoveRoleToUserInGame(anotherVendor, testUser, anotherGame, role))
 		}
 	}
+}
+
+func contains(arr []string, s string) bool {
+	for _, item := range arr {
+		if item == s {
+			return true
+		}
+	}
+	return false
 }
 
 func format(s, vendorId, gameId, messageId string) string {
@@ -250,24 +262,32 @@ func (suite *AccessRightsTestSuite) generateTestCases() map[struct {
 		url    string
 		body   string
 	}][]string{
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/games", ""}:                     {model.Admin, model.Support},
-		{http.MethodPost, "/api/v1/vendors/%vendor_id/games", ""}:                    {model.Admin},
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/documents", ""}:                 {model.Admin},
-		{http.MethodPut, "/api/v1/vendors/%vendor_id/documents", ""}:                 {model.Admin},
-		{http.MethodPost, "/api/v1/vendors/%vendor_id/documents/reviews", ""}:        {model.Admin},
+		{http.MethodGet, "/api/v1/vendors", ""}:            {model.AnyRole},
+		{http.MethodPost, "/api/v1/vendors", ""}:           {model.AnyRole},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id", ""}: {model.Admin, model.Manager, model.Support, model.Developer, model.Accountant, model.Store, model.Publisher},
+		{http.MethodPut, "/api/v1/vendors/%vendor_id", ""}: {model.Admin},
+
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/games", ""}:  {model.Admin, model.Support},
+		{http.MethodPost, "/api/v1/vendors/%vendor_id/games", ""}: {model.Admin},
+
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/documents", ""}:          {model.Admin},
+		{http.MethodPut, "/api/v1/vendors/%vendor_id/documents", ""}:          {model.Admin},
+		{http.MethodPost, "/api/v1/vendors/%vendor_id/documents/reviews", ""}: {model.Admin},
+
 		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages", ""}:                  {model.Admin},
 		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages/short", ""}:            {model.Admin},
 		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages/%message_id", ""}:      {model.Admin},
 		{http.MethodPut, "/api/v1/vendors/%vendor_id/messages/%message_id/read", ""}: {model.Admin},
-		{http.MethodGet, "/api/v1/games/%game_id", ""}:                               {model.Admin, model.Support},
-		{http.MethodPut, "/api/v1/games/%game_id", ""}:                               {model.Admin},
-		{http.MethodGet, "/api/v1/games/%game_id/descriptions", ""}:                  {model.Admin, model.Support},
-		{http.MethodPut, "/api/v1/games/%game_id/descriptions", ""}:                  {model.Admin},
-		{http.MethodGet, "/api/v1/games/%game_id/ratings", ""}:                       {model.Admin, model.Support},
-		{http.MethodPut, "/api/v1/games/%game_id/ratings", ""}:                       {model.Admin},
-		{http.MethodGet, "/api/v1/games/%game_id/prices", ""}:                        {model.Admin, model.Support},
-		{http.MethodPut, "/api/v1/games/%game_id/prices", ""}:                        {model.Admin},
-		{http.MethodPut, "/api/v1/games/%game_id/prices/USD", ""}:                    {model.Admin},
+
+		{http.MethodGet, "/api/v1/games/%game_id", ""}:              {model.Admin, model.Support},
+		{http.MethodPut, "/api/v1/games/%game_id", ""}:              {model.Admin},
+		{http.MethodGet, "/api/v1/games/%game_id/descriptions", ""}: {model.Admin, model.Support},
+		{http.MethodPut, "/api/v1/games/%game_id/descriptions", ""}: {model.Admin},
+		{http.MethodGet, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin, model.Support},
+		{http.MethodPut, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin},
+		{http.MethodGet, "/api/v1/games/%game_id/prices", ""}:       {model.Admin, model.Support},
+		{http.MethodPut, "/api/v1/games/%game_id/prices", ""}:       {model.Admin},
+		{http.MethodPut, "/api/v1/games/%game_id/prices/USD", ""}:   {model.Admin},
 	}
 }
 

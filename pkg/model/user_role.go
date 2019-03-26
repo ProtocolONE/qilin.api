@@ -15,6 +15,8 @@ const (
 	Store      string = "store"
 	Publisher  string = "publisher"
 
+	AnyRole  string = "any"
+
 	VendorDomain string = "vendor"
 )
 
@@ -34,6 +36,7 @@ const GameType string = "games"
 const GameListType string = "vendor.games"
 const DocumentsType string = "vendor.documents"
 const MessagesType string = "vendor.messages"
+const VendorType string = "vendor"
 const AdminDocumentsType string = "admin.vendor.documents"
 const RolesType string = "roles"
 const GlobalType string = "global"
