@@ -10,6 +10,10 @@ type gameService struct {
 
 }
 
+func (gameService) GetOwnerForGame(gameId uuid.UUID) (string, error) {
+	panic("implement me")
+}
+
 func (gameService) CreateTags([]model.GameTag) error {
 	panic("implement me")
 }

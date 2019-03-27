@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/pkg/errors"
 	"net/http"
-	"qilin-api/pkg/api/middleware"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
@@ -40,22 +40,21 @@ func InitDiscountsRouter(group *echo.Group, service *orm.DiscountService) (*Disc
 		service: service,
 	}
 
-	r := &middleware.RbacGroup{}
-	r = r.Group(group,"/games/:id", &router)
-	r.GET("/discounts", router.get, []string{"id", model.GameType, model.VendorDomain})
-	r.POST("/discounts", router.post, []string{"id", model.GameType, model.VendorDomain})
-	r.PUT("/discounts/:discountId", router.put, []string{"id", model.GameType, model.VendorDomain})
-	r.DELETE("/discounts/:discountId", router.delete, []string{"id", model.GameType, model.VendorDomain})
+	r := rbac_echo.Group(group,"/games/:gameId", &router, []string{"gameId", model.GameType, model.VendorDomain})
+	r.GET("/discounts", router.get, nil)
+	r.POST("/discounts", router.post, nil)
+	r.PUT("/discounts/:discountId", router.put, nil)
+	r.DELETE("/discounts/:discountId", router.delete, nil)
 
 	return &router, nil
 }
 
-func (router *DiscountsRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+func (router *DiscountsRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	return GetOwnerForGame(ctx)
 }
 
 func (router *DiscountsRouter) post(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -89,7 +88,7 @@ func (router *DiscountsRouter) post(ctx echo.Context) error {
 }
 
 func (router *DiscountsRouter) get(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -121,7 +120,7 @@ func (router *DiscountsRouter) get(ctx echo.Context) error {
 }
 
 func (router *DiscountsRouter) put(ctx echo.Context) error {
-	gameId, err := uuid.FromString(ctx.Param("id"))
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -159,7 +158,7 @@ func (router *DiscountsRouter) put(ctx echo.Context) error {
 }
 
 func (router *DiscountsRouter) delete(ctx echo.Context) error {
-	_, err := uuid.FromString(ctx.Param("id"))
+	_, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}

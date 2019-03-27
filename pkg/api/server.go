@@ -8,8 +8,9 @@ import (
 	"github.com/labstack/echo/middleware"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
-	qilin_middleware "qilin-api/pkg/api/middleware"
+	qilin_middleware "qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/conf"
+	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
 	"qilin-api/pkg/utils"
@@ -61,9 +62,19 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.HidePort = true
 	server.echo.Debug = opts.ServerConfig.Debug
 
+	gameService, err := orm.NewGameService(server.db)
+	if err != nil {
+		return nil, err
+	}
+
+	vendorService, err := orm.NewVendorService(server.db)
+	if err != nil {
+		return nil, err
+	}
+
 	server.echo.Use(ZapLogger(zap.L())) // logs all http requests
 	server.echo.Use(middleware.Recover())
-	server.echo.Use(qilin_middleware.QilinContextMiddleware(server.db, server.enforcer))
+	server.echo.Use(qilin_middleware.NewAppContextMiddleware(gameService, vendorService, server.enforcer))
 
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
 
@@ -99,7 +110,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.Router.Use(jwt_middleware.AuthOneJwtWithConfig(jwtv))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
-	if err := server.setupRoutes(opts.Mailer); err != nil {
+	if err := server.setupRoutes(gameService, vendorService, opts.Mailer); err != nil {
 		zap.L().Fatal("Fail to setup routes", zap.Error(err))
 	}
 
@@ -112,7 +123,7 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes(mailer sys.Mailer) error {
+func (s *Server) setupRoutes(gameService model.GameService, vendorService model.VendorService, mailer sys.Mailer) error {
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {
 		return err
@@ -174,7 +185,7 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 		return err
 	}
 
-	membershipService := orm.NewMembershipService(s.db, s.enforcer)
+	membershipService := orm.NewMembershipService(s.db, gameService, vendorService, s.enforcer)
 	if err := membershipService.Init(); err != nil {
 		return err
 	}
@@ -183,18 +194,10 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 		return err
 	}
 
-	gameService, err := orm.NewGameService(s.db)
-	if err != nil {
-		return err
-	}
 	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
 		return err
 	}
 
-	vendorService, err := orm.NewVendorService(s.db)
-	if err != nil {
-		return err
-	}
 	if err := InitVendorRoutes(s.Router, vendorService, userService); err != nil {
 		return err
 	}

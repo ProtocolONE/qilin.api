@@ -101,8 +101,8 @@ func (suite *RatingRouterTestSuite) TestBadRatingsShouldReturnError() {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/games/:id/ratings")
-		c.SetParamNames("id")
+		c.SetPath("/api/v1/games/:gameId/ratings")
+		c.SetParamNames("gameId")
 		c.SetParamValues(TestID)
 
 		// Assertions
@@ -116,8 +116,8 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnEmptyObject() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -132,8 +132,8 @@ func (suite *RatingRouterTestSuite) TestPutRatingsShouldReturnError() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -159,8 +159,8 @@ func (suite *RatingRouterTestSuite) TestPutRatingsShouldReturnOk() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -172,8 +172,8 @@ func (suite *RatingRouterTestSuite) TestPutRatingsShouldReturnOk() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -187,8 +187,8 @@ func (suite *RatingRouterTestSuite) TestPutBadObjectShouldReturnError() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -201,8 +201,8 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldWithNilIdShouldReturnErr
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(uuid.Nil.String())
 
 	// Assertions
@@ -215,8 +215,8 @@ func (suite *RatingRouterTestSuite) TestPutRatingsShouldWithNilIdShouldReturnErr
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(uuid.Nil.String())
 
 	// Assertions
@@ -229,8 +229,8 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldWithBadIdShouldReturnErr
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues("XXX")
 
 	// Assertions
@@ -243,8 +243,8 @@ func (suite *RatingRouterTestSuite) TestPutRatingsShouldWithBadIdShouldReturnErr
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues("XXX")
 
 	// Assertions
@@ -257,8 +257,8 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnNotFound() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(uuid.NewV4().String())
 
 	// Assertions
@@ -307,8 +307,8 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnRightObject() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/ratings")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/ratings")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions

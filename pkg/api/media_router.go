@@ -4,7 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"net/http"
-	"qilin-api/pkg/api/middleware"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
@@ -61,15 +61,14 @@ func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRoute
 		mediaService: service,
 	}
 
-	router := &middleware.RbacGroup{}
-	router = router.Group(group, "/games/:id", &mediaRouter)
-	router.GET("/media", mediaRouter.get, []string{"id", model.GameType, model.VendorDomain})
-	router.PUT("/media", mediaRouter.put, []string{"id", model.GameType, model.VendorDomain})
+	router := rbac_echo.Group(group, "/games/:gameId", &mediaRouter, []string{"gameId", model.GameType, model.VendorDomain})
+	router.GET("/media", mediaRouter.get, nil)
+	router.PUT("/media", mediaRouter.put, nil)
 
 	return &mediaRouter, nil
 }
 
-func (api *MediaRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+func (api *MediaRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	return GetOwnerForGame(ctx)
 }
 
@@ -81,9 +80,9 @@ func (api *MediaRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
 // @Failure 404 {object} "Not found"
 // @Failure 422 {object} "Unprocessable object"
 // @Failure 500 {object} "Internal server error"
-// @GameRouter /api/v1/games/:id/media [put]
+// @GameRouter /api/v1/games/:gameId/media [put]
 func (api *MediaRouter) put(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
@@ -122,9 +121,9 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 // @Failure 403 {object} "Forbidden"
 // @Failure 404 {object} "Not found"
 // @Failure 500 {object} "Internal server error"
-// @GameRouter /api/v1/games/:id/media [get]
+// @GameRouter /api/v1/games/:gameId/media [get]
 func (api *MediaRouter) get(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")

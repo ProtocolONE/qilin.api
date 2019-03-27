@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
-	"qilin-api/pkg/api/middleware"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 )
@@ -29,24 +29,23 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 		service: service,
 	}
 
-	route := &middleware.RbacGroup{}
-	route = route.Group(group, "/vendors/:id", res)
 	permissions := []string{"*", model.RolesType, model.VendorDomain}
+	route := rbac_echo.Group(group, "/vendors/:vendorId", res, permissions)
 
-	route.GET("/memberships", res.getUsers, permissions)
-	route.GET("/memberships/:userId", res.getUser, permissions)
-	route.PUT("/memberships/:userId", res.changeUserRoles, permissions)
-	route.GET("/memberships/:userId/permissions", res.getUserPermissions, permissions)
+	route.GET("/memberships", res.getUsers, nil)
+	route.GET("/memberships/:userId", res.getUser, nil)
+	route.PUT("/memberships/:userId", res.changeUserRoles, nil)
+	route.GET("/memberships/:userId/permissions", res.getUserPermissions, nil)
 
 	return res, nil
 }
 
-func (api *MembershipRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+func (api *MembershipRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	return GetOwnerForVendor(ctx)
 }
 
 func (api *MembershipRouter) getUsers(ctx echo.Context) error {
-	vendorIdParam := ctx.Param("id")
+	vendorIdParam := ctx.Param("vendorId")
 	vendorId, err := uuid.FromString(vendorIdParam)
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
@@ -61,7 +60,7 @@ func (api *MembershipRouter) getUsers(ctx echo.Context) error {
 }
 
 func (api *MembershipRouter) changeUserRoles(ctx echo.Context) error {
-	vendorId, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
 	}
@@ -109,7 +108,7 @@ func (api *MembershipRouter) changeUserRoles(ctx echo.Context) error {
 }
 
 func (api *MembershipRouter) getUser(ctx echo.Context) error {
-	vendorId, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
 	}
@@ -128,7 +127,7 @@ func (api *MembershipRouter) getUser(ctx echo.Context) error {
 }
 
 func (api *MembershipRouter) getUserPermissions(ctx echo.Context) error {
-	vendorId, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
 	}

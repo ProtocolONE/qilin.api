@@ -15,7 +15,8 @@ const (
 	Store      string = "store"
 	Publisher  string = "publisher"
 
-	AnyRole  string = "any"
+	AnyRole     string = "any"
+	NotApproved string = "not_approved"
 
 	VendorDomain string = "vendor"
 )

@@ -6,7 +6,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/context"
-	"qilin-api/pkg/api/middleware"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"strconv"
@@ -34,10 +34,9 @@ func InitVendorRoutes(group *echo.Group, service model.VendorService, userServic
 		userService:   userService,
 	}
 
-	router := &middleware.RbacGroup{}
-	router = router.Group(group, "/vendors", &vendorRouter)
-	router.GET("/:id", vendorRouter.get, []string{"*", model.VendorType, model.VendorDomain})
-	router.PUT("/:id", vendorRouter.update, []string{"*", model.VendorType, model.VendorDomain})
+	router := rbac_echo.Group(group, "/vendors", &vendorRouter, []string{"*", model.VendorType, model.VendorDomain})
+	router.GET("/:vendorId", vendorRouter.get, nil)
+	router.PUT("/:vendorId", vendorRouter.update, nil)
 
 	group.GET("/vendors", vendorRouter.getAll)
 	group.POST("/vendors", vendorRouter.create)
@@ -45,7 +44,7 @@ func InitVendorRoutes(group *echo.Group, service model.VendorService, userServic
 	return nil
 }
 
-func (api *VendorRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+func (api *VendorRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	return GetOwnerForVendor(ctx)
 }
 
@@ -59,7 +58,7 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 		offset = 0
 	}
 
-	qilinCtx := ctx.(middleware.QilinContext)
+	qilinCtx := ctx.(rbac_echo.AppContext)
 	userId, err := api.getUserId(ctx)
 	shouldBreak := false
 	localOffset := offset
@@ -100,7 +99,7 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 }
 
 func (api *VendorRouter) get(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -160,7 +159,7 @@ func (api *VendorRouter) update(ctx echo.Context) error {
 	if err := ctx.Bind(dto); err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bind vendor obj"))
 	}
-	vendorId, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}

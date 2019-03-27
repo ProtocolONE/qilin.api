@@ -29,4 +29,5 @@ type VendorService interface {
 	Update(g *Vendor) (*Vendor, error)
 	GetAll(int, int) ([]*Vendor, error)
 	FindByID(id uuid.UUID) (*Vendor, error)
+	GetOwnerForVendor(vendorId uuid.UUID) (string, error)
 }

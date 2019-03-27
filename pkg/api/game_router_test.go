@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/api/context"
-	"qilin-api/pkg/api/middleware"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -75,17 +75,19 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	echoObj := echo.New()
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
 
-	enforcer := rbac.NewEnforcer()
-	echoObj.Use(middleware.QilinContextMiddleware(db, enforcer))
+	service, err := orm.NewGameService(db)
+	vendorService, err := orm.NewVendorService(db)
 
-	membership := orm.NewMembershipService(db, enforcer)
+	enforcer := rbac.NewEnforcer()
+	echoObj.Use(rbac_echo.NewAppContextMiddleware(service, vendorService, enforcer))
+
+	membership := orm.NewMembershipService(db, service, vendorService, enforcer)
 	err = membership.Init()
 	if err != nil {
 		suite.FailNow("Membership fail", "%v", err)
 	}
 
 	groupApi := echoObj.Group("/api/v1")
-	service, err := orm.NewGameService(db)
 	userService, err := orm.NewUserService(db, nil)
 	router, err := InitRoutes(groupApi, service, userService)
 	if err != nil {
@@ -121,8 +123,8 @@ func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
 
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/games")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/games")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(vendorId)
 	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: userId})
 

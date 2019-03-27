@@ -80,7 +80,9 @@ func (suite *MembershipRouterTestSuite) SetupTest() {
 	e := echo.New()
 	e.Validator = &QilinValidator{validator: validator.New()}
 	enf := rbac.NewEnforcer()
-	service := orm.NewMembershipService(db, enf)
+	gService, _ := orm.NewGameService(db)
+	vService, _ := orm.NewVendorService(db)
+	service := orm.NewMembershipService(db, gService, vService, enf)
 	shouldBe.Nil(service.Init())
 	enf.AddRole(rbac.Role{Role: "admin", User: adminId, Domain: "vendor", Owner: ownerId, RestrictedResourceId: []string{"*"}})
 
@@ -113,8 +115,8 @@ func (suite *MembershipRouterTestSuite) TestGetMemberships() {
 		rec := httptest.NewRecorder()
 
 		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/vendors/:id/memberships")
-		c.SetParamNames("id")
+		c.SetPath("/api/v1/vendors/:vendorId/memberships")
+		c.SetParamNames("vendorId")
 		c.SetParamValues(testCase.vendorId)
 
 		res := suite.router.getUsers(c)
@@ -152,8 +154,8 @@ func (suite *MembershipRouterTestSuite) TestGetMembership() {
 		rec := httptest.NewRecorder()
 
 		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/vendors/:id/memberships/:userId")
-		c.SetParamNames("id", "userId")
+		c.SetPath("/api/v1/vendors/:vendorId/memberships/:userId")
+		c.SetParamNames("vendorId", "userId")
 		c.SetParamValues(testCase.vendorId, testCase.userId)
 
 		res := suite.router.getUser(c)
@@ -196,8 +198,8 @@ func (suite *MembershipRouterTestSuite) TestPutMembership() {
 		rec := httptest.NewRecorder()
 
 		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/vendors/:id/memberships/:userId")
-		c.SetParamNames("id", "userId")
+		c.SetPath("/api/v1/vendors/:vendorId/memberships/:userId")
+		c.SetParamNames("vendorId", "userId")
 		c.SetParamValues(testCase.vendorId, testCase.userId)
 
 		res := suite.router.changeUserRoles(c)
@@ -234,8 +236,8 @@ func (suite *MembershipRouterTestSuite) TestGetPermissions() {
 		rec := httptest.NewRecorder()
 
 		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/vendors/:id/memberships/:userId")
-		c.SetParamNames("id", "userId")
+		c.SetPath("/api/v1/vendors/:vendorId/memberships/:userId")
+		c.SetParamNames("vendorId", "userId")
 		c.SetParamValues(testCase.vendorId, testCase.userId)
 
 		res := suite.router.getUserPermissions(c)

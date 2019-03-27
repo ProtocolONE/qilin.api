@@ -41,8 +41,11 @@ func (suite *MemershipServiceTestSuite) SetupTest() {
 
 	enf := rbac.NewEnforcer()
 
+	gService, _ := orm.NewGameService(db)
+	vService, _ := orm.NewVendorService(db)
+
 	suite.db = db
-	suite.service = orm.NewMembershipService(db, enf)
+	suite.service = orm.NewMembershipService(db, gService, vService, enf)
 	shouldBe.Nil(suite.service.Init())
 
 	ownerId := uuid.NewV4()
@@ -106,7 +109,7 @@ func (suite *MemershipServiceTestSuite) TestAddRoleToUser() {
 			continue
 		}
 
-		shouldBe.Equal(7, len(user.Roles))
+		shouldBe.Equal(9, len(user.Roles))
 		for _, role := range user.Roles {
 			shouldBe.NotEmpty(role.Resource.Meta.InternalName)
 		}

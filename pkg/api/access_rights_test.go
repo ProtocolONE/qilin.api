@@ -12,8 +12,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"net/http/httptest"
-	"qilin-api/pkg/api/middleware"
-	"qilin-api/pkg/api/mock"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -61,10 +60,12 @@ func (suite *AccessRightsTestSuite) SetupTest() {
 	}
 
 	enforcer := rbac.NewEnforcer()
-	echoObj.Use(middleware.QilinContextMiddleware(db, enforcer))
+	gameService, err := orm.NewGameService(db)
+	vendorService, err := orm.NewVendorService(db)
+	echoObj.Use(rbac_echo.NewAppContextMiddleware(gameService, vendorService, enforcer))
 	echoObj.Use(suite.localAuth())
 
-	membership := orm.NewMembershipService(db, enforcer)
+	membership := orm.NewMembershipService(db, gameService, vendorService, enforcer)
 	err = membership.Init()
 	if err != nil {
 		suite.FailNow("Membership fail", "%v", err)
@@ -143,7 +144,17 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	membershipService := orm.NewMembershipService(s.db, s.enforcer)
+	gameService, err := orm.NewGameService(s.db)
+	if err != nil {
+		return err
+	}
+
+	vendorService, err := orm.NewVendorService(s.db)
+	if err != nil {
+		return err
+	}
+
+	membershipService := orm.NewMembershipService(s.db, gameService, vendorService, s.enforcer)
 	if err := membershipService.Init(); err != nil {
 		return err
 	}
@@ -152,17 +163,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	gameService, err := mock.NewGameService(s.db)
-	if err != nil {
-		return err
-	}
-
 	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
-		return err
-	}
-
-	vendorService, err := orm.NewVendorService(s.db)
-	if err != nil {
 		return err
 	}
 
@@ -180,6 +181,11 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 	owner := suite.createUser()
 	vendor := suite.createVendor(owner)
 	gameId := suite.createGame(vendor, owner).String()
+
+	notApprovedOwner := suite.createUser()
+	vendorForNotApprovedOwner := suite.createVendor(notApprovedOwner)
+	gameForNotApprovedOwner := suite.createGame(vendorForNotApprovedOwner, notApprovedOwner)
+	messageForNotApprovedOwner := suite.createMessage(vendorForNotApprovedOwner, notApprovedOwner)
 
 	admin := suite.createUser()
 	globalAdmin := suite.createUser()
@@ -199,6 +205,8 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 	testUser := suite.createUser()
 	roles := []string{"admin", "support"}
 
+	shouldBe.True(suite.enforcer.AddRole(rbac.Role{Role: model.NotApproved, User: notApprovedOwner, Domain: "vendor"}))
+
 	for key, values := range testCases {
 		url := format(key.url, vendorId, gameId, messageId)
 		method := key.method
@@ -208,16 +216,19 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 		suite.checkAccess("anotherOwner", method, url, body, anotherOwner, contains(values, model.AnyRole))
 		suite.checkAccess("superAdmin", method, url, body, superAdmin, true)
 
+		urlUnapproved := format(key.url, vendorForNotApprovedOwner.String(), gameForNotApprovedOwner.String(), messageForNotApprovedOwner)
+		suite.checkAccess("notApprovedOwner", method, urlUnapproved, body, notApprovedOwner, contains(values, model.NotApproved) || contains(values, model.AnyRole))
+
 		for _, role := range roles {
 			accept := contains(values, role) || contains(values, model.AnyRole)
 
-			// 1. Создатель может выполнить действие
-			// 2. Другой Создатель не може выполнить действие
-			// 3. Супер (наш) админ моет выполнить действие
-			// 4. Пользователь с правами X без рестрикшенов имеет доступ (глобальный)
-			// Пользователь с правами Х с правами на игру имеет доступ
-			// Пользовтель с правами Х на другую игру не имеет доступ
-			// Пользователь с правами Y не имеет доступа к игре которой нужны права X
+			// 1. Approved owner should pass
+			// 2. Another approved owner should not pass
+			// 3. Super-admin should pass
+			// 4. User with role X in vendor context should pass (Global role)
+			// 5. User with role X in vendor context and game restriction should pass
+			// 6. User with role X in vendor context and game restriction should not pass for another game
+			// 7. User with role Y should not pass to action with resource needed another role
 
 			shouldBe.Nil(suite.service.AddRoleToUserInGame(vendor, testUser, "*", role))
 			suite.checkAccess(role, method, url, body, testUser, accept)
@@ -264,20 +275,20 @@ func (suite *AccessRightsTestSuite) generateTestCases() map[struct {
 	}][]string{
 		{http.MethodGet, "/api/v1/vendors", ""}:            {model.AnyRole},
 		{http.MethodPost, "/api/v1/vendors", ""}:           {model.AnyRole},
-		{http.MethodGet, "/api/v1/vendors/%vendor_id", ""}: {model.Admin, model.Manager, model.Support, model.Developer, model.Accountant, model.Store, model.Publisher},
-		{http.MethodPut, "/api/v1/vendors/%vendor_id", ""}: {model.Admin},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id", ""}: {model.Admin, model.Manager, model.Support, model.Developer, model.Accountant, model.Store, model.Publisher, model.NotApproved},
+		{http.MethodPut, "/api/v1/vendors/%vendor_id", ""}: {model.Admin, model.NotApproved},
 
 		{http.MethodGet, "/api/v1/vendors/%vendor_id/games", ""}:  {model.Admin, model.Support},
 		{http.MethodPost, "/api/v1/vendors/%vendor_id/games", ""}: {model.Admin},
 
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/documents", ""}:          {model.Admin},
-		{http.MethodPut, "/api/v1/vendors/%vendor_id/documents", ""}:          {model.Admin},
-		{http.MethodPost, "/api/v1/vendors/%vendor_id/documents/reviews", ""}: {model.Admin},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/documents", ""}:          {model.Admin, model.NotApproved},
+		{http.MethodPut, "/api/v1/vendors/%vendor_id/documents", ""}:          {model.Admin, model.NotApproved},
+		{http.MethodPost, "/api/v1/vendors/%vendor_id/documents/reviews", ""}: {model.Admin, model.NotApproved},
 
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages", ""}:                  {model.Admin},
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages/short", ""}:            {model.Admin},
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages/%message_id", ""}:      {model.Admin},
-		{http.MethodPut, "/api/v1/vendors/%vendor_id/messages/%message_id/read", ""}: {model.Admin},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages", ""}:                  {model.Admin, model.NotApproved},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages/short", ""}:            {model.Admin, model.NotApproved},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/messages/%message_id", ""}:      {model.Admin, model.NotApproved},
+		{http.MethodPut, "/api/v1/vendors/%vendor_id/messages/%message_id/read", ""}: {model.Admin, model.NotApproved},
 
 		{http.MethodGet, "/api/v1/games/%game_id", ""}:              {model.Admin, model.Support},
 		{http.MethodPut, "/api/v1/games/%game_id", ""}:              {model.Admin},

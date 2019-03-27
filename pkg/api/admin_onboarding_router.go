@@ -7,7 +7,7 @@ import (
 	"github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"net/http"
-	"qilin-api/pkg/api/middleware"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -61,24 +61,24 @@ func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingSe
 		notificationService: notificationService,
 	}
 
-	r := &middleware.RbacGroup{}
-	r = r.Group(group,"/vendors", &router)
-	common :=  []string{"id", model.AdminDocumentsType, model.VendorDomain}
-	r.GET("/reviews", router.getReviews, common)
-	r.GET("/:id/documents", router.getDocument, common)
-	r.PUT("/:id/documents/status", router.changeStatus, common)
-	r.POST("/:id/messages", router.sendNotification, common)
-	r.GET("/:id/messages", router.getNotifications, common)
+	common :=  []string{"*", model.AdminDocumentsType, model.VendorDomain}
+
+	r := rbac_echo.Group(group,"/vendors", &router, common)
+	r.GET("/reviews", router.getReviews, nil)
+	r.GET("/:vendorId/documents", router.getDocument, nil)
+	r.PUT("/:vendorId/documents/status", router.changeStatus, nil)
+	r.POST("/:vendorId/messages", router.sendNotification, nil)
+	r.GET("/:vendorId/messages", router.getNotifications, nil)
 
 	return &router, nil
 }
 
-func (api *OnboardingAdminRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+func (api *OnboardingAdminRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	return GetOwnerForVendor(ctx)
 }
 
 func (api *OnboardingAdminRouter) changeStatus(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad id"))
 	}
@@ -114,7 +114,7 @@ func (api *OnboardingAdminRouter) changeStatus(ctx echo.Context) error {
 }
 
 func (api *OnboardingAdminRouter) getDocument(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad id"))
 	}
@@ -197,7 +197,7 @@ func (api *OnboardingAdminRouter) getReviews(ctx echo.Context) error {
 }
 
 func (api *OnboardingAdminRouter) getNotifications(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
@@ -246,7 +246,7 @@ func (api *OnboardingAdminRouter) getNotifications(ctx echo.Context) error {
 }
 
 func (api *OnboardingAdminRouter) sendNotification(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}

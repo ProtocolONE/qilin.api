@@ -113,3 +113,18 @@ func (p *VendorService) GetAll(limit, offset int) (vendors []*model.Vendor, err 
 
 	return vendors, err
 }
+
+//GetOwnerForVendor is method for getting owner of vendor
+func (p *VendorService) GetOwnerForVendor(vendorId uuid.UUID) (string, error) {
+	vendor := model.Vendor{}
+	err := p.db.Model(&model.Vendor{}).Where("id = ?", vendorId).First(&vendor).Error
+
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found ", vendorId)
+		}
+		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get vendor"))
+	}
+
+	return vendor.ManagerID, nil
+}

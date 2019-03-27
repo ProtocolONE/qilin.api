@@ -8,7 +8,7 @@ import (
 	"gopkg.in/russross/blackfriday.v2"
 	"net/http"
 	"qilin-api/pkg/api/context"
-	"qilin-api/pkg/api/middleware"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
@@ -266,18 +266,16 @@ func InitRoutes(router *echo.Group, service model.GameService, userService model
 		userService: userService,
 	}
 
-	r := &middleware.RbacGroup{}
-	r.Group(router, "/vendors/:id", &Router)
-	r.GET("/games", Router.GetList, []string{"*", model.GameListType, model.VendorDomain})
-	r.POST("/games", Router.Create, []string{"*", model.GameListType, model.VendorDomain})
+	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.GameListType, model.VendorDomain})
+	r.GET("/games", Router.GetList, nil)
+	r.POST("/games", Router.Create, nil)
 
-	gameGroup := &middleware.RbacGroup{}
-	gameGroup = gameGroup.Group(router, "/games", &Router)
-	gameGroup.GET("/:id", Router.GetInfo, []string{"id", model.GameType, model.VendorDomain})
-	gameGroup.DELETE("/:id", Router.Delete, []string{"id", model.GameType, model.VendorDomain})
-	gameGroup.PUT("/:id", Router.UpdateInfo, []string{"id", model.GameType, model.VendorDomain})
-	gameGroup.GET("/:id/descriptions", Router.GetDescr, []string{"id", model.GameType, model.VendorDomain})
-	gameGroup.PUT("/:id/descriptions", Router.UpdateDescr, []string{"id", model.GameType, model.VendorDomain})
+	gameGroup := rbac_echo.Group(router, "/games", &Router, []string{"gameId", model.GameType, model.VendorDomain})
+	gameGroup.GET("/:gameId", Router.GetInfo, nil)
+	gameGroup.DELETE("/:gameId", Router.Delete, nil)
+	gameGroup.PUT("/:gameId", Router.UpdateInfo, nil)
+	gameGroup.GET("/:gameId/descriptions", Router.GetDescr, nil)
+	gameGroup.PUT("/:gameId/descriptions", Router.UpdateDescr, nil)
 
 	router.GET("/genre", Router.GetGenres) // TODO: Remove after some time
 	router.GET("/genres", Router.GetGenres)
@@ -291,16 +289,16 @@ type CreateGameDTO struct {
 	InternalName string
 }
 
-func (api *GameRouter) GetOwner(ctx middleware.QilinContext) (string, error) {
+func (api *GameRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	path := ctx.Path()
-	if strings.Contains(path, "/vendors/:id") {
+	if strings.Contains(path, "/vendors/:vendorId") {
 		return GetOwnerForVendor(ctx)
 	}
 	return GetOwnerForGame(ctx)
 }
 
 func (api *GameRouter) GetList(ctx echo.Context) error {
-	vendorId, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
 	}
@@ -323,7 +321,7 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 	}
 
 	var dto []ShortGameInfoDTO
-	qilinCtx := ctx.(middleware.QilinContext)
+	qilinCtx := ctx.(rbac_echo.AppContext)
 	shouldBreak := false
 	localOffset := offset
 
@@ -379,7 +377,7 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Wrong parameters in body")
 	}
-	vendorId, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendorId")
 	}
@@ -399,7 +397,7 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 }
 
 func (api *GameRouter) GetInfo(ctx echo.Context) error {
-	gameId, err := uuid.FromString(ctx.Param("id"))
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -416,7 +414,7 @@ func (api *GameRouter) GetInfo(ctx echo.Context) error {
 }
 
 func (api *GameRouter) Delete(ctx echo.Context) error {
-	gameId, err := uuid.FromString(ctx.Param("id"))
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -432,7 +430,7 @@ func (api *GameRouter) Delete(ctx echo.Context) error {
 }
 
 func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
-	gameId, err := uuid.FromString(ctx.Param("id"))
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -454,7 +452,7 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 }
 
 func (api *GameRouter) GetDescr(ctx echo.Context) error {
-	gameId, err := uuid.FromString(ctx.Param("id"))
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
 	}
@@ -495,7 +493,7 @@ func (api *GameRouter) GetDescr(ctx echo.Context) error {
 }
 
 func (api *GameRouter) UpdateDescr(ctx echo.Context) error {
-	gameId, err := uuid.FromString(ctx.Param("id"))
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
 	}

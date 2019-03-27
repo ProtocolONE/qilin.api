@@ -6,6 +6,8 @@ github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190306075438-fae68b8
 github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190306075438-fae68b84f58d/go.mod h1:XNfuS/K3zPtqxoIJwu/yO6jTII2TleXBysce4/xNEOQ=
 github.com/ProtocolONE/rbac v0.0.0-20190318075816-19010b8e6f04 h1:n7DcjCtf93vq95+pBIn85wHHbRWbzzFrcRzRfC7yotI=
 github.com/ProtocolONE/rbac v0.0.0-20190318075816-19010b8e6f04/go.mod h1:OKug3kkWJOJJQV8IJgH7Ktpd7VUZlbI9qXX2RkCwIQo=
+github.com/ProtocolONE/rbac v0.0.0-20190327162713-7c9ef6330a8a h1:QZduV1C/+iGjZOtUYVaKInho1fxfg2pxrlI1o2cODnU=
+github.com/ProtocolONE/rbac v0.0.0-20190327162713-7c9ef6330a8a/go.mod h1:mZUivEYBdQhUhScMwSdCphoANrh2GU6+RnSm6WTVYwo=
 github.com/billcobbler/casbin-redis-watcher v0.0.0-20180829182704-69cab1cdcf44 h1:6IUAqiLy9jbnkun5V2TE+RzFu4fy+qqn/bS80I+L0B4=
 github.com/billcobbler/casbin-redis-watcher v0.0.0-20180829182704-69cab1cdcf44/go.mod h1:7gAaWqZ3MW7v5114HJaUNsNxaVCV6LHknrrwQtnjGX4=
 github.com/casbin/casbin v1.8.1 h1:BVvL6H0nc+1y68nwIe8ZxwMIOEVUgg9y00yeD3GTDCc=

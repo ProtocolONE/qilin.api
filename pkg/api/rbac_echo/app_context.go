@@ -1,4 +1,4 @@
-package middleware
+package rbac_echo
 
 import (
 	"github.com/ProtocolONE/rbac"
@@ -6,16 +6,18 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 )
 
-type QilinContext struct {
+type AppContext struct {
 	echo.Context
-	enf *rbac.Enforcer
-	db  *orm.Database
+	enf           *rbac.Enforcer
+	vendorService model.VendorService
+	gameService   model.GameService
 }
 
-func (c *QilinContext) CheckPermissions(userId, domain, resource, resourceId, owner, action string) error {
+func (c *AppContext) CheckPermissions(userId, domain, resource, resourceId, owner, action string) error {
 	ctx := rbac.Context{
 		Domain:        domain,
 		User:          userId,
@@ -30,18 +32,18 @@ func (c *QilinContext) CheckPermissions(userId, domain, resource, resourceId, ow
 	return nil
 }
 
-func (c *QilinContext) GetOwnerForGame(uuid uuid.UUID) (string, error) {
-	return orm.GetOwnerForGame(c.db.DB(), uuid)
+func (c *AppContext) GetOwnerForGame(uuid uuid.UUID) (string, error) {
+	return c.gameService.GetOwnerForGame(uuid)
 }
 
-func (c *QilinContext) GetOwnerForVendor(uuid uuid.UUID) (string, error) {
-	return orm.GetOwnerForVendor(c.db.DB(), uuid)
+func (c *AppContext) GetOwnerForVendor(uuid uuid.UUID) (string, error) {
+	return c.vendorService.GetOwnerForVendor(uuid)
 }
 
-func CheckPermissions(group *RbacGroup, router RbacRouter) echo.MiddlewareFunc {
+func CheckPermissions(group *RbacGroup, router Router) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			qilinCtx := c.(QilinContext)
+			qilinCtx := c.(AppContext)
 
 			paths := group.paths
 			path := c.Path()
@@ -87,13 +89,14 @@ func CheckPermissions(group *RbacGroup, router RbacRouter) echo.MiddlewareFunc {
 	}
 }
 
-func QilinContextMiddleware(db *orm.Database, enf *rbac.Enforcer) echo.MiddlewareFunc {
+func NewAppContextMiddleware(gameService model.GameService, vendorService model.VendorService, enf *rbac.Enforcer) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			context := QilinContext{
-				enf:     enf,
-				db:      db,
-				Context: c,
+			context := AppContext{
+				enf:           enf,
+				gameService:   gameService,
+				vendorService: vendorService,
+				Context:       c,
 			}
 			return next(context)
 		}
