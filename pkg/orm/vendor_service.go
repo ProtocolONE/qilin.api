@@ -54,23 +54,30 @@ func (p *VendorService) Create(item *model.Vendor) (result *model.Vendor, err er
 	if uuid.Nil == vendor.ID {
 		vendor.ID = uuid.NewV4()
 	}
-	err = p.db.Create(&vendor).Error
+
+	tx := p.db.Begin()
+
+	err = tx.Create(&vendor).Error
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
+		tx.Rollback()
 		return nil, NewServiceError(http.StatusConflict, errVendorConflict)
 	} else if err != nil {
+		tx.Rollback()
 		return nil, errors.Wrap(err, "Insert vendor")
 	}
-	err = p.db.Model(&vendor).Association("Users").Append(model.User{ID: vendor.ManagerID}).Error
+	err = tx.Model(&vendor).Association("Users").Append(model.User{ID: vendor.ManagerID}).Error
 	if err != nil {
+		tx.Rollback()
 		return nil, errors.Wrap(err, "Append to association")
 	}
 
 	err = p.membershipService.AddRoleToUser(vendor.ID, vendor.ManagerID, vendor.ManagerID, model.NotApproved)
 	if err != nil {
+		tx.Rollback()
 		return &vendor, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Set role to owner"))
 	}
 
-	return &vendor, nil
+	return &vendor, tx.Commit().Error
 }
 
 func (p *VendorService) Update(item *model.Vendor) (vendor *model.Vendor, err error) {
