@@ -89,8 +89,6 @@ type (
 		UpdateInfo(game *Game) error
 		GetDescr(gameId uuid.UUID) (*GameDescr, error)
 		UpdateDescr(descr *GameDescr) error
-
-		GetOwnerForGame(gameId uuid.UUID) (string, error)
 	}
 )
 

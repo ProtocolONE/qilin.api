@@ -41,11 +41,10 @@ func (suite *MemershipServiceTestSuite) SetupTest() {
 
 	enf := rbac.NewEnforcer()
 
-	gService, _ := orm.NewGameService(db)
-	vService, _ := orm.NewVendorService(db)
+	ownProvider := orm.NewOwnerProvider(db)
 
 	suite.db = db
-	suite.service = orm.NewMembershipService(db, gService, vService, enf)
+	suite.service = orm.NewMembershipService(db, ownProvider, enf)
 	shouldBe.Nil(suite.service.Init())
 
 	ownerId := uuid.NewV4()

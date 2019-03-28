@@ -12,6 +12,7 @@ import (
 // VendorService is service to interact with database and Vendor object.
 type VendorService struct {
 	db *gorm.DB
+	membershipService model.MembershipService
 }
 
 const (
@@ -21,8 +22,8 @@ const (
 )
 
 // NewVendorService initialize this service.
-func NewVendorService(db *Database) (*VendorService, error) {
-	return &VendorService{db.database}, nil
+func NewVendorService(db *Database, membershipService model.MembershipService) (*VendorService, error) {
+	return &VendorService{db.database, membershipService}, nil
 }
 
 func (p *VendorService) validate(item *model.Vendor) error {
@@ -63,6 +64,12 @@ func (p *VendorService) Create(item *model.Vendor) (result *model.Vendor, err er
 	if err != nil {
 		return nil, errors.Wrap(err, "Append to association")
 	}
+
+	err = p.membershipService.AddRoleToUser(vendor.ID, vendor.ManagerID, vendor.ManagerID, model.NotApproved)
+	if err != nil {
+		return &vendor, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Set role to owner"))
+	}
+
 	return &vendor, nil
 }
 
@@ -114,17 +121,3 @@ func (p *VendorService) GetAll(limit, offset int) (vendors []*model.Vendor, err 
 	return vendors, err
 }
 
-//GetOwnerForVendor is method for getting owner of vendor
-func (p *VendorService) GetOwnerForVendor(vendorId uuid.UUID) (string, error) {
-	vendor := model.Vendor{}
-	err := p.db.Model(&model.Vendor{}).Where("id = ?", vendorId).First(&vendor).Error
-
-	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found ", vendorId)
-		}
-		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get vendor"))
-	}
-
-	return vendor.ManagerID, nil
-}

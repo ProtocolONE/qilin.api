@@ -80,9 +80,8 @@ func (suite *MembershipRouterTestSuite) SetupTest() {
 	e := echo.New()
 	e.Validator = &QilinValidator{validator: validator.New()}
 	enf := rbac.NewEnforcer()
-	gService, _ := orm.NewGameService(db)
-	vService, _ := orm.NewVendorService(db)
-	service := orm.NewMembershipService(db, gService, vService, enf)
+	ownerProvider := orm.NewOwnerProvider(db)
+	service := orm.NewMembershipService(db, ownerProvider, enf)
 	shouldBe.Nil(service.Init())
 	enf.AddRole(rbac.Role{Role: "admin", User: adminId, Domain: "vendor", Owner: ownerId, RestrictedResourceId: []string{"*"}})
 

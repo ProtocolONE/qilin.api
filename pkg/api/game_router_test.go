@@ -75,17 +75,16 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	echoObj := echo.New()
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
 
-	service, err := orm.NewGameService(db)
-	vendorService, err := orm.NewVendorService(db)
-
+	ownerProvider := orm.NewOwnerProvider(db)
 	enforcer := rbac.NewEnforcer()
-	echoObj.Use(rbac_echo.NewAppContextMiddleware(service, vendorService, enforcer))
-
-	membership := orm.NewMembershipService(db, service, vendorService, enforcer)
+	membership := orm.NewMembershipService(db, ownerProvider, enforcer)
 	err = membership.Init()
 	if err != nil {
 		suite.FailNow("Membership fail", "%v", err)
 	}
+
+	service, err := orm.NewGameService(db)
+	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
 
 	groupApi := echoObj.Group("/api/v1")
 	userService, err := orm.NewUserService(db, nil)

@@ -22,12 +22,13 @@ import (
 
 type AccessRightsTestSuite struct {
 	suite.Suite
-	db          *orm.Database
-	echo        *echo.Echo
-	service     model.MembershipService
-	enforcer    *rbac.Enforcer
-	currentUser string
-	Router      *echo.Group
+	db            *orm.Database
+	echo          *echo.Echo
+	service       model.MembershipService
+	enforcer      *rbac.Enforcer
+	currentUser   string
+	Router        *echo.Group
+	ownerProvider model.OwnerProvider
 }
 
 func Test_AccessRightsTestSuite(t *testing.T) {
@@ -60,21 +61,21 @@ func (suite *AccessRightsTestSuite) SetupTest() {
 	}
 
 	enforcer := rbac.NewEnforcer()
-	gameService, err := orm.NewGameService(db)
-	vendorService, err := orm.NewVendorService(db)
-	echoObj.Use(rbac_echo.NewAppContextMiddleware(gameService, vendorService, enforcer))
-	echoObj.Use(suite.localAuth())
-
-	membership := orm.NewMembershipService(db, gameService, vendorService, enforcer)
+	ownerProvider := orm.NewOwnerProvider(db)
+	membership := orm.NewMembershipService(db, ownerProvider, enforcer)
 	err = membership.Init()
 	if err != nil {
 		suite.FailNow("Membership fail", "%v", err)
 	}
 
+	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
+	echoObj.Use(suite.localAuth())
+
 	suite.Router = echoObj.Group("/api/v1")
 	suite.db = db
 	suite.echo = echoObj
 	suite.service = membership
+	suite.ownerProvider = ownerProvider
 	suite.enforcer = enforcer
 
 	if err := suite.InitRoutes(); err != nil {
@@ -149,12 +150,12 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	vendorService, err := orm.NewVendorService(s.db)
+	vendorService, err := orm.NewVendorService(s.db, s.service)
 	if err != nil {
 		return err
 	}
 
-	membershipService := orm.NewMembershipService(s.db, gameService, vendorService, s.enforcer)
+	membershipService := orm.NewMembershipService(s.db, s.ownerProvider, s.enforcer)
 	if err := membershipService.Init(); err != nil {
 		return err
 	}

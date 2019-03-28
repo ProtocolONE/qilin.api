@@ -405,25 +405,3 @@ func (p *gameService) CreateGenres(genres []model.GameGenre) (err error) {
 	}
 	return
 }
-
-func (p *gameService) GetOwnerForGame(gameId uuid.UUID) (string, error) {
-	vendor := model.Vendor{}
-	game := model.Game{}
-	err := p.db.Model(&model.Game{}).Where("id = ?", gameId).First(&game).Error
-
-	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return "", NewServiceErrorf(http.StatusNotFound, "Game `%s` not found ", gameId)
-		}
-		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get game"))
-	}
-
-	if err := p.db.Model(&model.Vendor{}).Where("id = ?", game.VendorID).First(&vendor).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found ", gameId)
-		}
-		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get vendor"))
-	}
-
-	return vendor.ManagerID, nil
-}

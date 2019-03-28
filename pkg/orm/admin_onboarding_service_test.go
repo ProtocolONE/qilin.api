@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"qilin-api/pkg/model"
@@ -64,7 +65,11 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 
 	userId := user.ID
 
-	vendorService, err := orm.NewVendorService(db)
+	ownProvider := orm.NewOwnerProvider(suite.db)
+	enf := rbac.NewEnforcer()
+	membershipService := orm.NewMembershipService(suite.db, ownProvider, enf)
+
+	vendorService, err := orm.NewVendorService(db, membershipService)
 	suite.Nil(err, "Unable make vendor service")
 
 	vendor := model.Vendor{

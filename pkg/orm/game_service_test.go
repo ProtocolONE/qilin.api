@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/assert"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
@@ -108,7 +109,11 @@ func (suite *GameServiceTestSuite) TestGames() {
 	gameService, err := orm.NewGameService(suite.db)
 	require.Nil(err, "Unable make game service")
 
-	vendorService, err := orm.NewVendorService(suite.db)
+	ow := orm.NewOwnerProvider(suite.db)
+	enf := rbac.NewEnforcer()
+	memService := orm.NewMembershipService(suite.db, ow, enf)
+
+	vendorService, err := orm.NewVendorService(suite.db, memService)
 	require.Nil(err, "Unable make vendor service")
 
 	userService, err := orm.NewUserService(suite.db, nil)

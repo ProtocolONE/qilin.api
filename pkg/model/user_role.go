@@ -60,6 +60,7 @@ type MembershipService interface {
 	GetUser(vendorId uuid.UUID, userId string) (*UserRole, error)
 	GetUserPermissions(vendorId uuid.UUID, userId string) (*rbac.UserPermissions, error)
 	AddRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error
+	AddRoleToUser(vendorId uuid.UUID, userId string, owner string, role string) error
 	RemoveRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error
 	SendInvite(vendorId uuid.UUID, userId string) error
 	AcceptInvite(inviteId uuid.UUID) error

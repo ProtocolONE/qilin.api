@@ -13,8 +13,7 @@ import (
 type AppContext struct {
 	echo.Context
 	enf           *rbac.Enforcer
-	vendorService model.VendorService
-	gameService   model.GameService
+	ownerProvider model.OwnerProvider
 }
 
 func (c *AppContext) CheckPermissions(userId, domain, resource, resourceId, owner, action string) error {
@@ -33,11 +32,11 @@ func (c *AppContext) CheckPermissions(userId, domain, resource, resourceId, owne
 }
 
 func (c *AppContext) GetOwnerForGame(uuid uuid.UUID) (string, error) {
-	return c.gameService.GetOwnerForGame(uuid)
+	return c.ownerProvider.GetOwnerForGame(uuid)
 }
 
 func (c *AppContext) GetOwnerForVendor(uuid uuid.UUID) (string, error) {
-	return c.vendorService.GetOwnerForVendor(uuid)
+	return c.ownerProvider.GetOwnerForVendor(uuid)
 }
 
 func CheckPermissions(group *RbacGroup, router Router) echo.MiddlewareFunc {
@@ -89,13 +88,12 @@ func CheckPermissions(group *RbacGroup, router Router) echo.MiddlewareFunc {
 	}
 }
 
-func NewAppContextMiddleware(gameService model.GameService, vendorService model.VendorService, enf *rbac.Enforcer) echo.MiddlewareFunc {
+func NewAppContextMiddleware(ownerProvider model.OwnerProvider, enf *rbac.Enforcer) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			context := AppContext{
 				enf:           enf,
-				gameService:   gameService,
-				vendorService: vendorService,
+				ownerProvider: ownerProvider,
 				Context:       c,
 			}
 			return next(context)

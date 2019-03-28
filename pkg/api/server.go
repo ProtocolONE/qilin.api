@@ -62,19 +62,11 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.echo.HidePort = true
 	server.echo.Debug = opts.ServerConfig.Debug
 
-	gameService, err := orm.NewGameService(server.db)
-	if err != nil {
-		return nil, err
-	}
-
-	vendorService, err := orm.NewVendorService(server.db)
-	if err != nil {
-		return nil, err
-	}
+	ownerProvider := orm.NewOwnerProvider(server.db)
 
 	server.echo.Use(ZapLogger(zap.L())) // logs all http requests
 	server.echo.Use(middleware.Recover())
-	server.echo.Use(qilin_middleware.NewAppContextMiddleware(gameService, vendorService, server.enforcer))
+	server.echo.Use(qilin_middleware.NewAppContextMiddleware(ownerProvider, server.enforcer))
 
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
 
@@ -110,7 +102,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.Router.Use(jwt_middleware.AuthOneJwtWithConfig(jwtv))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
-	if err := server.setupRoutes(gameService, vendorService, opts.Mailer); err != nil {
+	if err := server.setupRoutes(ownerProvider, opts.Mailer); err != nil {
 		zap.L().Fatal("Fail to setup routes", zap.Error(err))
 	}
 
@@ -123,7 +115,7 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes(gameService model.GameService, vendorService model.VendorService, mailer sys.Mailer) error {
+func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer) error {
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {
 		return err
@@ -185,12 +177,22 @@ func (s *Server) setupRoutes(gameService model.GameService, vendorService model.
 		return err
 	}
 
-	membershipService := orm.NewMembershipService(s.db, gameService, vendorService, s.enforcer)
+	membershipService := orm.NewMembershipService(s.db, ownerProvider, s.enforcer)
 	if err := membershipService.Init(); err != nil {
 		return err
 	}
 
 	if _, err := InitClientMembershipRouter(s.Router, membershipService); err != nil {
+		return err
+	}
+
+	gameService, err := orm.NewGameService(s.db)
+	if err != nil {
+		return err
+	}
+
+	vendorService, err := orm.NewVendorService(s.db, membershipService)
+	if err != nil {
 		return err
 	}
 

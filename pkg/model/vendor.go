@@ -24,10 +24,14 @@ type Vendor struct {
 	Users []User `gorm:"many2many:vendor_users;"`
 }
 
+type OwnerProvider interface {
+	GetOwnerForVendor(vendorId uuid.UUID) (string, error)
+	GetOwnerForGame(gameId uuid.UUID) (string, error)
+}
+
 type VendorService interface {
 	Create(g *Vendor) (*Vendor, error)
 	Update(g *Vendor) (*Vendor, error)
 	GetAll(int, int) ([]*Vendor, error)
 	FindByID(id uuid.UUID) (*Vendor, error)
-	GetOwnerForVendor(vendorId uuid.UUID) (string, error)
 }

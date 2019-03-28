@@ -13,24 +13,21 @@ import (
 
 type membershipService struct {
 	db            *Database
-	gameService   model.GameService
-	vendorService model.VendorService
+	ownerProvider model.OwnerProvider
 	enforcer      *rbac.Enforcer
 }
 
-func NewMembershipService(db *Database, gameService model.GameService, vendorService model.VendorService, enforcer *rbac.Enforcer) model.MembershipService {
-	return &membershipService{db: db, gameService: gameService, vendorService: vendorService, enforcer: enforcer}
+func NewMembershipService(db *Database, ownerProvider model.OwnerProvider, enforcer *rbac.Enforcer) model.MembershipService {
+	return &membershipService{db: db, ownerProvider: ownerProvider, enforcer: enforcer}
 }
 
 func (service *membershipService) Init() error {
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: model.DocumentsType, Action: "any", ResourceType: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: model.VendorType, Action: "any", ResourceType: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: model.MessagesType, Action: "any", ResourceType: "any", Effect: "allow"})
-	//service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: "any", Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.GameType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.GameListType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RolesType, Effect: "deny"})
-
 
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "read", Effect: "allow"})
@@ -50,7 +47,7 @@ func (service *membershipService) Init() error {
 }
 
 func (service *membershipService) GetUsers(vendorId uuid.UUID) ([]*model.UserRole, error) {
-	ownerId, err := service.vendorService.GetOwnerForVendor(vendorId)
+	ownerId, err := service.ownerProvider.GetOwnerForVendor(vendorId)
 
 	if err != nil {
 		return nil, err
@@ -161,7 +158,7 @@ func (service *membershipService) getUser(userId string, ownerId string) (*model
 }
 
 func (service *membershipService) GetUser(vendorId uuid.UUID, userId string) (*model.UserRole, error) {
-	ownerId, err := service.vendorService.GetOwnerForVendor(vendorId)
+	ownerId, err := service.ownerProvider.GetOwnerForVendor(vendorId)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +187,7 @@ func (service *membershipService) RemoveRoleToUserInGame(vendorId uuid.UUID, use
 		restrict = []string{gameId}
 	}
 
-	owner, err := service.vendorService.GetOwnerForVendor(vendorId)
+	owner, err := service.ownerProvider.GetOwnerForVendor(vendorId)
 	if err != nil {
 		return err
 	}
@@ -223,7 +220,7 @@ func (service *membershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId
 		restrict = []string{gameId}
 	}
 
-	owner, err := service.vendorService.GetOwnerForVendor(vendorId)
+	owner, err := service.ownerProvider.GetOwnerForVendor(vendorId)
 	if err != nil {
 		return err
 	}
@@ -261,6 +258,14 @@ func (service *membershipService) GetUserPermissions(vendorId uuid.UUID, userId 
 	return service.enforcer.GetPermissionsForUser(userId, "vendor", vendorId.String()), nil
 }
 
+
+func (service *membershipService) AddRoleToUser(vendorId uuid.UUID, userId string, owner string, role string) error {
+	if service.enforcer.AddRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: []string{"*"}}) == false {
+		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role, userId)
+	}
+	return nil
+}
+
 func appendIfMissing(slice []string, users []string, skipNames []string) []string {
 	for _, user := range users {
 		if array_utils.Contains(skipNames, user) || array_utils.Contains(slice, user) {
@@ -272,3 +277,4 @@ func appendIfMissing(slice []string, users []string, skipNames []string) []strin
 
 	return slice
 }
+
