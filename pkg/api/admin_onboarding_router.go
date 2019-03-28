@@ -154,7 +154,7 @@ func (api *OnboardingAdminRouter) getReviews(ctx echo.Context) error {
 	}
 
 	sort := ctx.QueryParam("sort")
-	requests, err := api.service.GetRequests(limit, offset, name, status, sort)
+	requests, count, err := api.service.GetRequests(limit, offset, name, status, sort)
 
 	if err != nil {
 		return err
@@ -184,6 +184,8 @@ func (api *OnboardingAdminRouter) getReviews(ctx echo.Context) error {
 	if dto == nil {
 		dto = make([]ShortDocumentsInfoDTO, 0)
 	}
+
+	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", count))
 
 	return ctx.JSON(http.StatusOK, dto)
 }
