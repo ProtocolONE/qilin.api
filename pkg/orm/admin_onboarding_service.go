@@ -20,10 +20,10 @@ func NewAdminOnboardingService(db *Database) (*AdminOnboardingService, error) {
 	return &AdminOnboardingService{db.database}, nil
 }
 
-func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string, status model.ReviewStatus, sort string) ([]model.DocumentsInfo, error) {
+func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string, status model.ReviewStatus, sort string) ([]model.DocumentsInfo, int, error) {
 
 	var documents []model.DocumentsInfo
-	query := p.db.Where("status <> ?", model.StatusDraft).Limit(limit).Offset(offset)
+	query := p.db.Model(model.DocumentsInfo{}).Where("status <> ?", model.StatusDraft).Limit(limit).Offset(offset)
 	if name != "" {
 		query = query.Where("company->>'Name' ILIKE ?", "%"+name+"%")
 	}
@@ -51,7 +51,7 @@ func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string,
 				orderBy = "company->>'Name' ASC"
 			}
 			if orderBy == "" {
-				return nil, NewServiceError(http.StatusBadRequest, fmt.Sprintf("Unsupported sorting '%s'", curSort))
+				return nil, 0, NewServiceError(http.StatusBadRequest, fmt.Sprintf("Unsupported sorting '%s'", curSort))
 			}
 			query = query.Order(orderBy)
 		}
@@ -60,10 +60,16 @@ func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string,
 	err := query.Find(&documents).Error
 
 	if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, err)
+		return nil, 0, NewServiceError(http.StatusInternalServerError, err)
 	}
 
-	return documents, nil
+	count := 0
+	err = query.Limit(nil).Offset(nil).Count(&count).Error
+	if err != nil {
+		return nil, 0, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Counting reviews"))
+	}
+
+	return documents, count, nil
 }
 
 func (p *AdminOnboardingService) GetForVendor(vendorId uuid.UUID) (*model.DocumentsInfo, error) {

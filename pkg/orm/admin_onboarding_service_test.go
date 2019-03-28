@@ -338,41 +338,41 @@ func (suite *AdminOnboardingServiceTestSuite) TestChangeStatus() {
 func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 	should := require.New(suite.T())
 
-	requests, err := suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "")
+	requests, count, err := suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(13, len(requests))
 
-	requests, err = suite.service.GetRequests(100, 10, "", model.ReviewUndefined, "")
+	requests, count, err = suite.service.GetRequests(100, 10, "", model.ReviewUndefined, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(3, len(requests))
 
-	requests, err = suite.service.GetRequests(100, 100, "", model.ReviewUndefined, "")
+	requests, count, err = suite.service.GetRequests(100, 100, "", model.ReviewUndefined, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(0, len(requests))
 
 	for i := 1; i <= 10; i++ {
-		requests, err = suite.service.GetRequests(i, 0, "", model.ReviewUndefined, "")
+		requests, count, err = suite.service.GetRequests(i, 0, "", model.ReviewUndefined, "")
 		should.Nil(err)
 		should.NotNil(requests)
 		should.Equal(i, len(requests))
 	}
 
-	requests, err = suite.service.GetRequests(100, 0, "MEGA", model.ReviewUndefined, "")
+	requests, count, err = suite.service.GetRequests(100, 0, "MEGA", model.ReviewUndefined, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(1, len(requests))
 	should.Equal("MEGA TEST", requests[0].Company["Name"])
 
-	requests, err = suite.service.GetRequests(100, 0, "mega", model.ReviewUndefined, "")
+	requests, count, err = suite.service.GetRequests(100, 0, "mega", model.ReviewUndefined, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(1, len(requests))
 	should.Equal("MEGA TEST", requests[0].Company["Name"])
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-status")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-status")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(13, len(requests))
@@ -383,7 +383,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.Equal(model.ReviewNew, requests[i].ReviewStatus)
 	}
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+status")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+status")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(13, len(requests))
@@ -394,7 +394,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 	should.Equal(model.ReviewChecking, requests[11].ReviewStatus)
 	should.Equal(model.ReviewApproved, requests[10].ReviewStatus)
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+name")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+name")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(13, len(requests))
@@ -405,7 +405,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.Equal("ZTEST2", requests[i].Company["Name"])
 	}
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-name")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-name")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(13, len(requests))
@@ -416,7 +416,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 	should.Equal("MEGA TEST", requests[11].Company["Name"])
 	should.Equal("PUBG TEST", requests[10].Company["Name"])
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-updatedAt")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "-updatedAt")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(13, len(requests))
@@ -425,7 +425,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.True(requests[i].UpdatedAt.After(requests[i+1].UpdatedAt))
 	}
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+updatedAt")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewUndefined, "+updatedAt")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(13, len(requests))
@@ -434,7 +434,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.True(requests[i].UpdatedAt.Before(requests[i+1].UpdatedAt))
 	}
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewNew, "")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewNew, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(10, len(requests))
@@ -443,7 +443,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.Equal(model.ReviewNew, requests[i].ReviewStatus)
 	}
 
-	requests, err = suite.service.GetRequests(100, 5, "", model.ReviewNew, "")
+	requests, count, err = suite.service.GetRequests(100, 5, "", model.ReviewNew, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(5, len(requests))
@@ -452,7 +452,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.Equal(model.ReviewNew, requests[i].ReviewStatus)
 	}
 
-	requests2, err := suite.service.GetRequests(5, 0, "", model.ReviewNew, "")
+	requests2, count, err := suite.service.GetRequests(5, 0, "", model.ReviewNew, "")
 	should.Nil(err)
 	should.NotNil(requests2)
 	should.Equal(5, len(requests2))
@@ -462,7 +462,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.NotEqual(requests[i].ID, requests2[i].ID)
 	}
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewChecking, "")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewChecking, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(1, len(requests))
@@ -471,7 +471,7 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.Equal(model.ReviewChecking, requests[i].ReviewStatus)
 	}
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewApproved, "")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewApproved, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(1, len(requests))
@@ -480,10 +480,11 @@ func (suite *AdminOnboardingServiceTestSuite) TestSearching() {
 		should.Equal(model.ReviewApproved, requests[i].ReviewStatus)
 	}
 
-	requests, err = suite.service.GetRequests(100, 0, "", model.ReviewReturned, "")
+	requests, count, err = suite.service.GetRequests(100, 0, "", model.ReviewReturned, "")
 	should.Nil(err)
 	should.NotNil(requests)
 	should.Equal(1, len(requests))
+	should.Equal(1, count)
 
 	for i := 0; i > len(requests); i++ {
 		should.Equal(model.ReviewReturned, requests[i].ReviewStatus)
