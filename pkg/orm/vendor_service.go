@@ -27,7 +27,7 @@ func NewVendorService(db *Database, membershipService model.MembershipService) (
 }
 
 func (p *VendorService) validate(item *model.Vendor) error {
-	if strings.Index(item.Email, "@") < 1 {
+	if item.Email != "" && strings.Index(item.Email, "@") != 1 {
 		return NewServiceError(http.StatusBadRequest, "Invalid Email")
 	}
 	if len(item.Name) < 2 {

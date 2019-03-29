@@ -22,7 +22,7 @@ type (
 		Id              uuid.UUID `json:"id"`
 		Name            string    `json:"name" validate:"required,min=2"`
 		Domain3         string    `json:"domain3" validate:"required,min=2"`
-		Email           string    `json:"email" validate:"required,email"`
+		Email           string    `json:"email" validate:"email"`
 		ManagerId       string    `json:"manager_id"`
 		HowManyProducts string    `json:"howmanyproducts"`
 	}

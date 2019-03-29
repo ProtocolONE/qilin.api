@@ -15,7 +15,7 @@ type Vendor struct {
 	// 3d level domain - example.super.com
 	Domain3 string `gorm:"unique; not null"`
 	// Main email for notifications and bills
-	Email           string `gorm:"unique; not null"`
+	Email           string
 	HowManyProducts string `gorm:"column:howmanyproducts; not null;"`
 
 	Manager   *User
