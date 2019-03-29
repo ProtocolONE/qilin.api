@@ -115,7 +115,6 @@ func (p *VendorService) FindByID(id uuid.UUID) (vendor *model.Vendor, err error)
 }
 
 func (p *VendorService) GetAll(limit, offset int) (vendors []*model.Vendor, err error) {
-
 	err = p.db.
 		Offset(offset).
 		Limit(limit).

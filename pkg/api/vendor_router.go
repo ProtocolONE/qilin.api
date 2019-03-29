@@ -78,7 +78,7 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 			owner := v.ManagerID
 
 			// filter games that user do not have rights
-			if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.GameType, "*", owner, "read") != nil {
+			if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.VendorType, "*", owner, "read") != nil {
 				continue
 			}
 
