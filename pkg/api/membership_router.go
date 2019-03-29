@@ -65,6 +65,9 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 	//TODO: Hack. Remove after needed functionality implemented
 	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
 
+	//TODO: Hack. Remove after needed functionality implemented
+	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
+
 	return res, nil
 }
 

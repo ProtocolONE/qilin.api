@@ -178,6 +178,22 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
+	packageService, err := orm.NewPackageService(s.db)
+	if err != nil {
+		return err
+	}
+	if _, err := InitPackageRouter(s.Router, packageService); err != nil {
+		return err
+	}
+
+	bundleService, err := orm.NewBundleService(s.db)
+	if err != nil {
+		return err
+	}
+	if _, err := InitBundleRouter(s.Router, bundleService); err != nil {
+		return err
+	}
+
 	adminClientOnboarding, err := orm.NewAdminOnboardingService(s.db, membershipService, ownerProvider)
 	if err != nil {
 		return err

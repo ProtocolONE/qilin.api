@@ -11,8 +11,8 @@ import (
 //      model.Model
 //    }
 type Model struct {
-	ID        uuid.UUID `gorm:"type:uuid; primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uuid.UUID  `gorm:"type:uuid; primary_key"`
+	CreatedAt time.Time  `gorm:"default:now()"`
+	UpdatedAt time.Time  `gorm:"default:now()"`
 	DeletedAt *time.Time `sql:"index"`
 }
