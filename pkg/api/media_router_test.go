@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
@@ -97,7 +97,7 @@ func (suite *MediaRouterTestSuite) TestGetMediaShouldReturnEmptyObject() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), emptyObject, rec.Body.String())
+		assert.JSONEq(suite.T(), emptyObject, rec.Body.String())
 	}
 }
 
@@ -128,7 +128,7 @@ func (suite *MediaRouterTestSuite) TestPutMediaShouldUpdateGame() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), emptyObject, rec.Body.String())
+		assert.JSONEq(suite.T(), emptyObject, rec.Body.String())
 	}
 }
 

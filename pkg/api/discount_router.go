@@ -10,7 +10,7 @@ import (
 	"qilin-api/pkg/orm"
 	"time"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
 )
 

@@ -1,33 +1,51 @@
 package model
 
-import "time"
+import (
+	"github.com/lib/pq"
+	"github.com/satori/go.uuid"
+)
 
-type Asset interface {
-	UniqueID() string
-}
+type BuyOption string
 
-type Package struct {
-	// unique merchant identifier in auth system
-	ID string `json:"id" validate:"required"`
+const (
+	Whole BuyOption = "whole"
+	Part BuyOption = "part"
+)
 
-	// game name
-	Name string `bson:"name"`
+type (
+	Package struct {
+		Model
+		Sku                 string
+		Name                string
+		Image               string
+		ImageCover          string
+		ImageThumb          string
+		IsUpgradeAllowed    bool
+		IsEnabled           bool
+		VendorID            uuid.UUID
+		Vendor              Vendor
+		// DiscountPolicy
+		Discount            uint
+		DiscountBuyOpt      BuyOption
+		// RegionalRestrinctions
+		AllowedCountries    pq.StringArray  `gorm:"type:text[]"`
+		// Package payload
+		Products            []Product       `gorm:"-"`
+	}
 
-	Assets []Asset `bson:"assets"`
+	PackageProduct struct {
+		PackageID           uuid.UUID
+		ProductID           uuid.UUID
+		Position            int
+	}
 
-	// date of create merchant in system
-	CreatedAt time.Time `json:"created_at"`
-
-	// date of last update merchant in system
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// GameService is a helper service class to interact with Game object.
-type PackageService interface {
-	CreatePackage(g *Game) error
-	UpdatePackage(g *Game) error
-	DeletePackage(g *Game) error
-	GetAll() ([]*Game, error)
-	FindByID(id string) (*Game, error)
-	FindByName(name string) ([]*Game, error)
-}
+	PackageService interface {
+		Create(vendorId uuid.UUID, name string, prods []uuid.UUID) (*Package, error)
+		Get(packageId uuid.UUID) (result *Package, err error)
+		GetList(vendorId uuid.UUID, query, orderBy string, offset, limit int) (result []Package, err error)
+		AddProducts(packageId uuid.UUID, prods []uuid.UUID) (*Package, error)
+		RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) (*Package, error)
+		Update(pkg *Package) (result *Package, err error)
+		Remove(packageId uuid.UUID) (err error)
+	}
+)

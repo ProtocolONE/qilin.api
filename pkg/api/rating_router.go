@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"

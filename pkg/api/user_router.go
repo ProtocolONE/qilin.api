@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/model"

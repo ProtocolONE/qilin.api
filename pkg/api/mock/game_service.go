@@ -70,6 +70,10 @@ func (gameService) UpdateDescr(descr *model.GameDescr) error {
 	return nil
 }
 
+func (gameService) GetProduct(gameId uuid.UUID) (model.Product, error) {
+	return nil, nil
+}
+
 func NewGameService(_ *orm.Database) (model.GameService, error) {
 	return &gameService{}, nil
 }

@@ -155,6 +155,7 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 	item.Tags = []int64{}
 	item.VendorID = vendorId
 	item.CreatorID = userId
+	item.Product.EntryID = item.ID
 
 	err = p.db.Create(item).Error
 	if err != nil {
@@ -274,6 +275,21 @@ func (p *gameService) GetInfo(gameId uuid.UUID) (game *model.Game, err error) {
 	}
 
 	return game, nil
+}
+
+func (p *gameService) GetProduct(gameId uuid.UUID) (model.Product, error) {
+
+	game := model.ProductGameImpl{}
+	err := p.db.
+		Where("id = ?", gameId).
+		First(&game).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, NewServiceError(404, "Game not found")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "Fetch game info")
+	}
+
+	return &game, nil
 }
 
 func (p *gameService) Delete(userId string, gameId uuid.UUID) (err error) {

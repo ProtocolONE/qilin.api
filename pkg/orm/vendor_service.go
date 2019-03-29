@@ -27,7 +27,7 @@ func NewVendorService(db *Database, membershipService model.MembershipService) (
 }
 
 func (p *VendorService) validate(item *model.Vendor) error {
-	if strings.Index(item.Email, "@") < 1 {
+	if item.Email != "" && strings.Index(item.Email, "@") == -1 {
 		return NewServiceError(http.StatusBadRequest, "Invalid Email")
 	}
 	if len(item.Name) < 2 {
@@ -71,7 +71,7 @@ func (p *VendorService) Create(item *model.Vendor) (result *model.Vendor, err er
 		return nil, errors.Wrap(err, "Append to association")
 	}
 
-	err = p.membershipService.AddRoleToUser(vendor.ID, vendor.ManagerID, vendor.ManagerID, model.NotApproved)
+	err = p.membershipService.AddRoleToUser(vendor.ManagerID, vendor.ManagerID, model.NotApproved)
 	if err != nil {
 		tx.Rollback()
 		return &vendor, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Set role to owner"))

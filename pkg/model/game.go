@@ -51,6 +51,8 @@ type (
 		CreatedAt time.Time  `gorm:"default:now()"`
 		UpdatedAt time.Time  `gorm:"default:now()"`
 		DeletedAt *time.Time `sql:"index"`
+
+		Product ProductEntry `gorm:"polymorphic:Entry;"`
 	}
 
 	GameDescr struct {
@@ -71,6 +73,11 @@ type (
 		Price
 	}
 
+	ProductGameImpl struct {
+		Game
+		Media
+	}
+
 	// GameService is a helper service class to interact with Game object.
 	GameService interface {
 		CreateTags([]GameTag) error
@@ -89,9 +96,34 @@ type (
 		UpdateInfo(game *Game) error
 		GetDescr(gameId uuid.UUID) (*GameDescr, error)
 		UpdateDescr(descr *GameDescr) error
+		GetProduct(gameId uuid.UUID) (Product, error)
 	}
 )
 
 func (ShortGameInfo) TableName() string {
 	return "games"
+}
+
+func (ProductGameImpl) TableName() string {
+	return "games"
+}
+
+func (p *ProductGameImpl) GetID() uuid.UUID {
+	return p.Game.ID
+}
+
+func (p *ProductGameImpl) GetName() string {
+	return p.Game.InternalName
+}
+
+func (p *ProductGameImpl) GetType() ProductType {
+	return ProductGame
+}
+
+func (p *ProductGameImpl) GetImage(lang string) string {
+	if p.Media.CoverImage == nil {
+		return ""
+	}
+	found, _ := p.Media.CoverImage[lang]
+	return found.(string)
 }
