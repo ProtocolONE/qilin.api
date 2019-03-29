@@ -2,6 +2,7 @@
 # Declare variables to be passed into your templates.
 
 enableCertIssuer: true
+enableRedis: true
 
 ingress:
   hostname: qilinapi.tst.protocol.one
@@ -28,6 +29,8 @@ backend:
     - QILINAPI_SERVER_DEBUG
     - QILINAPI_DATABASE_DSN
     - QILINAPI_DATABASE_DEBUG
+    - QILINAPI_ENFORCER_HOST
+    - QILINAPI_ENFORCER_PORT
     - QILINAPI_LOG_LEVEL
     - QILINAPI_LOG_REPORT_CALLER
     - QILINAPI_MAILER_HOST
