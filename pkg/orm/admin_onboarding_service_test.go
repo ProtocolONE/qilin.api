@@ -1,7 +1,6 @@
 package orm_test
 
 import (
-	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"qilin-api/pkg/model"
@@ -65,13 +64,6 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 
 	userId := user.ID
 
-	ownProvider := orm.NewOwnerProvider(suite.db)
-	enf := rbac.NewEnforcer()
-	membershipService := orm.NewMembershipService(suite.db, ownProvider, enf)
-
-	vendorService, err := orm.NewVendorService(db, membershipService)
-	suite.Nil(err, "Unable make vendor service")
-
 	vendor := model.Vendor{
 		ID:              uuid.NewV4(),
 		Name:            "domino",
@@ -80,8 +72,7 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 		HowManyProducts: "+1000",
 		ManagerID:       userId,
 	}
-	_, err = vendorService.Create(&vendor)
-	suite.Nil(err, "Must create new vendor")
+	suite.Nil(db.DB().Create(&vendor).Error)
 
 	vendor2 := model.Vendor{
 		ID:              uuid.FromStringOrNil("5862ead5-acf5-4092-a7bc-a645f279096d"),
@@ -91,7 +82,7 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 		HowManyProducts: "+10004",
 		ManagerID:       userId,
 	}
-	_, err = vendorService.Create(&vendor2)
+	suite.Nil(db.DB().Create(&vendor2).Error)
 
 	id, _ := uuid.FromString(GameID)
 	game := model.Game{}
