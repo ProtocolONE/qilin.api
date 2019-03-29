@@ -259,7 +259,7 @@ func (service *membershipService) GetUserPermissions(vendorId uuid.UUID, userId 
 }
 
 
-func (service *membershipService) AddRoleToUser(vendorId uuid.UUID, userId string, owner string, role string) error {
+func (service *membershipService) AddRoleToUser(userId string, owner string, role string) error {
 	if service.enforcer.AddRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: []string{"*"}}) == false {
 		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role, userId)
 	}

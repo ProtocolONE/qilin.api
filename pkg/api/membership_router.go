@@ -37,7 +37,20 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 	route.PUT("/memberships/:userId", res.changeUserRoles, nil)
 	route.GET("/memberships/:userId/permissions", res.getUserPermissions, nil)
 
+	//TODO: Hack. Remove after needed functionality implemented
+	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
+
 	return res, nil
+}
+
+//TODO: Hack. Remove after needed functionality implemented
+func (api *MembershipRouter) addAdminRole(ctx echo.Context) error {
+	userId := ctx.Param("userId")
+	if err := api.service.AddRoleToUser(userId, "*", model.SuperAdmin); err != nil {
+		return err
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (api *MembershipRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {

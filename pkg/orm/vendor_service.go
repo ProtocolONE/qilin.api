@@ -71,7 +71,7 @@ func (p *VendorService) Create(item *model.Vendor) (result *model.Vendor, err er
 		return nil, errors.Wrap(err, "Append to association")
 	}
 
-	err = p.membershipService.AddRoleToUser(vendor.ID, vendor.ManagerID, vendor.ManagerID, model.NotApproved)
+	err = p.membershipService.AddRoleToUser(vendor.ManagerID, vendor.ManagerID, model.NotApproved)
 	if err != nil {
 		tx.Rollback()
 		return &vendor, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Set role to owner"))
