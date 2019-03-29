@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/utils"
@@ -41,24 +42,28 @@ type (
 	}
 )
 
-//InitPriceRouter is initialization method for router
+//InitPriceRouter is initialization method for group
 func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *PriceRouter, err error) {
 	priceRouter := PriceRouter{
 		service: service,
 	}
 
-	r := group.Group("/games/:id")
+	r := rbac_echo.Group(group,"/games/:gameId", &priceRouter, []string{"gameId", model.GameType, model.VendorDomain})
 
-	r.GET("/prices", priceRouter.getBase)
-	r.PUT("/prices", priceRouter.putBase)
-	r.PUT("/prices/:currency", priceRouter.updatePrice)
-	r.DELETE("/prices/:currency", priceRouter.deletePrice)
+	r.GET("/prices", priceRouter.getBase, nil)
+	r.PUT("/prices", priceRouter.putBase, nil)
+	r.PUT("/prices/:currency", priceRouter.updatePrice, nil)
+	r.DELETE("/prices/:currency", priceRouter.deletePrice, nil)
 
 	return &priceRouter, nil
 }
 
+func (router *PriceRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	return GetOwnerForGame(ctx)
+}
+
 func (router *PriceRouter) getBase(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
@@ -81,7 +86,7 @@ func (router *PriceRouter) getBase(ctx echo.Context) error {
 }
 
 func (router *PriceRouter) putBase(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
@@ -116,7 +121,7 @@ func (router *PriceRouter) putBase(ctx echo.Context) error {
 }
 
 func (router *PriceRouter) deletePrice(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
@@ -138,7 +143,7 @@ func (router *PriceRouter) deletePrice(ctx echo.Context) error {
 }
 
 func (router *PriceRouter) updatePrice(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")

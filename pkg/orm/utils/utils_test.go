@@ -26,7 +26,7 @@ func TestCheckExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	game := &model.Game{ID: uuid.NewV4(), Tags: []int64{1, 2}, GenreMain: 1, GenreAddition: []int64{2}, FeaturesCommon: []string{"1", "2"}, VendorID: uuid.NewV4(), CreatorID: uuid.NewV4(), Title: "asd"}
+	game := &model.Game{ID: uuid.NewV4(), Tags: []int64{1, 2}, GenreMain: 1, GenreAddition: []int64{2}, FeaturesCommon: []string{"1", "2"}, VendorID: uuid.NewV4(), CreatorID: uuid.NewV4().String(), Title: "asd"}
 	err = db.DB().Create(game).Error
 	if err != nil {
 		t.FailNow()

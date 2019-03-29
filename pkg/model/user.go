@@ -1,16 +1,14 @@
 package model
 
 import (
-	"github.com/satori/go.uuid"
 	"time"
 )
 
 type User struct {
-	ID         uuid.UUID  `gorm:"type:uuid; primary_key; default:gen_random_uuid()"`
-	ExternalID string     `gorm:"type:varchar(64); unique_index"`
-	CreatedAt  time.Time  `gorm:"default:now()"`
-	UpdatedAt  time.Time  `gorm:"default:now()"`
-	DeletedAt  *time.Time `sql:"index"`
+	ID        string     `gorm:"type:varchar(64); primary_key"`
+	CreatedAt time.Time  `gorm:"default:now()"`
+	UpdatedAt time.Time  `gorm:"default:now()"`
+	DeletedAt *time.Time `sql:"index"`
 
 	// User nickname for public display
 	Nickname string
@@ -18,16 +16,20 @@ type User struct {
 	Password string
 	Lang     string `gorm:"default:'ru'"`
 	Currency string `gorm:"default:'usd'"`
+	Email    string
+	FullName string
+
+	LastSeen *time.Time
 
 	Vendors []Vendor `gorm:"many2many:vendor_users;"`
 }
 
 type UserInfo struct {
-	Id       uuid.UUID `json:"id"`
-	Nickname string    `json:"nickname"`
-	Avatar   string    `json:"avatar"`
-	Lang     string    `json:"lang"`
-	Currency string    `json:"currency"`
+	Id       string `json:"id"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Lang     string `json:"lang"`
+	Currency string `json:"currency"`
 }
 
 type LoginResult struct {
@@ -42,7 +44,6 @@ type AppState struct {
 
 // UserService is a helper service class to interact with User.
 type UserService interface {
-	FindByID(id *uuid.UUID) (User, error)
-	FindByExternalID(id string) (User, error)
+	FindByID(id string) (User, error)
 	Create(id string, lang string) (User, error)
 }

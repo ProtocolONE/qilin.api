@@ -8,6 +8,10 @@ import (
 )
 
 func (s *Server) QilinErrorHandler(err error, c echo.Context) {
+	QilinErrorHandler(err, c, s.echo.Debug)
+}
+
+func QilinErrorHandler(err error, c echo.Context, isDebug bool) {
 	var (
 		code = http.StatusInternalServerError
 		msg  interface{}
@@ -19,7 +23,7 @@ func (s *Server) QilinErrorHandler(err error, c echo.Context) {
 	} else if se, ok := err.(*orm.ServiceError); ok {
 		msg = echo.Map{"message": se.Message, "code": se.Code}
 		code = se.Code
-	} else if s.echo.Debug {
+	} else if isDebug {
 		msg = err.Error()
 	} else {
 		msg = http.StatusText(code)

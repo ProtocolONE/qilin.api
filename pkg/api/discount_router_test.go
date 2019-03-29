@@ -90,8 +90,8 @@ func (suite *DiscountRouterTestSuite) TEstGetDiscountsShouldReturnObjects() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -119,8 +119,8 @@ func (suite *DiscountRouterTestSuite) TestGetDiscountsShouldReturnEmptyArray() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -137,8 +137,8 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountShouldReturnId() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -153,8 +153,8 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountWithIncorrectIdShouldRetur
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts")
+	c.SetParamNames("gameId")
 	c.SetParamValues("BAD-TestID")
 
 	// Assertions
@@ -167,8 +167,8 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountWithIncorrectObjectShouldR
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -181,8 +181,8 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountWithEmptyObjectShouldRetur
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -195,8 +195,8 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithIncorrectIdShouldReturn
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId")
 	c.SetParamValues("BAD-TestID", uuid.NewV4().String())
 
 	// Assertions
@@ -222,8 +222,8 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithCorrectObjectShouldRetu
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id", "discountId")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId", "discountId")
 	c.SetParamValues(TestID, discount.ID.String())
 
 	// Assertions
@@ -250,8 +250,8 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithIncorrectObjectShouldRe
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id", "discountId")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId", "discountId")
 	c.SetParamValues(TestID, discount.ID.String())
 
 	// Assertions
@@ -277,8 +277,8 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithEmptyObjectShouldReturn
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id", "discountId")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId", "discountId")
 	c.SetParamValues(TestID, discount.ID.String())
 
 	// Assertions
@@ -291,8 +291,8 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithUnknownDiscountIdShould
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id", "discountId")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId", "discountId")
 	c.SetParamValues(TestID, "00000000-0000-0000-0000-000000000000")
 
 	// Assertions
@@ -305,8 +305,8 @@ func (suite *DiscountRouterTestSuite) TestGetDiscountsWithInvalidIdShouldReturnE
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts")
+	c.SetParamNames("gameId")
 	c.SetParamValues("BAD-TestID")
 
 	// Assertions
@@ -319,8 +319,8 @@ func (suite *DiscountRouterTestSuite) TestGetDiscountsWithUnknownIdShouldReturnE
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/discounts")
+	c.SetParamNames("gameId")
 	c.SetParamValues("00000000-0000-0000-0000-000000000000")
 
 	// Assertions
@@ -333,8 +333,8 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithIncorrectIdShouldRet
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id", "discountId")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId", "discountId")
 	c.SetParamValues("BAD-TestID", uuid.NewV4().String())
 
 	// Assertions
@@ -347,8 +347,8 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithUnknownDiscountIDSho
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id", "discountId")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId", "discountId")
 	c.SetParamValues(TestID, uuid.NewV4().String())
 
 	// Assertions
@@ -361,8 +361,8 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithIncorrectDiscountIDS
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id", "discountId")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId", "discountId")
 	c.SetParamValues(TestID, "BAD-TestID")
 
 	// Assertions
@@ -388,8 +388,8 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithCorrectIdShouldRetur
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/discounts/:discountId")
-	c.SetParamNames("id", "discountId")
+	c.SetPath("/api/v1/games/:gameId/discounts/:discountId")
+	c.SetParamNames("gameId", "discountId")
 	c.SetParamValues(TestID, discount.ID.String())
 
 	// Assertions

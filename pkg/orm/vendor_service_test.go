@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"github.com/ProtocolONE/rbac"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,9 +53,12 @@ func (suite *VendorServiceTestSuite) TearDownTest() {
 func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 	req := require.New(suite.T())
 
-	vendorService, err := orm.NewVendorService(suite.db)
+	ownProvider := orm.NewOwnerProvider(suite.db)
+	enf := rbac.NewEnforcer()
+	memServide := orm.NewMembershipService(suite.db, ownProvider, enf)
+	vendorService, err := orm.NewVendorService(suite.db, memServide)
 
-	userId := uuid.NamespaceDNS
+	userId := uuid.NamespaceDNS.String()
 
 	vendor := model.Vendor{
 		ID:        uuid.NewV4(),

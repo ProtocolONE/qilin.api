@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/pkg/errors"
 	"net/http"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
@@ -39,17 +40,21 @@ func InitDiscountsRouter(group *echo.Group, service *orm.DiscountService) (*Disc
 		service: service,
 	}
 
-	r := group.Group("/games/:id")
-	r.GET("/discounts", router.get)
-	r.POST("/discounts", router.post)
-	r.PUT("/discounts/:discountId", router.put)
-	r.DELETE("/discounts/:discountId", router.delete)
+	r := rbac_echo.Group(group,"/games/:gameId", &router, []string{"gameId", model.GameType, model.VendorDomain})
+	r.GET("/discounts", router.get, nil)
+	r.POST("/discounts", router.post, nil)
+	r.PUT("/discounts/:discountId", router.put, nil)
+	r.DELETE("/discounts/:discountId", router.delete, nil)
 
 	return &router, nil
 }
 
+func (router *DiscountsRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	return GetOwnerForGame(ctx)
+}
+
 func (router *DiscountsRouter) post(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -83,7 +88,7 @@ func (router *DiscountsRouter) post(ctx echo.Context) error {
 }
 
 func (router *DiscountsRouter) get(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -115,7 +120,7 @@ func (router *DiscountsRouter) get(ctx echo.Context) error {
 }
 
 func (router *DiscountsRouter) put(ctx echo.Context) error {
-	gameId, err := uuid.FromString(ctx.Param("id"))
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}
@@ -153,7 +158,7 @@ func (router *DiscountsRouter) put(ctx echo.Context) error {
 }
 
 func (router *DiscountsRouter) delete(ctx echo.Context) error {
-	_, err := uuid.FromString(ctx.Param("id"))
+	_, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
 	}

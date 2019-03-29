@@ -9,7 +9,7 @@ type Notification struct {
 	Message  string
 	IsRead   bool      `gorm:"not null;default:false"`
 	VendorID uuid.UUID `gorm:"type:uuid;not null"`
-	UserID   uuid.UUID `gorm:"type:uuid;not null"`
+	UserID   string    `gorm:"not null"`
 }
 
 type NotificationService interface {

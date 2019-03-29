@@ -52,7 +52,7 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 	suite.service = service
 
 	user := model.User{
-		ID:       uuid.NewV4(),
+		ID:       uuid.NewV4().String(),
 		Login:    "test@protocol.one",
 		Password: "megapass",
 		Nickname: "Test",
@@ -64,9 +64,6 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 
 	userId := user.ID
 
-	vendorService, err := orm.NewVendorService(db)
-	suite.Nil(err, "Unable make vendor service")
-
 	vendor := model.Vendor{
 		ID:              uuid.NewV4(),
 		Name:            "domino",
@@ -75,8 +72,7 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 		HowManyProducts: "+1000",
 		ManagerID:       userId,
 	}
-	_, err = vendorService.Create(&vendor)
-	suite.Nil(err, "Must create new vendor")
+	suite.Nil(db.DB().Create(&vendor).Error)
 
 	vendor2 := model.Vendor{
 		ID:              uuid.FromStringOrNil("5862ead5-acf5-4092-a7bc-a645f279096d"),
@@ -86,7 +82,7 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 		HowManyProducts: "+10004",
 		ManagerID:       userId,
 	}
-	_, err = vendorService.Create(&vendor2)
+	suite.Nil(db.DB().Create(&vendor2).Error)
 
 	id, _ := uuid.FromString(GameID)
 	game := model.Game{}

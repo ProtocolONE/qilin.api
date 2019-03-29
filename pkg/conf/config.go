@@ -7,6 +7,12 @@ type Config struct {
 	Auth1    Auth1
 	Mailer   Mailer
 	Notifier Notifier
+	Enforcer Enforcer
+}
+
+type Enforcer struct {
+	Host string `envconfig:"HOST" required:"false" default:"127.0.0.1"`
+	Port int    `envconfig:"PORT" required:"false" default:"6379"`
 }
 
 // ServerConfig specifies all the parameters needed for http server

@@ -99,8 +99,8 @@ func (suite *PriceRouterTestSuite) TestGetBasePriceShouldReturnEmptyObject() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/prices")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -115,8 +115,8 @@ func (suite *PriceRouterTestSuite) TestPutBasePriceShouldReturnOk() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/prices")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -131,8 +131,8 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnOk() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices/:currency")
-	c.SetParamNames("id", "currency")
+	c.SetPath("/api/v1/games/:gameId/prices/:currency")
+	c.SetParamNames("gameId", "currency")
 	c.SetParamValues(TestID, "USD")
 
 	// Assertions
@@ -147,8 +147,8 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnBadRequest() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices/:currency")
-	c.SetParamNames("id", "currency")
+	c.SetPath("/api/v1/games/:gameId/prices/:currency")
+	c.SetParamNames("gameId", "currency")
 	c.SetParamValues(TestID, "USD")
 
 	he := suite.router.updatePrice(c).(*orm.ServiceError)
@@ -160,8 +160,8 @@ func (suite *PriceRouterTestSuite) TestPutWithIncorrectCurrencyPriceShouldReturn
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices/:currency")
-	c.SetParamNames("id", "currency")
+	c.SetPath("/api/v1/games/:gameId/prices/:currency")
+	c.SetParamNames("gameId", "currency")
 	c.SetParamValues(TestID, "EUR")
 
 	he := suite.router.putBase(c).(*orm.ServiceError)
@@ -173,8 +173,8 @@ func (suite *PriceRouterTestSuite) TestPutBadModelShouldReturn422() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/prices")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -187,8 +187,8 @@ func (suite *PriceRouterTestSuite) TestPutWithUnknownIdModelShouldReturnNotFound
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/prices")
+	c.SetParamNames("gameId")
 	c.SetParamValues("00000000-0000-0000-0000-000000000000")
 
 	// Assertions
@@ -201,8 +201,8 @@ func (suite *PriceRouterTestSuite) TestPutWithBadIdModelShouldReturnBadRequest()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/prices")
+	c.SetParamNames("gameId")
 	c.SetParamValues("0000")
 
 	// Assertions
@@ -215,8 +215,8 @@ func (suite *PriceRouterTestSuite) TestDeleteUnknownCurrencyShouldReturnError() 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices/:currency")
-	c.SetParamNames("id", "currency")
+	c.SetPath("/api/v1/games/:gameId/prices/:currency")
+	c.SetParamNames("gameId", "currency")
 	c.SetParamValues(TestID, "XXX")
 
 	// Assertions
@@ -233,8 +233,8 @@ func (suite *PriceRouterTestSuite) TestPutBasePriceWihhUnknownCurrencyShouldRetu
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices/")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/prices/")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -263,8 +263,8 @@ func (suite *PriceRouterTestSuite) TestPutBadObjectsShouldReturnError() {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/games/:id/prices/:currency")
-		c.SetParamNames("id", "currency")
+		c.SetPath("/api/v1/games/:gameId/prices/:currency")
+		c.SetParamNames("gameId", "currency")
 		c.SetParamValues(TestID, "USD")
 
 		// Assertions
@@ -282,8 +282,8 @@ func (suite *PriceRouterTestSuite) TestPutUnknownCurrencyShouldReturnError() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/prices/:currency")
-	c.SetParamNames("id", "currency")
+	c.SetPath("/api/v1/games/:gameId/prices/:currency")
+	c.SetParamNames("gameId", "currency")
 	c.SetParamValues(TestID, "XXX")
 
 	// Assertions

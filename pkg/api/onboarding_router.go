@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -66,10 +67,10 @@ type (
 	}
 
 	DocumentsInfoResponseDTO struct {
-		Company  CompanyDTO `json:"company" validate:"required,dive"`
-		Contact  ContactDTO `json:"contact" validate:"required,dive"`
-		Banking  BankingDTO `json:"banking" validate:"required,dive"`
-		Status   string     `json:"status"`
+		Company CompanyDTO `json:"company" validate:"required,dive"`
+		Contact ContactDTO `json:"contact" validate:"required,dive"`
+		Banking BankingDTO `json:"banking" validate:"required,dive"`
+		Status  string     `json:"status"`
 	}
 )
 
@@ -78,21 +79,30 @@ func InitClientOnboardingRouter(group *echo.Group, service *orm.OnboardingServic
 		service:             service,
 		notificationService: notificationService,
 	}
-	r := group.Group("/vendors/:id")
-	r.GET("/documents", router.getDocument)
-	r.PUT("/documents", router.changeDocument)
-	r.POST("/documents/reviews", router.sendToReview)
-	r.DELETE("/documents/reviews", router.revokeReview)
-	r.GET("/messages", router.getNotifications)
-	r.GET("/messages/:messageId", router.getNotification)
-	r.PUT("/messages/:messageId/read", router.markAsRead)
-	r.GET("/messages/short", router.getLastNotifications)
+
+	common := []string{"*", model.DocumentsType, model.VendorDomain}
+	r := rbac_echo.Group(group, "/vendors/:vendorId", &router, common)
+
+	r.GET("/documents", router.getDocument, nil)
+	r.PUT("/documents", router.changeDocument, nil)
+	r.POST("/documents/reviews", router.sendToReview, nil)
+	r.DELETE("/documents/reviews", router.revokeReview, nil)
+
+	messagesCommon := []string{"*", model.MessagesType, model.VendorDomain}
+	r.GET("/messages", router.getNotifications, messagesCommon)
+	r.GET("/messages/:messageId", router.getNotification, messagesCommon)
+	r.PUT("/messages/:messageId/read", router.markAsRead, messagesCommon)
+	r.GET("/messages/short", router.getLastNotifications, messagesCommon)
 
 	return &router, nil
 }
 
+func (r *OnboardingClientRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	return GetOwnerForVendor(ctx)
+}
+
 func (api *OnboardingClientRouter) getLastNotifications(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
@@ -123,7 +133,7 @@ func (api *OnboardingClientRouter) getLastNotifications(ctx echo.Context) error 
 }
 
 func (api *OnboardingClientRouter) getNotification(ctx echo.Context) error {
-	vendorId, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
@@ -149,7 +159,7 @@ func (api *OnboardingClientRouter) getNotification(ctx echo.Context) error {
 }
 
 func (api *OnboardingClientRouter) markAsRead(ctx echo.Context) error {
-	vendorId, err := uuid.FromString(ctx.Param("id"))
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
@@ -168,7 +178,7 @@ func (api *OnboardingClientRouter) markAsRead(ctx echo.Context) error {
 }
 
 func (api *OnboardingClientRouter) getNotifications(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
@@ -217,7 +227,7 @@ func (api *OnboardingClientRouter) getNotifications(ctx echo.Context) error {
 }
 
 func (api *OnboardingClientRouter) changeDocument(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
@@ -247,7 +257,7 @@ func (api *OnboardingClientRouter) changeDocument(ctx echo.Context) error {
 }
 
 func (api *OnboardingClientRouter) getDocument(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
@@ -270,7 +280,7 @@ func (api *OnboardingClientRouter) getDocument(ctx echo.Context) error {
 }
 
 func (api *OnboardingClientRouter) sendToReview(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
@@ -284,7 +294,7 @@ func (api *OnboardingClientRouter) sendToReview(ctx echo.Context) error {
 }
 
 func (api *OnboardingClientRouter) revokeReview(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("vendorId"))
 
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")

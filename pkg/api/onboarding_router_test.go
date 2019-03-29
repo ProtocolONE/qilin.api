@@ -96,8 +96,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetDocument() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -110,8 +110,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetDocument() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents")
+	c.SetParamNames("vendorId")
 	c.SetParamValues("XXX")
 
 	err := suite.router.getDocument(c)
@@ -122,8 +122,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetDocument() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(uuid.NewV4().String())
 
 	err = suite.router.getDocument(c)
@@ -173,8 +173,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetShouldReturnObject() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -229,8 +229,8 @@ func (suite *OnboardingClientRouterTestSuite) TestSendToReviewShouldReturnCreate
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents/reviews")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents/reviews")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -281,8 +281,8 @@ func (suite *OnboardingClientRouterTestSuite) TestSendToReviewShouldReturnError(
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents/reviews")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents/reviews")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	res := suite.router.sendToReview(c)
@@ -333,8 +333,8 @@ func (suite *OnboardingClientRouterTestSuite) TestChangeShouldReturnErrorWhenNot
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	res := suite.router.changeDocument(c)
@@ -348,8 +348,8 @@ func (suite *OnboardingClientRouterTestSuite) TestPutShouldReturnOK() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	if assert.NoError(suite.T(), suite.router.changeDocument(c)) {
@@ -363,8 +363,8 @@ func (suite *OnboardingClientRouterTestSuite) TestPutShouldReturnNotFound() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(uuid.NewV4().String())
 
 	res := suite.router.changeDocument(c)
@@ -378,8 +378,8 @@ func (suite *OnboardingClientRouterTestSuite) TestPutShouldReturnBadRequest() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents")
+	c.SetParamNames("vendorId")
 	c.SetParamValues("XXX")
 
 	res := suite.router.changeDocument(c)
@@ -408,8 +408,8 @@ func (suite *OnboardingClientRouterTestSuite) TestPutShouldReturnError422() {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/vendors/:id/documents")
-		c.SetParamNames("id")
+		c.SetPath("/api/v1/vendors/:vendorId/documents")
+		c.SetParamNames("vendorId")
 		c.SetParamValues(TestID)
 
 		res := suite.router.changeDocument(c)
@@ -449,8 +449,8 @@ func (suite *OnboardingClientRouterTestSuite) TestMarkAsRead() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages/:messageId/read")
-	c.SetParamNames("id", "messageId")
+	c.SetPath("/api/v1/vendors/:vendorId/messages/:messageId/read")
+	c.SetParamNames("vendorId", "messageId")
 	c.SetParamValues("XXX", TestID)
 
 	err := suite.router.markAsRead(c)
@@ -464,8 +464,8 @@ func (suite *OnboardingClientRouterTestSuite) TestMarkAsRead() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages/:messageId/read")
-	c.SetParamNames("id", "messageId")
+	c.SetPath("/api/v1/vendors/:vendorId/messages/:messageId/read")
+	c.SetParamNames("vendorId", "messageId")
 	c.SetParamValues(TestID, "XXXX")
 
 	err = suite.router.markAsRead(c)
@@ -479,8 +479,8 @@ func (suite *OnboardingClientRouterTestSuite) TestMarkAsRead() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages/:messageId/read")
-	c.SetParamNames("id", "messageId")
+	c.SetPath("/api/v1/vendors/:vendorId/messages/:messageId/read")
+	c.SetParamNames("vendorId", "messageId")
 	c.SetParamValues(TestID, TestID)
 
 	err = suite.router.markAsRead(c)
@@ -499,8 +499,8 @@ func (suite *OnboardingClientRouterTestSuite) TestMarkAsRead() {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec = httptest.NewRecorder()
 		c = suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/vendors/:id/messages/:messageId/read")
-		c.SetParamNames("id", "messageId")
+		c.SetPath("/api/v1/vendors/:vendorId/messages/:messageId/read")
+		c.SetParamNames("vendorId", "messageId")
 		c.SetParamValues(TestID, n.ID.String())
 
 		err = suite.router.markAsRead(c)
@@ -517,8 +517,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/messages")
+	c.SetParamNames("vendorId")
 	c.SetParamValues("XXX")
 
 	err := suite.router.getNotifications(c)
@@ -532,8 +532,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/messages")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(uuid.NewV4().String())
 
 	err = suite.router.getNotifications(c)
@@ -547,8 +547,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/messages")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	err = suite.router.getNotifications(c)
@@ -566,8 +566,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/messages")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	err = suite.router.getNotifications(c)
@@ -584,8 +584,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/messages")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	err = suite.router.getNotifications(c)
@@ -599,8 +599,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/messages")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	err = suite.router.getNotifications(c)
@@ -614,8 +614,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotifications() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages/short")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/messages/short")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	err = suite.router.getLastNotifications(c)
@@ -644,8 +644,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotification() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages/:messageId")
-	c.SetParamNames("id", "messageId")
+	c.SetPath("/api/v1/vendors/:vendorId/messages/:messageId")
+	c.SetParamNames("vendorId", "messageId")
 	c.SetParamValues(TestID, "XXX")
 
 	err := suite.router.getNotification(c)
@@ -659,8 +659,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotification() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages/:messageId")
-	c.SetParamNames("id", "messageId")
+	c.SetPath("/api/v1/vendors/:vendorId/messages/:messageId")
+	c.SetParamNames("vendorId", "messageId")
 	c.SetParamValues(TestID, uuid.NewV4().String())
 
 	err = suite.router.getNotification(c)
@@ -674,8 +674,8 @@ func (suite *OnboardingClientRouterTestSuite) TestGetNotification() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/messages/:messageId")
-	c.SetParamNames("id", "messageId")
+	c.SetPath("/api/v1/vendors/:vendorId/messages/:messageId")
+	c.SetParamNames("vendorId", "messageId")
 	c.SetParamValues(TestID, notification.ID.String())
 
 	err = suite.router.getNotification(c)
@@ -708,8 +708,8 @@ func (suite *OnboardingClientRouterTestSuite) TestRevokeReview() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents/reviews")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents/reviews")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -720,8 +720,8 @@ func (suite *OnboardingClientRouterTestSuite) TestRevokeReview() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents/reviews")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents/reviews")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -733,8 +733,8 @@ func (suite *OnboardingClientRouterTestSuite) TestRevokeReview() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents/reviews")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents/reviews")
+	c.SetParamNames("vendorId")
 	c.SetParamValues("XXX")
 
 	// Assertions
@@ -746,8 +746,8 @@ func (suite *OnboardingClientRouterTestSuite) TestRevokeReview() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec = httptest.NewRecorder()
 	c = suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:id/documents/reviews")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/vendors/:vendorId/documents/reviews")
+	c.SetParamNames("vendorId")
 	c.SetParamValues(uuid.NewV4().String())
 
 	// Assertions

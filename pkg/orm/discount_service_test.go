@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"qilin-api/pkg/model"
@@ -59,7 +60,7 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 	suite.service = service
 
 	user := model.User{
-		ID:       uuid.NewV4(),
+		ID:       uuid.NewV4().String(),
 		Login:    "test@protocol.one",
 		Password: "megapass",
 		Nickname: "Test",
@@ -71,7 +72,12 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 
 	userId := user.ID
 
-	vendorService, err := orm.NewVendorService(db)
+
+	ownProvider := orm.NewOwnerProvider(suite.db)
+	enf := rbac.NewEnforcer()
+	membershipService := orm.NewMembershipService(suite.db, ownProvider, enf)
+
+	vendorService, err := orm.NewVendorService(db, membershipService)
 	suite.Nil(err, "Unable make vendor service")
 
 	vendor := model.Vendor{

@@ -21,6 +21,7 @@ func NewAdminOnboardingService(db *Database) (*AdminOnboardingService, error) {
 }
 
 func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string, status model.ReviewStatus, sort string) ([]model.DocumentsInfo, int, error) {
+
 	var documents []model.DocumentsInfo
 	query := p.db.Model(model.DocumentsInfo{}).Where("status <> ?", model.StatusDraft).Limit(limit).Offset(offset)
 	if name != "" {
@@ -71,19 +72,19 @@ func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string,
 	return documents, count, nil
 }
 
-func (p *AdminOnboardingService) GetForVendor(id uuid.UUID) (*model.DocumentsInfo, error) {
-	if exists, err := utils.CheckExists(p.db, &model.Vendor{}, id); !(exists && err == nil) {
+func (p *AdminOnboardingService) GetForVendor(vendorId uuid.UUID) (*model.DocumentsInfo, error) {
+	if exist, err := utils.CheckExists(p.db, &model.Vendor{}, vendorId); !(exist && err == nil) {
 		if err != nil {
-			return nil, NewServiceError(http.StatusInternalServerError, err)
+			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Check vendor existing"))
 		}
-		return nil, NewServiceError(http.StatusNotFound)
+		return nil, NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", vendorId)
 	}
 
 	result := model.DocumentsInfo{}
-	err := p.db.Where("vendor_id = ?", id).First(&result).Error
+	err := p.db.Where("vendor_id = ?", vendorId).First(&result).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Get vendor's documents with vendor id: %s", id)))
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Get vendor's documents with vendor vendorId: %s", vendorId)))
 	}
 
 	return &result, nil

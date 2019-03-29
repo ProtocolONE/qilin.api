@@ -1,7 +1,8 @@
-package game
+package api
 
 import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
+	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -17,20 +19,12 @@ import (
 	"testing"
 )
 
-type QilinValidator struct {
-	validator *validator.Validate
-}
-
-func (cv *QilinValidator) Validate(i interface{}) error {
-	return cv.validator.Struct(i)
-}
-
 type GamesRouterTestSuite struct {
 	suite.Suite
-	db     *orm.Database
-	echo   *echo.Echo
-	router *Router
-	token  *jwtverifier.UserInfo
+	db       *orm.Database
+	echo     *echo.Echo
+	router   *GameRouter
+	enforcer *rbac.Enforcer
 }
 
 func Test_GamesRouter(t *testing.T) {
@@ -39,9 +33,8 @@ func Test_GamesRouter(t *testing.T) {
 
 var (
 	userId             = uuid.NewV4().String()
-	externalUserId     = uuid.NewV4().String()
 	vendorId           = uuid.NewV4().String()
-	createGamesPayload = `{"InternalName":"new_game", "vendorId": "` + vendorId + `"}`
+	createGamesPayload = `{"InternalName":"new_game"}`
 )
 
 func (suite *GamesRouterTestSuite) SetupTest() {
@@ -58,15 +51,13 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 		suite.T().Log(err)
 	}
 
-	userUuid, _ := uuid.FromString(userId)
 	err = db.DB().Save(&model.User{
-		ID:         userUuid,
-		ExternalID: externalUserId,
-		Nickname:   "admin",
-		Login:      "admin@protocol.one",
-		Password:   "123456",
-		Lang:       "en",
-		Currency:   "usd",
+		ID:       userId,
+		Nickname: "admin",
+		Login:    "admin@protocol.one",
+		Password: "123456",
+		Lang:     "en",
+		Currency: "usd",
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
 	vendorUuid, _ := uuid.FromString(vendorId)
@@ -76,14 +67,26 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 		Domain3:         "domino",
 		Email:           "domine@ya.ru",
 		HowManyProducts: "+10",
-		ManagerID:       userUuid,
-		Users:           []model.User{{ID: userUuid}},
+		ManagerID:       userId,
+		Users:           []model.User{{ID: userId}},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make user")
+
 	echoObj := echo.New()
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
-	groupApi := echoObj.Group("/api/v1")
+
+	ownerProvider := orm.NewOwnerProvider(db)
+	enforcer := rbac.NewEnforcer()
+	membership := orm.NewMembershipService(db, ownerProvider, enforcer)
+	err = membership.Init()
+	if err != nil {
+		suite.FailNow("Membership fail", "%v", err)
+	}
+
 	service, err := orm.NewGameService(db)
+	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
+
+	groupApi := echoObj.Group("/api/v1")
 	userService, err := orm.NewUserService(db, nil)
 	router, err := InitRoutes(groupApi, service, userService)
 	if err != nil {
@@ -92,10 +95,11 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	suite.db = db
 	suite.router = router
 	suite.echo = echoObj
+	suite.enforcer = enforcer
 }
 
 func (suite *GamesRouterTestSuite) TearDownTest() {
-	if err := suite.db.DB().DropTable(model.Game{}, model.User{}, model.Vendor{}).Error; err != nil {
+	if err := suite.db.DropAllTables(); err != nil {
 		panic(err)
 	}
 	if err := suite.db.Close(); err != nil {
@@ -104,15 +108,13 @@ func (suite *GamesRouterTestSuite) TearDownTest() {
 }
 
 func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
-	userUuid, _ := uuid.FromString(userId)
 	err := suite.db.DB().Save(&model.User{
-		ID:         userUuid,
-		ExternalID: externalUserId,
-		Nickname:   "admin",
-		Login:      "admin@protocol.one",
-		Password:   "123456",
-		Lang:       "en",
-		Currency:   "usd",
+		ID:       userId,
+		Nickname: "admin",
+		Login:    "admin@protocol.one",
+		Password: "123456",
+		Lang:     "en",
+		Currency: "usd",
 	}).Error
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(createGamesPayload))
@@ -120,8 +122,10 @@ func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
 
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games")
-	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: externalUserId})
+	c.SetPath("/api/v1/vendors/:vendorId/games")
+	c.SetParamNames("vendorId")
+	c.SetParamValues(vendorId)
+	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: userId})
 
 	err = suite.router.Create(c)
 	require.Nil(suite.T(), err, "Error while create game")

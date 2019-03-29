@@ -5,6 +5,7 @@ import (
 	"github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
@@ -33,22 +34,26 @@ type (
 	}
 )
 
-//InitRatingsRouter is initialization method for router
+//InitRatingsRouter is initialization method for group
 func InitRatingsRouter(group *echo.Group, service *orm.RatingService) (*RatingsRouter, error) {
 	ratingRouter := RatingsRouter{
 		service: service,
 	}
 
-	r := group.Group("/games/:id")
+	r := rbac_echo.Group(group, "/games/:gameId", &ratingRouter, []string{"gameId", model.GameType, model.VendorDomain})
 
-	r.GET("/ratings", ratingRouter.get)
-	r.PUT("/ratings", ratingRouter.put)
+	r.GET("/ratings", ratingRouter.get, nil)
+	r.PUT("/ratings", ratingRouter.put, nil)
 
 	return &ratingRouter, nil
 }
 
+func (router *RatingsRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	return GetOwnerForGame(ctx)
+}
+
 func (router *RatingsRouter) get(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
@@ -71,7 +76,7 @@ func (router *RatingsRouter) get(ctx echo.Context) error {
 }
 
 func (router *RatingsRouter) put(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("id"))
+	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")

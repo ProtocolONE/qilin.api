@@ -1,0 +1,532 @@
+openapi: 3.0.1
+info:
+  title: API for providing and changing rights for users and resources
+  version: 1.0.0
+
+servers:
+  - url: https://qilinapi.tst.protocol.one
+    description: Master test server
+
+paths:
+  /api/v1/vendors/{id}/memberships:
+    get:
+      tags:
+        - "common"
+      summary: "Gets list of users"
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: "ID of vendor"
+          schema:
+            type: string
+            format: uuid
+        - name: query
+          in: query
+          description: "Filter users by name or email"
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: "Order by field"
+          required: false
+          schema:
+            type: string
+            enum:
+              - +name
+              - -name
+              - +email
+              - -email
+              - +last_seen
+              - -last_seen
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/memberships/invites/{inviteId}:
+    put:
+      summary: "Accept invite"
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: "ID of vendor"
+          schema:
+            type: string
+            format: uuid
+        - name: inviteId
+          required: true
+          in: path
+          description: "ID of invite"
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
+                  type: string
+                  enum:
+                    - accept
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/memberships/invites:
+    post:
+      tags:
+        - "common"
+      summary: "Send invite to user"
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: "ID of vendor"
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "example@example.com"
+                roles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum:
+                          - manager
+                          - accountant
+                          - pubisher
+                          - store
+                          - support
+                      resource:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          type:
+                            type: string
+                            enum:
+                              - global
+                              - game
+                              - documents
+                          domain:
+                            type: string
+                            enum:
+                              - vendor
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                   type: string
+                   format: uuid
+                   description: "Invite id"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        422:
+            $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/{id}/memberships/{userId}:
+    get:
+      tags:
+        - "common"
+      summary: "Get roles for user"
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: "ID of vendor"
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          description: "user ID"
+          required: true
+          schema:
+            type: string
+            format: uuid
+          in: path
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags:
+        - "common"
+      summary: "Change roles for user"
+      parameters:
+        - name: id
+          description: "vendor ID"
+          required: true
+          schema:
+            type: string
+            format: uuid
+          in: path
+        - name: userId
+          description: "user ID"
+          required: true
+          schema:
+            type: string
+            format: uuid
+          in: path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                added:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        description: "Resource (Game) id"
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - manager
+                            - accountant
+                            - pubisher
+                            - store
+                            - support
+                removed:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: "Resource (Game) id"
+                        format: uuid
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - manager
+                            - accountant
+                            - pubisher
+                            - store
+                            - support
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+
+  /api/v1/vendors/{id}/memberships/{userId}/permissions:
+    get:
+      tags:
+        - "common"
+      summary: "Get permissions and restrictions for user"
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: "ID of vendor"
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          description: "user ID"
+          required: true
+          schema:
+            type: string
+            format: uuid
+          in: path
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: string
+                    format: uuid
+                  domain:
+                    type: string
+                    enum:
+                      - vendor
+                  unmatchedRestrictions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        owner:
+                          type: string
+                        role:
+                          type: role
+                        uuid:
+                          type: uuid
+                  permissions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        role:
+                          type: string
+                        domain:
+                          type: string
+                        resource:
+                          type: string
+                          enum:
+                            - global
+                            - game
+                        uuid:
+                          type: string
+                          format: uuid
+                        action:
+                          type: string
+                        allowed:
+                          type: boolean
+                        restrictions:
+                          type: object
+                          properties:
+                            owner:
+                              type: string
+                            role:
+                              type: string
+                            uuid:
+                              type: string
+                              format: uuid
+
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 409
+            message: "Resource with same unique id already exists"
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 422
+            message: "Fields required: 'title, description'"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  parameters:
+    Offset:
+      in: query
+      name: offset
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: The number of items to skip before starting to collect the result set.
+    Limit:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+      description: The numbers of items to return.
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          format: email
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum:
+                  - admin
+                  - accountant
+                  - manager
+                  - support
+                  - store
+              domain:
+                type: string
+                enum:
+                  - vendor
+              resource:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  type:
+                    type: string
+                    enum:
+                      - global
+                      - game
+                  meta:
+                    type: object
+                    properties:
+                      preview:
+                        type: string
+                      internalName:
+                        type: string
+        lastSeen:
+          type: string
+          format: 'date-time'
+
+security:
+  - bearerAuth: []

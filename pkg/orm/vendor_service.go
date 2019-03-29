@@ -12,6 +12,7 @@ import (
 // VendorService is service to interact with database and Vendor object.
 type VendorService struct {
 	db *gorm.DB
+	membershipService model.MembershipService
 }
 
 const (
@@ -21,8 +22,8 @@ const (
 )
 
 // NewVendorService initialize this service.
-func NewVendorService(db *Database) (*VendorService, error) {
-	return &VendorService{db.database}, nil
+func NewVendorService(db *Database, membershipService model.MembershipService) (*VendorService, error) {
+	return &VendorService{db.database, membershipService}, nil
 }
 
 func (p *VendorService) validate(item *model.Vendor) error {
@@ -38,7 +39,7 @@ func (p *VendorService) validate(item *model.Vendor) error {
 	if strings.Index("0123456789", string(item.Domain3[0])) > -1 {
 		return NewServiceError(http.StatusBadRequest, "Domain is invalid")
 	}
-	if uuid.Equal(item.ManagerID, uuid.Nil) {
+	if item.ManagerID == "" {
 		return NewServiceError(http.StatusBadRequest, errVendorManagerId)
 	}
 	return nil
@@ -53,17 +54,30 @@ func (p *VendorService) Create(item *model.Vendor) (result *model.Vendor, err er
 	if uuid.Nil == vendor.ID {
 		vendor.ID = uuid.NewV4()
 	}
-	err = p.db.Create(&vendor).Error
+
+	tx := p.db.Begin()
+
+	err = tx.Create(&vendor).Error
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
+		tx.Rollback()
 		return nil, NewServiceError(http.StatusConflict, errVendorConflict)
 	} else if err != nil {
+		tx.Rollback()
 		return nil, errors.Wrap(err, "Insert vendor")
 	}
-	err = p.db.Model(&vendor).Association("Users").Append(model.User{ID: vendor.ManagerID}).Error
+	err = tx.Model(&vendor).Association("Users").Append(model.User{ID: vendor.ManagerID}).Error
 	if err != nil {
+		tx.Rollback()
 		return nil, errors.Wrap(err, "Append to association")
 	}
-	return &vendor, nil
+
+	err = p.membershipService.AddRoleToUser(vendor.ID, vendor.ManagerID, vendor.ManagerID, model.NotApproved)
+	if err != nil {
+		tx.Rollback()
+		return &vendor, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Set role to owner"))
+	}
+
+	return &vendor, tx.Commit().Error
 }
 
 func (p *VendorService) Update(item *model.Vendor) (vendor *model.Vendor, err error) {
@@ -101,7 +115,6 @@ func (p *VendorService) FindByID(id uuid.UUID) (vendor *model.Vendor, err error)
 }
 
 func (p *VendorService) GetAll(limit, offset int) (vendors []*model.Vendor, err error) {
-
 	err = p.db.
 		Offset(offset).
 		Limit(limit).
@@ -113,3 +126,4 @@ func (p *VendorService) GetAll(limit, offset int) (vendors []*model.Vendor, err 
 
 	return vendors, err
 }
+

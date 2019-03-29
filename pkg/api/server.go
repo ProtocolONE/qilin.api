@@ -3,12 +3,14 @@ package api
 import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	jwt_middleware "github.com/ProtocolONE/authone-jwt-verifier-golang/middleware/echo"
+	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
-	"qilin-api/pkg/api/game"
+	qilin_middleware "qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/conf"
+	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
 	"qilin-api/pkg/utils"
@@ -22,6 +24,7 @@ type ServerOptions struct {
 	Mailer           sys.Mailer
 	Notifier         sys.Notifier
 	CentrifugoSecret string
+	Enforcer         *rbac.Enforcer
 }
 
 type Server struct {
@@ -30,6 +33,7 @@ type Server struct {
 	serverConfig     *conf.ServerConfig
 	notifier         sys.Notifier
 	centrifugoSecret string
+	enforcer         *rbac.Enforcer
 
 	Router      *echo.Group
 	AdminRouter *echo.Group
@@ -51,13 +55,19 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		db:               opts.Database,
 		notifier:         opts.Notifier,
 		centrifugoSecret: opts.CentrifugoSecret,
+		enforcer:         opts.Enforcer,
 	}
 
 	server.echo.HideBanner = true
 	server.echo.HidePort = true
 	server.echo.Debug = opts.ServerConfig.Debug
 
+	ownerProvider := orm.NewOwnerProvider(server.db)
+
 	server.echo.Use(ZapLogger(zap.L())) // logs all http requests
+	server.echo.Use(middleware.Recover())
+	server.echo.Use(qilin_middleware.NewAppContextMiddleware(ownerProvider, server.enforcer))
+
 	server.echo.HTTPErrorHandler = server.QilinErrorHandler
 
 	validate := validator.New()
@@ -68,7 +78,6 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 
 	server.echo.Validator = &QilinValidator{validator: validate}
 
-	server.echo.Use(middleware.Recover())
 	server.echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		ExposeHeaders:    []string{"x-centrifugo-token", "x-items-count"},
 		AllowHeaders:     []string{"authorization", "content-type"},
@@ -93,7 +102,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.Router.Use(jwt_middleware.AuthOneJwtWithConfig(jwtv))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
-	if err := server.setupRoutes(opts.Mailer); err != nil {
+	if err := server.setupRoutes(ownerProvider, opts.Mailer); err != nil {
 		zap.L().Fatal("Fail to setup routes", zap.Error(err))
 	}
 
@@ -106,7 +115,7 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes(mailer sys.Mailer) error {
+func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer) error {
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {
 		return err
@@ -117,14 +126,6 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 		return err
 	}
 	if err := InitUserRoutes(s, userService); err != nil {
-		return err
-	}
-
-	vendorService, err := orm.NewVendorService(s.db)
-	if err != nil {
-		return err
-	}
-	if err := InitVendorRoutes(s, vendorService, userService); err != nil {
 		return err
 	}
 
@@ -176,11 +177,30 @@ func (s *Server) setupRoutes(mailer sys.Mailer) error {
 		return err
 	}
 
+	membershipService := orm.NewMembershipService(s.db, ownerProvider, s.enforcer)
+	if err := membershipService.Init(); err != nil {
+		return err
+	}
+
+	if _, err := InitClientMembershipRouter(s.Router, membershipService); err != nil {
+		return err
+	}
+
 	gameService, err := orm.NewGameService(s.db)
 	if err != nil {
 		return err
 	}
-	if _, err := game.InitRoutes(s.Router, gameService, userService); err != nil {
+
+	vendorService, err := orm.NewVendorService(s.db, membershipService)
+	if err != nil {
+		return err
+	}
+
+	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
+		return err
+	}
+
+	if err := InitVendorRoutes(s.Router, vendorService, userService); err != nil {
 		return err
 	}
 

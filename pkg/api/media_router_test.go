@@ -90,8 +90,8 @@ func (suite *MediaRouterTestSuite) TestGetMediaShouldReturnEmptyObject() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/media")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/media")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -106,8 +106,8 @@ func (suite *MediaRouterTestSuite) TestGetMediaShouldReturnNotFound() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/media")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/media")
+	c.SetParamNames("gameId")
 	c.SetParamValues("00000000-0000-0000-0000-000000000000")
 
 	// Assertions
@@ -121,8 +121,8 @@ func (suite *MediaRouterTestSuite) TestPutMediaShouldUpdateGame() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/media")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/media")
+	c.SetParamNames("gameId")
 	c.SetParamValues(TestID)
 
 	// Assertions
@@ -137,8 +137,8 @@ func (suite *MediaRouterTestSuite) TestPutMediaShouldreturnNotFound() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:id/media")
-	c.SetParamNames("id")
+	c.SetPath("/api/v1/games/:gameId/media")
+	c.SetParamNames("gameId")
 	c.SetParamValues("00000000-0000-0000-0000-000000000000")
 
 	// Assertions
