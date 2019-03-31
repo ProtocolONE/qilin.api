@@ -62,6 +62,6 @@ type MembershipService interface {
 	AddRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error
 	AddRoleToUser(userId string, owner string, role string) error
 	RemoveRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error
-	SendInvite(vendorId uuid.UUID, userId string) error
+	SendInvite(vendorId uuid.UUID, invite Invite) (*InviteCreated, error)
 	AcceptInvite(inviteId uuid.UUID) error
 }

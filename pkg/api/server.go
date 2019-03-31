@@ -177,7 +177,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	membershipService := orm.NewMembershipService(s.db, ownerProvider, s.enforcer)
+	membershipService := orm.NewMembershipService(s.db, ownerProvider, s.enforcer, mailer, "")
 	if err := membershipService.Init(); err != nil {
 		return err
 	}

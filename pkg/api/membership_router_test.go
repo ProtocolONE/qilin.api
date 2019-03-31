@@ -11,6 +11,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"net/http/httptest"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -81,7 +82,7 @@ func (suite *MembershipRouterTestSuite) SetupTest() {
 	e.Validator = &QilinValidator{validator: validator.New()}
 	enf := rbac.NewEnforcer()
 	ownerProvider := orm.NewOwnerProvider(db)
-	service := orm.NewMembershipService(db, ownerProvider, enf)
+	service := orm.NewMembershipService(db, ownerProvider, enf, mock.NewMailer(), "127.0.0.1")
 	shouldBe.Nil(service.Init())
 	enf.AddRole(rbac.Role{Role: "admin", User: adminId, Domain: "vendor", Owner: ownerId, RestrictedResourceId: []string{"*"}})
 
@@ -240,6 +241,50 @@ func (suite *MembershipRouterTestSuite) TestGetPermissions() {
 		c.SetParamValues(testCase.vendorId, testCase.userId)
 
 		res := suite.router.getUserPermissions(c)
+		msg := fmt.Sprintf("[%s] %v. %v", testCase.testName, testCase, res)
+		if testCase.success == false {
+			shouldBe.NotNil(res, msg)
+			he := res.(*orm.ServiceError)
+			shouldBe.Equal(testCase.code, he.Code, msg)
+		} else {
+			shouldBe.Nil(res, msg)
+			shouldBe.Equal(testCase.code, rec.Code, msg)
+			shouldBe.NotEmpty(rec.Body, msg)
+		}
+	}
+}
+
+func (suite *MembershipRouterTestSuite) TestSendInvite() {
+	shouldBe := require.New(suite.T())
+	normalBody := `{"email":"roman.golenok@protocol.one", "roles":[{"role":"manager","resource":{"id":"*","domain":"vendor"}}]}`
+	noEmailBody := `{"roles":[{"role":"manager","resource":{"id":"*"}}]}`
+	badBody := `<"email":"roman.golenok@protocol.one", "roles":[{"role":"manager","resource":{"id":"*"}}]>`
+	testCases := []struct {
+		testName string
+		vendorId string
+		success  bool
+		code     int
+		body     string
+	}{
+		{testName: "Normal", vendorId: vendorId, code: 201, body: normalBody, success: true},
+		{testName: "Duplicate", vendorId: vendorId, code: 409, body: normalBody, success: false},
+		{testName: "Bad body", vendorId: vendorId, code: 400, body: badBody, success: false},
+		{testName: "Without email", vendorId: vendorId, code: 422, body: noEmailBody, success: false},
+		{testName: "Unknown vendor", vendorId: uuid.NewV4().String(), code: 404, body: normalBody, success: false},
+		{testName: "Bad vendor id", vendorId: "SOME_BAD_UUID", code: 400, body: noEmailBody, success: false},
+	}
+
+	for _, testCase := range testCases {
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(testCase.body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := suite.echo.NewContext(req, rec)
+		c.SetPath("/api/v1/vendors/:vendorId/memberships/invites")
+		c.SetParamNames("vendorId")
+		c.SetParamValues(testCase.vendorId)
+
+		res := suite.router.sendInvite(c)
 		msg := fmt.Sprintf("[%s] %v. %v", testCase.testName, testCase, res)
 		if testCase.success == false {
 			shouldBe.NotNil(res, msg)

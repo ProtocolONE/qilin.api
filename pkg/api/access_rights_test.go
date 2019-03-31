@@ -12,6 +12,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"net/http/httptest"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -62,7 +63,7 @@ func (suite *AccessRightsTestSuite) SetupTest() {
 
 	enforcer := rbac.NewEnforcer()
 	ownerProvider := orm.NewOwnerProvider(db)
-	membership := orm.NewMembershipService(db, ownerProvider, enforcer)
+	membership := orm.NewMembershipService(db, ownerProvider, enforcer, mock.NewMailer(), "")
 	err = membership.Init()
 	if err != nil {
 		suite.FailNow("Membership fail", "%v", err)
@@ -155,7 +156,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	membershipService := orm.NewMembershipService(s.db, s.ownerProvider, s.enforcer)
+	membershipService := orm.NewMembershipService(s.db, s.ownerProvider, s.enforcer, mock.NewMailer(), "")
 	if err := membershipService.Init(); err != nil {
 		return err
 	}

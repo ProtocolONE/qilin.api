@@ -6,6 +6,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/rbac_echo"
+	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 )
@@ -24,6 +25,26 @@ type UserRoleDTO struct {
 	Roles []string `json:"roles"`
 }
 
+type InviteDTO struct {
+	Email string          `json:"email" validate:"required"`
+	Roles []RoleInviteDTO `json:"roles" validate:"required,dive"`
+}
+
+type RoleInviteDTO struct {
+	Role     string            `json:"role" validate:"required"`
+	Resource InviteResourceDTO `json:"resource" validate:"required,dive"`
+}
+
+type InviteResourceDTO struct {
+	Id     string `json:"id" validate:"required"`
+	Domain string `json:"domain" validate:"required"`
+}
+
+type InviteCreatedDTO struct {
+	Id  string `json:"id"`
+	Url string `json:"url"`
+}
+
 func InitClientMembershipRouter(group *echo.Group, service model.MembershipService) (*MembershipRouter, error) {
 	res := &MembershipRouter{
 		service: service,
@@ -36,6 +57,8 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 	route.GET("/memberships/:userId", res.getUser, nil)
 	route.PUT("/memberships/:userId", res.changeUserRoles, nil)
 	route.GET("/memberships/:userId/permissions", res.getUserPermissions, nil)
+
+	route.POST("/memberships/invites", res.sendInvite, nil)
 
 	//TODO: Hack. Remove after needed functionality implemented
 	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
@@ -55,6 +78,34 @@ func (api *MembershipRouter) addAdminRole(ctx echo.Context) error {
 
 func (api *MembershipRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	return GetOwnerForVendor(ctx)
+}
+
+func (api *MembershipRouter) sendInvite(ctx echo.Context) error {
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
+	}
+
+	dto := &InviteDTO{}
+	if err := ctx.Bind(dto); err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Binding to dto"))
+	}
+
+	if err := ctx.Validate(dto); err != nil {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errors.Wrap(err, "Validation failed"))
+	}
+
+	invite := model.Invite{}
+	if err := mapper.Map(dto, &invite); err != nil {
+		return orm.NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Mapping from dto to model failed"))
+	}
+
+	result, err := api.service.SendInvite(vendorId, invite)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusCreated, &InviteCreatedDTO{Id: result.Id, Url: result.Url})
 }
 
 func (api *MembershipRouter) getUsers(ctx echo.Context) error {

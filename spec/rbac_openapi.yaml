@@ -146,12 +146,6 @@ paths:
                           id:
                             type: string
                             format: uuid
-                          type:
-                            type: string
-                            enum:
-                              - global
-                              - game
-                              - documents
                           domain:
                             type: string
                             enum:
