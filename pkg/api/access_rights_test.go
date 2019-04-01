@@ -28,6 +28,7 @@ type AccessRightsTestSuite struct {
 	enforcer      *rbac.Enforcer
 	currentUser   string
 	Router        *echo.Group
+	AdminRouter   *echo.Group
 	ownerProvider model.OwnerProvider
 }
 
@@ -72,6 +73,7 @@ func (suite *AccessRightsTestSuite) SetupTest() {
 	echoObj.Use(suite.localAuth())
 
 	suite.Router = echoObj.Group("/api/v1")
+	suite.AdminRouter = echoObj.Group("/admin/api/v1")
 	suite.db = db
 	suite.echo = echoObj
 	suite.service = membership
@@ -171,6 +173,12 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 	if err := InitVendorRoutes(s.Router, vendorService, userService); err != nil {
 		return err
 	}
+
+	adminService, err := orm.NewAdminOnboardingService(s.db)
+	if _, err := InitAdminOnboardingRouter(s.AdminRouter, adminService, nil); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -207,6 +215,8 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 	roles := []string{"admin", "support"}
 
 	shouldBe.True(suite.enforcer.AddRole(rbac.Role{Role: model.NotApproved, User: notApprovedOwner, Domain: "vendor"}))
+
+	suite.checkAccess("super admin", http.MethodGet, "/admin/api/v1/vendors/reviews", "", superAdmin, true)
 
 	for key, values := range testCases {
 		url := format(key.url, vendorId, gameId, messageId)

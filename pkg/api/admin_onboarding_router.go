@@ -12,6 +12,7 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -61,9 +62,10 @@ func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingSe
 		notificationService: notificationService,
 	}
 
-	common :=  []string{"*", model.AdminDocumentsType, model.VendorDomain}
+	common := []string{"*", model.AdminDocumentsType, model.VendorDomain}
 
-	r := rbac_echo.Group(group,"/vendors", &router, common)
+	r := rbac_echo.Group(group, "/vendors", &router, common)
+	//group.GET("/vendors/reviews", router.getReviews)
 	r.GET("/reviews", router.getReviews, nil)
 	r.GET("/:vendorId/documents", router.getDocument, nil)
 	r.PUT("/:vendorId/documents/status", router.changeStatus, nil)
@@ -74,7 +76,11 @@ func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingSe
 }
 
 func (api *OnboardingAdminRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
-	return GetOwnerForVendor(ctx)
+	if strings.Contains(ctx.Path(), ":vendorId") {
+		return GetOwnerForVendor(ctx)
+	}
+
+	return "*", nil
 }
 
 func (api *OnboardingAdminRouter) changeStatus(ctx echo.Context) error {

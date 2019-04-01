@@ -617,13 +617,5 @@ func (api *GameRouter) GetRatingDescriptors(ctx echo.Context) error {
 
 func (api *GameRouter) getUserId(ctx echo.Context) (string, error) {
 	extUserId, err := context.GetAuthUserId(ctx)
-	if err != nil {
-		return "", err
-	}
-	user, err := api.userService.FindByID(extUserId)
-	if err != nil {
-		return "", err
-	}
-
-	return user.ID, nil
+	return extUserId, err
 }

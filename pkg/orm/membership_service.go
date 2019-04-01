@@ -42,6 +42,7 @@ func (service *membershipService) Init() error {
 
 	service.enforcer.LinkRoles(model.SuperAdmin, model.Admin, "vendor")
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.SuperAdmin, Domain: "vendor", ResourceType: model.RolesType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.SuperAdmin, Domain: "vendor", ResourceType: model.AdminDocumentsType, ResourceId: "skip", Action: "any", Effect: "allow"})
 
 	return nil
 }
