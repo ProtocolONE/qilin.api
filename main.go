@@ -53,6 +53,10 @@ func main() {
 	}
 
 	adapter := redisadapter.NewAdapter("tcp", fmt.Sprintf("%s:%d", config.Enforcer.Host, config.Enforcer.Port))
+	//watcher, err := rediswatcher.NewWatcher(fmt.Sprintf("%s:%d", config.Enforcer.Host, config.Enforcer.Port))
+	//if err != nil {
+	//	logger.Fatal("Failed to create redis watcher", zap.Error(err))
+	//}
 	enf := rbac.NewEnforcer(adapter)
 
 	serverOptions := api.ServerOptions{

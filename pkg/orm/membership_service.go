@@ -42,6 +42,7 @@ func (service *membershipService) Init() error {
 
 	service.enforcer.LinkRoles(model.SuperAdmin, model.Admin, "vendor")
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.SuperAdmin, Domain: "vendor", ResourceType: model.RolesType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.SuperAdmin, Domain: "vendor", ResourceType: model.AdminDocumentsType, ResourceId: "skip", Action: "any", Effect: "allow"})
 
 	return nil
 }
@@ -263,6 +264,7 @@ func (service *membershipService) AddRoleToUser(userId string, owner string, rol
 	if service.enforcer.AddRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: []string{"*"}}) == false {
 		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role, userId)
 	}
+
 	return nil
 }
 
