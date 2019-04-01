@@ -264,6 +264,7 @@ func (service *membershipService) AddRoleToUser(userId string, owner string, rol
 	if service.enforcer.AddRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: []string{"*"}}) == false {
 		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role, userId)
 	}
+
 	return nil
 }
 

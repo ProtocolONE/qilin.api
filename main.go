@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/ProtocolONE/rbac"
-	"github.com/billcobbler/casbin-redis-watcher"
 	"github.com/casbin/redis-adapter"
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
@@ -54,11 +53,11 @@ func main() {
 	}
 
 	adapter := redisadapter.NewAdapter("tcp", fmt.Sprintf("%s:%d", config.Enforcer.Host, config.Enforcer.Port))
-	watcher, err := rediswatcher.NewWatcher(fmt.Sprintf("%s:%d", config.Enforcer.Host, config.Enforcer.Port))
-	if err != nil {
-		logger.Fatal("Failed to create redis watcher", zap.Error(err))
-	}
-	enf := rbac.NewEnforcer(adapter, watcher)
+	//watcher, err := rediswatcher.NewWatcher(fmt.Sprintf("%s:%d", config.Enforcer.Host, config.Enforcer.Port))
+	//if err != nil {
+	//	logger.Fatal("Failed to create redis watcher", zap.Error(err))
+	//}
+	enf := rbac.NewEnforcer(adapter)
 
 	serverOptions := api.ServerOptions{
 		Auth1:            &config.Auth1,
