@@ -3,6 +3,7 @@ package orm_test
 import (
 	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/assert"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
@@ -111,7 +112,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 
 	ow := orm.NewOwnerProvider(suite.db)
 	enf := rbac.NewEnforcer()
-	memService := orm.NewMembershipService(suite.db, ow, enf)
+	memService := orm.NewMembershipService(suite.db, ow, enf, mock.NewMailer(), "")
 
 	vendorService, err := orm.NewVendorService(suite.db, memService)
 	require.Nil(err, "Unable make vendor service")
@@ -120,7 +121,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	require.Nil(err, "Unable make user service")
 
 	suite.T().Log("Register new user")
-	user, err := userService.Create("test@protocol.one", "ru")
+	user, err := userService.Create(uuid.NewV4().String(), "test@protocol.one", "ru")
 	require.Nil(err, "Unable to register user1")
 
 	suite.userId = user.ID
