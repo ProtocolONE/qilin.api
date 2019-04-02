@@ -335,7 +335,7 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 		}
 
 		// we do not have enough items in DB
-		shouldBreak = len(games) < localLimit
+		shouldBreak = len(games) <= localLimit
 
 		for _, game := range games {
 			prices := GamePriceDTO{

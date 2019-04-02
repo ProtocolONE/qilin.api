@@ -72,7 +72,7 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 		}
 
 		// we do not have enough items in DB
-		shouldBreak = len(vendors) < localLimit
+		shouldBreak = len(vendors) <= localLimit
 
 		for _, v := range vendors {
 			owner := v.ManagerID
