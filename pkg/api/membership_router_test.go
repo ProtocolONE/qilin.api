@@ -254,6 +254,46 @@ func (suite *MembershipRouterTestSuite) TestGetPermissions() {
 	}
 }
 
+func (suite *MembershipRouterTestSuite) TestAcceptInvite() {
+	shouldBe := require.New(suite.T())
+	inviteId := ""
+
+	testCases := []struct {
+		testName string
+		vendorId string
+		inviteId string
+		success  bool
+		code     int
+	}{
+		{testName: "Normal", vendorId: vendorId, code: 200, inviteId: inviteId, success: true},
+		{testName: "Already accepted", vendorId: vendorId, code: 409, inviteId: inviteId, success: false},
+		{testName: "Bad vendor id", vendorId: "SOME_BAD_UUID", code: 400, inviteId: inviteId, success: false},
+	}
+
+	for _, testCase := range testCases {
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(""))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := suite.echo.NewContext(req, rec)
+		c.SetPath("/api/v1/vendors/:vendorId/memberships/invites/:inviteId")
+		c.SetParamNames("vendorId", "inviteId")
+		c.SetParamValues(testCase.vendorId, testCase.inviteId)
+
+		res := suite.router.acceptInvite(c)
+		msg := fmt.Sprintf("[%s] %v. %v", testCase.testName, testCase, res)
+		if testCase.success == false {
+			shouldBe.NotNil(res, msg)
+			he := res.(*orm.ServiceError)
+			shouldBe.Equal(testCase.code, he.Code, msg)
+		} else {
+			shouldBe.Nil(res, msg)
+			shouldBe.Equal(testCase.code, rec.Code, msg)
+			shouldBe.NotEmpty(rec.Body, msg)
+		}
+	}
+}
+
 func (suite *MembershipRouterTestSuite) TestSendInvite() {
 	shouldBe := require.New(suite.T())
 	normalBody := `{"email":"roman.golenok@protocol.one", "roles":[{"role":"manager","resource":{"id":"*","domain":"vendor"}}]}`

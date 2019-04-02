@@ -313,7 +313,7 @@ func (service *membershipService) AcceptInvite(vendorId uuid.UUID, inviteId uuid
 
 	for _, role := range invite.Roles {
 		if err := service.AddRoleToUserInGame(vendorId, userId, role.Resource.Id, role.Role); err != nil {
-			return err
+			return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Add role to user after invite accept"))
 		}
 	}
 
