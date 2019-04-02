@@ -2,7 +2,7 @@ package rbac_echo
 
 import (
 	"github.com/ProtocolONE/rbac"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/context"

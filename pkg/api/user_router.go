@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"net/http"
 	"qilin-api/pkg/api/context"

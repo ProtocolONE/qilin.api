@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/lunny/html2md"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/satori/go.uuid"
