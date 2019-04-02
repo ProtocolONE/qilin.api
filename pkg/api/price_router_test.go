@@ -106,7 +106,7 @@ func (suite *PriceRouterTestSuite) TestGetBasePriceShouldReturnEmptyObject() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getBase(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), emptyBasePrice, rec.Body.String())
+		assert.JSONEq(suite.T(), emptyBasePrice, rec.Body.String())
 	}
 }
 

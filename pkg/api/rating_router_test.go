@@ -123,7 +123,7 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnEmptyObject() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), emptyRatings, rec.Body.String())
+		assert.JSONEq(suite.T(), emptyRatings, rec.Body.String())
 	}
 }
 
@@ -314,6 +314,6 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldReturnRightObject() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), fullRatings, rec.Body.String())
+		assert.JSONEq(suite.T(), fullRatings, rec.Body.String())
 	}
 }

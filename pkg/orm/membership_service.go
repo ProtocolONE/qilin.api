@@ -250,7 +250,7 @@ func (service *membershipService) SendInvite(vendorId uuid.UUID, invite model.In
 	}
 
 	if count > 0 {
-		return nil, NewServiceErrorf(http.StatusConflict, "Invite for %s vendor and user with %email email already sent", vendorId, invite.Email)
+		return nil, NewServiceErrorf(http.StatusConflict, "Invite for %s vendor and user with %s email already sent", vendorId, invite.Email)
 	}
 
 	invite.ID = uuid.NewV4()

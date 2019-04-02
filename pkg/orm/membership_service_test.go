@@ -1,6 +1,7 @@
 package orm_test
 
 import (
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -44,7 +45,7 @@ func (suite *MemershipServiceTestSuite) SetupTest() {
 	ownProvider := orm.NewOwnerProvider(db)
 
 	suite.db = db
-	suite.service = orm.NewMembershipService(db, ownProvider, enf)
+	suite.service = orm.NewMembershipService(db, ownProvider, enf, mock.NewMailer(), "")
 	shouldBe.Nil(suite.service.Init())
 
 	ownerId := uuid.NewV4()

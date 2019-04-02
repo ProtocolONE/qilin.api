@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
@@ -257,18 +258,38 @@ func (suite *MembershipRouterTestSuite) TestGetPermissions() {
 
 func (suite *MembershipRouterTestSuite) TestAcceptInvite() {
 	shouldBe := require.New(suite.T())
-	inviteId := ""
+
+	invitedUser := model.User{}
+	invitedUser.ID = uuid.NewV4().String()
+	invitedUser.Email = "invite@test.com"
+	shouldBe.Nil(suite.db.DB().Create(&invitedUser).Error)
+
+	invite := &model.Invite{}
+	invite.ID = uuid.NewV4()
+	invite.Email = invitedUser.Email
+	invite.Roles = model.Roles {
+		model.Role{Role: model.Support, Resource: model.ResourceRole{Id: TestID, Domain: "vendor"}},
+	}
+	invite.VendorId = uuid.FromStringOrNil(vendorId)
+
+	shouldBe.Nil(suite.db.DB().Create(invite).Error)
+	inviteId := invite.ID.String()
 
 	testCases := []struct {
 		testName string
 		vendorId string
 		inviteId string
+		userId   string
 		success  bool
 		code     int
 	}{
-		{testName: "Normal", vendorId: vendorId, code: 200, inviteId: inviteId, success: true},
-		{testName: "Already accepted", vendorId: vendorId, code: 409, inviteId: inviteId, success: false},
-		{testName: "Bad vendor id", vendorId: "SOME_BAD_UUID", code: 400, inviteId: inviteId, success: false},
+		{testName: "Invite for another user", vendorId: vendorId, code: 403, inviteId: inviteId, userId: ownerId, success: false},
+		{testName: "Normal", vendorId: vendorId, code: 200, inviteId: inviteId, userId: invitedUser.ID, success: true},
+		{testName: "Already accepted", vendorId: vendorId, code: 409, inviteId: inviteId, userId: invitedUser.ID, success: false},
+		{testName: "Bad vendor id", vendorId: "SOME_BAD_UUID", code: 400, inviteId: inviteId, userId: invitedUser.ID, success: false},
+		{testName: "Bad invite id", vendorId: vendorId, code: 400, inviteId: "SOME_BAD_UUID", userId: invitedUser.ID, success: false},
+		{testName: "Unknown user", vendorId: vendorId, code: 404, inviteId: inviteId, userId: uuid.NewV4().String(), success: false},
+		{testName: "Not existing invite", vendorId: vendorId, code: 404, inviteId: uuid.NewV4().String(), userId: invitedUser.ID, success: false},
 	}
 
 	for _, testCase := range testCases {
@@ -277,6 +298,7 @@ func (suite *MembershipRouterTestSuite) TestAcceptInvite() {
 		rec := httptest.NewRecorder()
 
 		c := suite.echo.NewContext(req, rec)
+		c.Set("user", &jwtverifier.UserInfo{UserID: testCase.userId})
 		c.SetPath("/api/v1/vendors/:vendorId/memberships/invites/:inviteId")
 		c.SetParamNames("vendorId", "inviteId")
 		c.SetParamValues(testCase.vendorId, testCase.inviteId)
@@ -290,7 +312,6 @@ func (suite *MembershipRouterTestSuite) TestAcceptInvite() {
 		} else {
 			shouldBe.Nil(res, msg)
 			shouldBe.Equal(testCase.code, rec.Code, msg)
-			shouldBe.NotEmpty(rec.Body, msg)
 		}
 	}
 }

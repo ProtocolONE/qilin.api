@@ -88,7 +88,7 @@ func (api *MembershipRouter) acceptInvite(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
 	}
 
-	inviteId, err := uuid.FromString(ctx.Param("vendorId"))
+	inviteId, err := uuid.FromString(ctx.Param("inviteId"))
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad invite id"))
 	}

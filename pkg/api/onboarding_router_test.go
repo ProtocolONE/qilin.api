@@ -103,7 +103,7 @@ func (suite *OnboardingClientRouterTestSuite) TestGetDocument() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getDocument(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), emptyDocument, rec.Body.String())
+		assert.JSONEq(suite.T(), emptyDocument, rec.Body.String())
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDocument))
@@ -180,7 +180,7 @@ func (suite *OnboardingClientRouterTestSuite) TestGetShouldReturnObject() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getDocument(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), nonEmptyDocument, rec.Body.String())
+		assert.JSONEq(suite.T(), nonEmptyDocument, rec.Body.String())
 	}
 
 	err = suite.db.DB().Delete(&info).Error

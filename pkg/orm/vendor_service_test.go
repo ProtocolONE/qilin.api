@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -55,7 +56,7 @@ func (suite *VendorServiceTestSuite) TestCreateVendorShouldPlaceInDB() {
 
 	ownProvider := orm.NewOwnerProvider(suite.db)
 	enf := rbac.NewEnforcer()
-	memServide := orm.NewMembershipService(suite.db, ownProvider, enf)
+	memServide := orm.NewMembershipService(suite.db, ownProvider, enf, mock.NewMailer(), "")
 	vendorService, err := orm.NewVendorService(suite.db, memServide)
 
 	userId := uuid.NamespaceDNS.String()
