@@ -12,9 +12,9 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"net/http/httptest"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
-	"qilin-api/pkg/sys"
 	"qilin-api/pkg/test"
 	"strings"
 	"testing"
@@ -84,7 +84,7 @@ func (suite *MembershipRouterTestSuite) SetupTest() {
 	enf := rbac.NewEnforcer()
 	ownerProvider := orm.NewOwnerProvider(db)
 
-	service := orm.NewMembershipService(db, ownerProvider, enf, sys.NewMailer(config.Mailer), "127.0.0.1")
+	service := orm.NewMembershipService(db, ownerProvider, enf, mock.NewMailer(), "127.0.0.1")
 	shouldBe.Nil(service.Init())
 	enf.AddRole(rbac.Role{Role: "admin", User: adminId, Domain: "vendor", Owner: ownerId, RestrictedResourceId: []string{"*"}})
 
