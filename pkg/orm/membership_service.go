@@ -270,8 +270,54 @@ func (service *membershipService) SendInvite(vendorId uuid.UUID, invite model.In
 	return &model.InviteCreated{Url: url, Id: invite.ID.String()}, nil
 }
 
-func (service *membershipService) AcceptInvite(inviteId uuid.UUID) error {
-	return errors.New("Not implemented yet")
+func (service *membershipService) AcceptInvite(vendorId uuid.UUID, inviteId uuid.UUID, userId string) error {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.Vendor{}, vendorId); !(exist && err == nil) {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Check vendor exist"))
+		}
+		return NewServiceError(http.StatusNotFound, "Vendor not found")
+	}
+
+	user := model.User{}
+	err := service.db.DB().Model(model.User{}).Where("id = ?", userId).First(&user).Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return NewServiceError(http.StatusNotFound, errors.Wrap(err, "Get user"))
+		}
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Get user"))
+	}
+
+	invite := model.Invite{}
+	err = service.db.DB().Model(model.Invite{}).Where("id = ?", inviteId).First(&invite).Error
+
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return NewServiceError(http.StatusNotFound, errors.Wrap(err, "Get invite"))
+		}
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Get invite"))
+	}
+
+	if invite.Email != user.Email {
+		return NewServiceErrorf(http.StatusForbidden, "Invite created for another user")
+	}
+
+	if invite.Accepted {
+		return NewServiceErrorf(http.StatusConflict, "Invite already accepted")
+	}
+
+	invite.Accepted = true
+	err = service.db.DB().Save(invite).Error
+	if err != nil {
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Save invite"))
+	}
+
+	for _, role := range invite.Roles {
+		if err := service.AddRoleToUserInGame(vendorId, userId, role.Resource.Id, role.Role); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (service *membershipService) GetUserPermissions(vendorId uuid.UUID, userId string) (*rbac.UserPermissions, error) {

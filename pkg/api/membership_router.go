@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
@@ -59,6 +60,7 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 	route.GET("/memberships/:userId/permissions", res.getUserPermissions, nil)
 
 	route.POST("/memberships/invites", res.sendInvite, nil)
+	group.PUT("/memberships/invites/:inviteId", res.acceptInvite)
 
 	//TODO: Hack. Remove after needed functionality implemented
 	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
@@ -78,6 +80,31 @@ func (api *MembershipRouter) addAdminRole(ctx echo.Context) error {
 
 func (api *MembershipRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	return GetOwnerForVendor(ctx)
+}
+
+func (api *MembershipRouter) acceptInvite(ctx echo.Context) error {
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
+	}
+
+	inviteId, err := uuid.FromString(ctx.Param("vendorId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad invite id"))
+	}
+
+	userId, err := context.GetAuthUserId(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	err = api.service.AcceptInvite(vendorId, inviteId, userId)
+	if err != nil {
+		return err
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (api *MembershipRouter) sendInvite(ctx echo.Context) error {
