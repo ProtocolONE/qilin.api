@@ -28,10 +28,12 @@ func (service *membershipService) Init() error {
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.GameType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.GameListType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RolesType, Effect: "deny"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "read", ResourceType: model.RoleUserType, Effect: "allow"})
 
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.VendorType, ResourceId: "skip", Action: "read", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceId: "skip", Action: "read", ResourceType: model.RoleUserType, Effect: "allow"})
 
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "any", Effect: "allow"})
@@ -39,6 +41,7 @@ func (service *membershipService) Init() error {
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.DocumentsType, ResourceId: "skip", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.RolesType, ResourceId: "skip", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.VendorType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceId: "skip", Action: "read", ResourceType: model.RoleUserType, Effect: "allow"})
 
 	service.enforcer.LinkRoles(model.SuperAdmin, model.Admin, "vendor")
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.SuperAdmin, Domain: "vendor", ResourceType: model.RolesType, ResourceId: "skip", Action: "any", Effect: "allow"})

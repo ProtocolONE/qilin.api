@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -35,7 +36,7 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 	route.GET("/memberships", res.getUsers, nil)
 	route.GET("/memberships/:userId", res.getUser, nil)
 	route.PUT("/memberships/:userId", res.changeUserRoles, nil)
-	route.GET("/memberships/:userId/permissions", res.getUserPermissions, nil)
+	route.GET("/memberships/:userId/permissions", res.getUserPermissions, []string{"*", model.RoleUserType, model.VendorDomain})
 
 	//TODO: Hack. Remove after needed functionality implemented
 	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
@@ -148,6 +149,11 @@ func (api *MembershipRouter) getUserPermissions(ctx echo.Context) error {
 	userId := ctx.Param("userId")
 	if userId == "" {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad user id"))
+	}
+
+	currentUserId, err := context.GetAuthUserId(ctx)
+	if currentUserId != userId {
+		return orm.NewServiceErrorf(http.StatusForbidden, "User %s can't see permissions for user %s", currentUserId, userId)
 	}
 
 	permissions, err := api.service.GetUserPermissions(vendorId, userId)

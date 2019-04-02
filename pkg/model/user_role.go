@@ -39,6 +39,7 @@ const DocumentsType string = "vendor.documents"
 const MessagesType string = "vendor.messages"
 const VendorType string = "vendor"
 const AdminDocumentsType string = "admin.vendor.documents"
+const RoleUserType string = "roles.user"
 const RolesType string = "roles"
 const GlobalType string = "global"
 
