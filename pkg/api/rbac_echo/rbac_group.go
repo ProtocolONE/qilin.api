@@ -1,6 +1,6 @@
 package rbac_echo
 
-import "github.com/labstack/echo"
+import "github.com/labstack/echo/v4"
 
 type RbacGroup struct {
 	group       *echo.Group

@@ -45,5 +45,5 @@ type AppState struct {
 // UserService is a helper service class to interact with User.
 type UserService interface {
 	FindByID(id string) (User, error)
-	Create(id string, lang string) (User, error)
+	Create(id string, email string, lang string) (User, error)
 }

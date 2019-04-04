@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -484,7 +484,7 @@ func (suite *OnboardingAdminRouterTestSuite) TestGetReviews() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getReviews(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), "[]", rec.Body.String())
+		assert.JSONEq(suite.T(), "[]", rec.Body.String())
 	}
 
 	suite.generateReviews(suite.db)

@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"fmt"
 	"github.com/ProtocolONE/rbac"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm/utils"
+	"qilin-api/pkg/sys"
 	array_utils "qilin-api/pkg/utils"
 )
 
@@ -15,10 +17,12 @@ type membershipService struct {
 	db            *Database
 	ownerProvider model.OwnerProvider
 	enforcer      *rbac.Enforcer
+	mailer        sys.Mailer
+	host          string
 }
 
-func NewMembershipService(db *Database, ownerProvider model.OwnerProvider, enforcer *rbac.Enforcer) model.MembershipService {
-	return &membershipService{db: db, ownerProvider: ownerProvider, enforcer: enforcer}
+func NewMembershipService(db *Database, ownerProvider model.OwnerProvider, enforcer *rbac.Enforcer, mailer sys.Mailer, host string) model.MembershipService {
+	return &membershipService{db: db, ownerProvider: ownerProvider, enforcer: enforcer, mailer: mailer, host: host}
 }
 
 func (service *membershipService) Init() error {
@@ -236,12 +240,88 @@ func (service *membershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId
 	return nil
 }
 
-func (service *membershipService) SendInvite(vendorId uuid.UUID, userId string) error {
-	return errors.New("Not implemented yet")
+func (service *membershipService) SendInvite(vendorId uuid.UUID, invite model.Invite) (*model.InviteCreated, error) {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.Vendor{}, vendorId); !(exist && err == nil) {
+		if err != nil {
+			return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Check vendor exist"))
+		}
+		return nil, NewServiceError(http.StatusNotFound, "Vendor not found")
+	}
+
+	count := 0
+	if err := service.db.DB().Model(&model.Invite{}).Where("vendor_id = ? AND email = ?", vendorId, invite.Email).Count(&count).Error; err != nil {
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Scan for existing invite"))
+	}
+
+	if count > 0 {
+		return nil, NewServiceErrorf(http.StatusConflict, "Invite for %s vendor and user with %s email already sent", vendorId, invite.Email)
+	}
+
+	invite.ID = uuid.NewV4()
+	invite.VendorId = vendorId
+	if err := service.db.DB().Create(&invite).Error; err != nil {
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Saving invite"))
+	}
+
+	url := fmt.Sprintf("%s?token=%s", service.host, invite.ID)
+
+	//TODO: add localization
+	err := service.mailer.Send(invite.Email, "Invitation to Qilin service", fmt.Sprintf("Body. Url: %s", url))
+	if err != nil {
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Sending email"))
+	}
+
+	return &model.InviteCreated{Url: url, Id: invite.ID.String()}, nil
 }
 
-func (service *membershipService) AcceptInvite(inviteId uuid.UUID) error {
-	return errors.New("Not implemented yet")
+func (service *membershipService) AcceptInvite(vendorId uuid.UUID, inviteId uuid.UUID, userId string) error {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.Vendor{}, vendorId); !(exist && err == nil) {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Check vendor exist"))
+		}
+		return NewServiceError(http.StatusNotFound, "Vendor not found")
+	}
+
+	user := model.User{}
+	err := service.db.DB().Model(model.User{}).Where("id = ?", userId).First(&user).Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return NewServiceError(http.StatusNotFound, errors.Wrap(err, "Get user"))
+		}
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Get user"))
+	}
+
+	invite := model.Invite{}
+	err = service.db.DB().Model(model.Invite{}).Where("id = ?", inviteId).First(&invite).Error
+
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return NewServiceError(http.StatusNotFound, errors.Wrap(err, "Get invite"))
+		}
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Get invite"))
+	}
+
+	if invite.Email != user.Email {
+		return NewServiceErrorf(http.StatusForbidden, "Invite created for another user")
+	}
+
+	if invite.Accepted {
+		return NewServiceErrorf(http.StatusConflict, "Invite already accepted")
+	}
+
+	invite.Accepted = true
+	err = service.db.DB().Save(invite).Error
+	if err != nil {
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Save invite"))
+	}
+
+	for _, role := range invite.Roles {
+		if err := service.AddRoleToUserInGame(vendorId, userId, role.Resource.Id, role.Role); err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Add role to user after invite accept"))
+		}
+	}
+
+	return nil
 }
 
 func (service *membershipService) GetUserPermissions(vendorId uuid.UUID, userId string) (*rbac.UserPermissions, error) {
@@ -262,7 +342,6 @@ func (service *membershipService) GetUserPermissions(vendorId uuid.UUID, userId 
 	return service.enforcer.GetPermissionsForUser(userId, "vendor", vendorId.String()), nil
 }
 
-
 func (service *membershipService) AddRoleToUser(userId string, owner string, role string) error {
 	if service.enforcer.AddRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: []string{"*"}}) == false {
 		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role, userId)
@@ -282,4 +361,3 @@ func appendIfMissing(slice []string, users []string, skipNames []string) []strin
 
 	return slice
 }
-

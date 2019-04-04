@@ -44,6 +44,7 @@ func (db *Database) Init() error {
 		&model.GameRating{},
 		&model.DocumentsInfo{},
 		&model.Notification{},
+		&model.Invite{},
 	).Error
 }
 
@@ -64,6 +65,7 @@ func (db *Database) DropAllTables() error {
 			"vendor_users",
 			model.DocumentsInfo{},
 			model.Notification{},
+			model.Invite{},
 		).Error
 	}
 	return nil

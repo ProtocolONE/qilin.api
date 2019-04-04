@@ -50,9 +50,10 @@ func (p *UserService) FindByID(id string) (user model.User, err error) {
 	return
 }
 
-func (p *UserService) Create(id string, lang string) (user model.User, err error) {
+func (p *UserService) Create(id string, email string, lang string) (user model.User, err error) {
 	user = model.User{
 		ID:   id,
+		Email: email,
 		Lang: lang,
 	}
 

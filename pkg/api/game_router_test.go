@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/ProtocolONE/rbac"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -77,7 +78,7 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 
 	ownerProvider := orm.NewOwnerProvider(db)
 	enforcer := rbac.NewEnforcer()
-	membership := orm.NewMembershipService(db, ownerProvider, enforcer)
+	membership := orm.NewMembershipService(db, ownerProvider, enforcer, mock.NewMailer(), "")
 	err = membership.Init()
 	if err != nil {
 		suite.FailNow("Membership fail", "%v", err)

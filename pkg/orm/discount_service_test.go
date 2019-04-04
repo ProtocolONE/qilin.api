@@ -4,17 +4,15 @@ import (
 	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"testing"
 	"time"
-
 	"github.com/stretchr/testify/assert"
-
 	"github.com/satori/go.uuid"
-
 	"github.com/stretchr/testify/suite"
 )
 
@@ -75,7 +73,7 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 
 	ownProvider := orm.NewOwnerProvider(suite.db)
 	enf := rbac.NewEnforcer()
-	membershipService := orm.NewMembershipService(suite.db, ownProvider, enf)
+	membershipService := orm.NewMembershipService(suite.db, ownProvider, enf, mock.NewMailer(), "")
 
 	vendorService, err := orm.NewVendorService(db, membershipService)
 	suite.Nil(err, "Unable make vendor service")

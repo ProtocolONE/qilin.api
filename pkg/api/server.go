@@ -4,8 +4,8 @@ import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	jwt_middleware "github.com/ProtocolONE/authone-jwt-verifier-golang/middleware/echo"
 	"github.com/ProtocolONE/rbac"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 	qilin_middleware "qilin-api/pkg/api/rbac_echo"
@@ -102,7 +102,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.Router.Use(jwt_middleware.AuthOneJwtWithConfig(jwtv))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
-	if err := server.setupRoutes(ownerProvider, opts.Mailer); err != nil {
+	if err := server.setupRoutes(ownerProvider, opts.Mailer, jwtv); err != nil {
 		zap.L().Fatal("Fail to setup routes", zap.Error(err))
 	}
 
@@ -115,7 +115,7 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer) error {
+func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer, verifier *jwtverifier.JwtVerifier) error {
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 	if err != nil {
 		return err
 	}
-	if err := InitUserRoutes(s, userService); err != nil {
+	if err := InitUserRoutes(s, userService, verifier); err != nil {
 		return err
 	}
 
@@ -177,7 +177,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	membershipService := orm.NewMembershipService(s.db, ownerProvider, s.enforcer)
+	membershipService := orm.NewMembershipService(s.db, ownerProvider, s.enforcer, mailer, "")
 	if err := membershipService.Init(); err != nil {
 		return err
 	}
