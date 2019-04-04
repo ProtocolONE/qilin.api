@@ -12,6 +12,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"net/http/httptest"
+	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
@@ -241,6 +242,7 @@ func (suite *MembershipRouterTestSuite) TestGetPermissions() {
 		c.SetPath("/api/v1/vendors/:vendorId/memberships/:userId")
 		c.SetParamNames("vendorId", "userId")
 		c.SetParamValues(testCase.vendorId, testCase.userId)
+		c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: testCase.userId})
 
 		res := suite.router.getUserPermissions(c)
 		msg := fmt.Sprintf("[%s] %v. %v", testCase.testName, testCase, res)
