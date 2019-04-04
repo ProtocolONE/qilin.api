@@ -8,15 +8,17 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type BasePrice struct {
-	ID uuid.UUID `gorm:"type:uuid; primary_key"`
-
-	UpdatedAt *time.Time
-
+type PackagePrices struct {
 	Common   JSONB `gorm:"type:JSONB"`
 	PreOrder JSONB `gorm:"type:JSONB"`
 
 	Prices []Price `gorm:"foreignkey:BasePriceID" field:"ignore"`
+}
+
+type BasePrice struct {
+	ID uuid.UUID `gorm:"type:uuid; primary_key"`
+	UpdatedAt *time.Time
+	PackagePrices
 }
 
 type Price struct {
@@ -31,5 +33,5 @@ type Price struct {
 
 //TableName is HACK method for merging this model with "games" table
 func (BasePrice) TableName() string {
-	return "games"
+	return "packages"
 }

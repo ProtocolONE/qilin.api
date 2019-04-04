@@ -44,6 +44,9 @@ type (
 		Name                string
 		IsUpgradeAllowed    bool
 		IsEnabled           bool
+		VendorID            uuid.UUID
+		Vendor              Vendor
+		CreatorID           string
 		// DiscountPolicy
 		Discount            uint
 		DiscountBuyOpt      BuyOption

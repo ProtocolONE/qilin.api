@@ -212,7 +212,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
+	if _, err := InitRoutes(s.Router, gameService, userService, packageService); err != nil {
 		return err
 	}
 

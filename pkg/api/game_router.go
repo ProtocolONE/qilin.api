@@ -22,6 +22,7 @@ import (
 type GameRouter struct {
 	gameService model.GameService
 	userService model.UserService
+	packageService model.PackageService
 }
 
 type (
@@ -260,11 +261,8 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 	}
 }
 
-func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService) (*GameRouter, error) {
-	Router := GameRouter{
-		gameService: service,
-		userService: userService,
-	}
+func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService, packageService model.PackageService) (*GameRouter, error) {
+	Router := GameRouter{service,userService,packageService}
 
 	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.GameListType, model.VendorDomain})
 	r.GET("/games", Router.GetList, nil)
@@ -393,6 +391,13 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// Create default package for Game
+	_, err = api.packageService.Create(vendorId, params.InternalName, []uuid.UUID{game.ID})
+	if err != nil {
+		return err
+	}
+
 	return ctx.JSON(http.StatusCreated, dto)
 }
 

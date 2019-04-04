@@ -14,7 +14,7 @@ servers:
     description: Master test server
 
 paths:
-  /api/v1/vendor/:vendorId/packages:
+  /api/v1/vendors/:vendorId/packages:
     get:
       tags:
         - "package"
@@ -35,7 +35,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Package'
+                  $ref: '#/components/schemas/PackageItem'
         400:
           $ref: '#/components/responses/BadRequest'
         401:
@@ -86,7 +86,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendor/:vendorId/packages/:id:
+  /api/v1/vendors/:vendorId/packages/:id:
     get:
       tags:
         - "package"
@@ -205,7 +205,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendor/:vendorId/packages/:id/products:
+  /api/v1/vendors/:vendorId/packages/:id/products:
     post:
       tags:
         - "package"
@@ -473,6 +473,38 @@ components:
       required:
         - code
         - message
+
+  PackageItem:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        readOnly: true
+      createdAt:
+        type: string
+        format: "date-time"
+        readOnly: true
+      sku:
+        type: string
+        description: "Store number"
+      name:
+        type: string
+        example: "Buy Poly Bridge Deluxe Edition"
+      isEnabled:
+        type: boolean
+      media:
+        type: object
+        properties:
+          image:
+            type: string
+            format: uri
+          cover:
+            type: string
+            format: uri
+          thumb:
+            type: string
+            format: uri
 
     Package:
       type: object
