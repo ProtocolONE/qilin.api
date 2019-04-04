@@ -72,7 +72,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendor/:id/games:
+  /api/v1/vendors/:id/games:
     post:
       tags:
         - "game"
@@ -137,14 +137,6 @@ paths:
           schema:
             type: "string"
           required: false
-        - name: "price"
-          in: query
-          description: "Filter games by price"
-          schema:
-            type: "number"
-            format: float
-          example: 59.99
-          required: false
         - name: "releaseDate"
           in: query
           description: "Filter games by release date"
@@ -166,8 +158,6 @@ paths:
                 - +genre
                 - -releaseDate
                 - +releaseDate
-                - -price
-                - +price
                 - -internalName
                 - +internalName
           required: false
@@ -538,7 +528,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/games/{id}/prices/{currency}:
+  /api/v1/vendors/{vendorId}/packages/{id}/prices/{currency}:
     put:
       summary: Change price in currency for game
       tags:
@@ -613,7 +603,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/games/{id}/prices:
+  /api/v1/vendors/{vendorId}/packages/{id}/prices:
     get:
       tags:
         - price
@@ -2247,8 +2237,6 @@ components:
           type: "string"
           format: "date-time"
           readOnly: true
-        prices:
-          $ref: "#/components/schemas/Price"
 
     Price:
       type: object

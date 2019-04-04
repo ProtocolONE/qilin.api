@@ -49,6 +49,50 @@ func (provider *ownerProvider) GetOwnerForGame(gameId uuid.UUID) (string, error)
 	return vendor.ManagerID, nil
 }
 
+func (provider *ownerProvider) GetOwnerForPackage(packageId uuid.UUID) (string, error) {
+	vendor := model.Vendor{}
+	pkg := model.Package{}
+	err := provider.db.DB().Model(&model.Package{}).Where("id = ?", packageId).First(&pkg).Error
+
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return "", NewServiceErrorf(http.StatusNotFound, "Package `%s` not found ", packageId)
+		}
+		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get package"))
+	}
+
+	if err := provider.db.DB().Model(&model.Vendor{}).Where("id = ?", pkg.VendorID).First(&vendor).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found ", packageId)
+		}
+		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get vendor"))
+	}
+
+	return vendor.ManagerID, nil
+}
+
+func (provider *ownerProvider) GetOwnerForBundle(bundleId uuid.UUID) (string, error) {
+	vendor := model.Vendor{}
+	bundle := model.StoreBundle{}
+	err := provider.db.DB().Model(&model.StoreBundle{}).Where("id = ?", bundleId).First(&bundle).Error
+
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return "", NewServiceErrorf(http.StatusNotFound, "Bundle `%s` not found ", bundleId)
+		}
+		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get bundle"))
+	}
+
+	if err := provider.db.DB().Model(&model.Vendor{}).Where("id = ?", bundle.VendorID).First(&vendor).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found ", bundleId)
+		}
+		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get vendor"))
+	}
+
+	return vendor.ManagerID, nil
+}
+
 func NewOwnerProvider(db *Database) model.OwnerProvider {
 	return &ownerProvider{db}
 }

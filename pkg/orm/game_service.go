@@ -218,11 +218,6 @@ func (p *gameService) GetList(userId string, vendorId uuid.UUID,
 		vals = append(vals, rdate)
 	}
 
-	if price > 0 {
-		conds = append(conds, `abs(prices.price - ?) < 0.01`)
-		vals = append(vals, price)
-	}
-
 	var orderBy interface{}
 	orderBy = "created_at ASC"
 	if sort != "" {
@@ -235,10 +230,6 @@ func (p *gameService) GetList(userId string, vendorId uuid.UUID,
 			orderBy = "release_date DESC"
 		case "+releaseDate":
 			orderBy = "release_date ASC"
-		case "-price":
-			orderBy = "prices ASC, prices.price DESC, created_at DESC"
-		case "+price":
-			orderBy = "prices DESC, prices.price ASC, created_at ASC"
 		case "-internalName":
 			orderBy = "internal_name DESC"
 		case "+internalName":
@@ -248,8 +239,7 @@ func (p *gameService) GetList(userId string, vendorId uuid.UUID,
 
 	err = p.db.
 		Model(model.Game{}).
-		Select("games.*, prices.currency, prices.price").
-		Joins("LEFT JOIN prices on prices.base_price_id = games.id and prices.currency = games.common ->> 'Currency'").
+		Select("games.*").
 		Joins("LEFT JOIN game_genres on game_genres.id = games.genre_main").
 		Where(`vendor_id = ?`, vendorId).
 		Where(strings.Join(conds, " or "), vals...).

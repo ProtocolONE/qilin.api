@@ -40,6 +40,7 @@ const MessagesType string = "vendor.messages"
 const VendorType string = "vendor"
 const AdminDocumentsType string = "admin.vendor.documents"
 const RolesType string = "roles"
+const PackageType string = "packages"
 const GlobalType string = "global"
 
 type ResourceMeta struct {

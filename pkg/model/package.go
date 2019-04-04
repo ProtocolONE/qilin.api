@@ -24,13 +24,15 @@ type (
 		IsEnabled           bool
 		VendorID            uuid.UUID
 		Vendor              Vendor
+		CreatorID           string
 		// DiscountPolicy
 		Discount            uint
 		DiscountBuyOpt      BuyOption
 		// RegionalRestrinctions
 		AllowedCountries    pq.StringArray  `gorm:"type:text[]"`
-		// Package payload
+		// Payload
 		Products            []Product       `gorm:"-"`
+		PackagePrices
 	}
 
 	PackageProduct struct {

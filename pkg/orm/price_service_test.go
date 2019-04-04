@@ -77,17 +77,19 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 	id, _ := uuid.FromString(ID)
 	game := model.BasePrice{
 		ID: uuid.NewV4(),
-		Common: model.JSONB{
-			"currency": "USD",
-			"price":    100.0,
-		},
-		PreOrder: model.JSONB{
-			"date":    "2019-01-22T07:53:16Z",
-			"enabled": false,
-		},
-		Prices: []model.Price{
-			{BasePriceID: id, Price: 100.0, Vat: 32, Currency: "EUR"},
-			{BasePriceID: id, Price: 93.23, Vat: 10, Currency: "RUR"},
+		PackagePrices: model.PackagePrices{
+			Common: model.JSONB{
+				"currency": "USD",
+				"price":    100.0,
+			},
+			PreOrder: model.JSONB{
+				"date":    "2019-01-22T07:53:16Z",
+				"enabled": false,
+			},
+			Prices: []model.Price{
+				{BasePriceID: id, Price: 100.0, Vat: 32, Currency: "EUR"},
+				{BasePriceID: id, Price: 93.23, Vat: 10, Currency: "RUR"},
+			},
 		},
 		UpdatedAt: &updatedAt,
 	}

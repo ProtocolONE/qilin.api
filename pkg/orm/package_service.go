@@ -158,6 +158,15 @@ func (p *PackageService) Get(packageId uuid.UUID) (result *model.Package, err er
 	}
 	result.Products = prods
 
+	err = p.db.
+		Model(model.Package{}).
+		Where("id = ?", packageId).
+		Association("Prices").
+		Find(&result.Prices).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Fetch prices for package")
+	}
+
 	return
 }
 

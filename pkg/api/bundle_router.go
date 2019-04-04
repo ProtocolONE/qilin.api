@@ -1,10 +1,11 @@
 package api
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"time"
@@ -42,7 +43,7 @@ type (
 	}
 )
 
-func mapStoreBundleDto(bundle *model.StoreBundle, lang string) (dto storeBundleDTO) {
+func mapStoreBundleDto(bundle *model.StoreBundle, lang string) (dto storeBundleDTO, err error) {
 	dto = storeBundleDTO{
 		ID: bundle.ID,
 		CreatedAt: bundle.CreatedAt,
@@ -59,19 +60,29 @@ func mapStoreBundleDto(bundle *model.StoreBundle, lang string) (dto storeBundleD
 		},
 	}
 	for _, p := range bundle.Packages {
-		dto.Packages = append(dto.Packages, mapPackageDto(&p, lang))
+		pkg, err := mapPackageDto(&p, lang)
+		if err != nil {
+			return dto, err
+		}
+		dto.Packages = append(dto.Packages, pkg)
 	}
-	return dto
+	return dto, nil
 }
 
 func InitBundleRouter(group *echo.Group, service *orm.BundleService) (router *BundleRouter, err error) {
 	router = &BundleRouter{service}
 
-	group.GET("/bundles/store/:bundleId", router.GetStore)
-	group.POST("/bundles/store", router.CreateStore)
-	group.DELETE("/bundles/:bundleId", router.Delete)
+	packageGroup := rbac_echo.Group(group,"/vendors/:vendorId", router, []string{"vendorId", "bundleId", model.VendorType})
+
+	packageGroup.GET("/bundles/store/:bundleId", router.GetStore, nil)
+	packageGroup.POST("/bundles/store", router.CreateStore, nil)
+	packageGroup.DELETE("/bundles/:bundleId", router.Delete, nil)
 
 	return
+}
+
+func (router *BundleRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	return GetOwnerForBundle(ctx)
 }
 
 func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
@@ -91,7 +102,11 @@ func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
 	}
 	lang := context.GetLang(ctx)
 
-	return ctx.JSON(http.StatusCreated, mapStoreBundleDto(bundle, lang))
+	dto, err := mapStoreBundleDto(bundle, lang)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusCreated, dto)
 }
 
 func (router *BundleRouter) GetStore(ctx echo.Context) (err error) {
@@ -111,7 +126,11 @@ func (router *BundleRouter) GetStore(ctx echo.Context) (err error) {
 	}
 	lang := context.GetLang(ctx)
 
-	return ctx.JSON(http.StatusOK, mapStoreBundleDto(bundleStore, lang))
+	dto, err := mapStoreBundleDto(bundleStore, lang)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, dto)
 }
 
 func (router *BundleRouter) Delete(ctx echo.Context) (err error) {

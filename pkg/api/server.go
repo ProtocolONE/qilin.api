@@ -4,8 +4,8 @@ import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	jwt_middleware "github.com/ProtocolONE/authone-jwt-verifier-golang/middleware/echo"
 	"github.com/ProtocolONE/rbac"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 	qilin_middleware "qilin-api/pkg/api/rbac_echo"
@@ -212,7 +212,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
+	if _, err := InitRoutes(s.Router, gameService, userService, packageService); err != nil {
 		return err
 	}
 
