@@ -169,20 +169,20 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	adminClientOnboarding, err := orm.NewAdminOnboardingService(s.db)
-	if err != nil {
-		return err
-	}
-	if _, err := InitAdminOnboardingRouter(s.AdminRouter, adminClientOnboarding, notificationService); err != nil {
-		return err
-	}
-
 	membershipService := orm.NewMembershipService(s.db, ownerProvider, s.enforcer, mailer, "")
 	if err := membershipService.Init(); err != nil {
 		return err
 	}
 
 	if _, err := InitClientMembershipRouter(s.Router, membershipService); err != nil {
+		return err
+	}
+
+	adminClientOnboarding, err := orm.NewAdminOnboardingService(s.db, membershipService, ownerProvider)
+	if err != nil {
+		return err
+	}
+	if _, err := InitAdminOnboardingRouter(s.AdminRouter, adminClientOnboarding, notificationService); err != nil {
 		return err
 	}
 

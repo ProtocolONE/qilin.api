@@ -175,7 +175,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	adminService, err := orm.NewAdminOnboardingService(s.db)
+	adminService, err := orm.NewAdminOnboardingService(s.db, mock.NewMembershipService(), orm.NewOwnerProvider(s.db))
 	if _, err := InitAdminOnboardingRouter(s.AdminRouter, adminService, nil); err != nil {
 		return err
 	}

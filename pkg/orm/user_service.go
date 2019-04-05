@@ -57,9 +57,9 @@ func (p *UserService) Create(id string, email string, lang string) (user model.U
 		Lang: lang,
 	}
 
-	err = p.db.Create(&user).Error
+	err = p.db.Save(&user).Error
 	if err != nil {
-		return user, errors.Wrap(err, "by insert new user")
+		return user, errors.Wrap(err, "by save new user")
 	}
 
 	return user, nil

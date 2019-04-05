@@ -14,14 +14,15 @@ import (
 // AdminOnboardingService is service to interact with vendor requests objects with admin rights
 type AdminOnboardingService struct {
 	db *gorm.DB
+	membershipService model.MembershipService
+	ownerProvider model.OwnerProvider
 }
 
-func NewAdminOnboardingService(db *Database) (*AdminOnboardingService, error) {
-	return &AdminOnboardingService{db.database}, nil
+func NewAdminOnboardingService(db *Database, membershipService model.MembershipService, ownerProvider model.OwnerProvider) (*AdminOnboardingService, error) {
+	return &AdminOnboardingService{db.database, membershipService, ownerProvider}, nil
 }
 
 func (p *AdminOnboardingService) GetRequests(limit int, offset int, name string, status model.ReviewStatus, sort string) ([]model.DocumentsInfo, int, error) {
-
 	var documents []model.DocumentsInfo
 	query := p.db.Model(model.DocumentsInfo{}).Where("status <> ?", model.StatusDraft).Limit(limit).Offset(offset)
 	if name != "" {
@@ -119,9 +120,18 @@ func (p *AdminOnboardingService) ChangeStatus(id uuid.UUID, status model.ReviewS
 	doc.ReviewStatus = status
 
 	err = p.db.Save(doc).Error
-
 	if err != nil {
 		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Saving document error"))
+	}
+
+	if doc.Status == model.StatusApproved {
+		owner, err := p.ownerProvider.GetOwnerForVendor(doc.VendorID)
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Trying get owner for vendor for removing not_approved role"))
+		}
+
+		//Error is ignored here
+		_ = p.membershipService.RemoveRoleToUserInGame(doc.VendorID, owner, "*", model.NotApproved)
 	}
 
 	return nil

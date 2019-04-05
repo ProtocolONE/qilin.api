@@ -65,7 +65,6 @@ func InitAdminOnboardingRouter(group *echo.Group, service *orm.AdminOnboardingSe
 	common := []string{"*", model.AdminDocumentsType, model.VendorDomain}
 
 	r := rbac_echo.Group(group, "/vendors", &router, common)
-	//group.GET("/vendors/reviews", router.getReviews)
 	r.GET("/reviews", router.getReviews, nil)
 	r.GET("/:vendorId/documents", router.getDocument, nil)
 	r.PUT("/:vendorId/documents/status", router.changeStatus, nil)

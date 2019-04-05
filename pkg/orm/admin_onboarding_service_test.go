@@ -3,6 +3,7 @@ package orm_test
 import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/orm"
@@ -44,7 +45,7 @@ func (suite *AdminOnboardingServiceTestSuite) SetupTest() {
 
 	suite.db = db
 
-	service, err := orm.NewAdminOnboardingService(suite.db)
+	service, err := orm.NewAdminOnboardingService(suite.db, mock.NewMembershipService(), orm.NewOwnerProvider(suite.db))
 	if err != nil {
 		suite.Fail("Unable to create service", "%v", err)
 	}

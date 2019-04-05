@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	bto "qilin-api/pkg/model/game"
 	"qilin-api/pkg/orm"
@@ -67,7 +68,7 @@ func (suite *OnboardingAdminRouterTestSuite) SetupTest() {
 	should.Nil(db.DB().Create(&model.Vendor{ID: uuid.FromStringOrNil("413ab3ec-91b0-43c4-8a4c-653a265288fa"), Email: "example3@example.ru", Name: "Test3", Domain3: "test3"}).Error, "Can't create vendor")
 
 	e := echo.New()
-	service, err := orm.NewAdminOnboardingService(db)
+	service, err := orm.NewAdminOnboardingService(db, mock.NewMembershipService(), orm.NewOwnerProvider(db))
 	should.Nil(err)
 	notifier, err := sys.NewNotifier(config.Notifier.ApiKey, config.Notifier.Host)
 	should.Nil(err)
