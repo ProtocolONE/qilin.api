@@ -63,7 +63,7 @@ paths:
           $ref: '#/components/responses/InternalError'
 
   /api/v1/vendors/{id}/memberships/invites/{inviteId}:
-    post:
+    put:
       summary: "Accept invite"
       parameters:
         - name: id
