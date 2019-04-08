@@ -321,6 +321,8 @@ func (suite *MembershipRouterTestSuite) TestAcceptInvite() {
 func (suite *MembershipRouterTestSuite) TestSendInvite() {
 	shouldBe := require.New(suite.T())
 	normalBody := `{"email":"tester@protocol.one", "roles":[{"role":"manager","resource":{"id":"*","domain":"vendor"}}]}`
+	normalBodyWithGameId := fmt.Sprintf(`{"email":"tester2@protocol.one", "roles":[{"role":"manager","resource":{"id":"%s","domain":"vendor"}}]}`, TestID)
+	bodyWithUnknownGameId := fmt.Sprintf(`{"email":"tester3@protocol.one", "roles":[{"role":"manager","resource":{"id":"%s","domain":"vendor"}}]}`, uuid.NewV4())
 	noEmailBody := `{"roles":[{"role":"manager","resource":{"id":"*"}}]}`
 	badBody := `<"email":"roman.golenok@protocol.one", "roles":[{"role":"manager","resource":{"id":"*"}}]>`
 	testCases := []struct {
@@ -331,6 +333,8 @@ func (suite *MembershipRouterTestSuite) TestSendInvite() {
 		body     string
 	}{
 		{testName: "Normal", vendorId: vendorId, code: 201, body: normalBody, success: true},
+		{testName: "Normal with specified game", vendorId: vendorId, code: 201, body: normalBodyWithGameId, success: true},
+		{testName: "Unknown game", vendorId: vendorId, code: 422, body: bodyWithUnknownGameId, success: false},
 		{testName: "Duplicate", vendorId: vendorId, code: 409, body: normalBody, success: false},
 		{testName: "Bad body", vendorId: vendorId, code: 400, body: badBody, success: false},
 		{testName: "Without email", vendorId: vendorId, code: 422, body: noEmailBody, success: false},

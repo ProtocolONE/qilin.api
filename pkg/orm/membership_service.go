@@ -257,8 +257,20 @@ func (service *membershipService) SendInvite(vendorId uuid.UUID, invite model.In
 		return nil, NewServiceErrorf(http.StatusConflict, "Invite for %s vendor and user with %s email already sent", vendorId, invite.Email)
 	}
 
+	for _, role := range invite.Roles {
+		if role.Resource.Id == "" || role.Resource.Id == "*" {
+			continue
+		}
+		game := model.Game{}
+		err := service.db.DB().Model(model.Game{}).Where("id = ?", role.Resource.Id).First(&game).Error
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, NewServiceErrorf(http.StatusUnprocessableEntity, "Game %s not found", role.Resource.Id)
+		}
+	}
+
 	invite.ID = uuid.NewV4()
 	invite.VendorId = vendorId
+
 	if err := service.db.DB().Create(&invite).Error; err != nil {
 		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Saving invite"))
 	}
