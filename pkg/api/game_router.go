@@ -266,7 +266,7 @@ func InitRoutes(router *echo.Group, service model.GameService, userService model
 		userService: userService,
 	}
 
-	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.GameListType, model.VendorDomain})
+	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.VendorGameType, model.VendorDomain})
 	r.GET("/games", Router.GetList, nil)
 	r.POST("/games", Router.Create, nil)
 

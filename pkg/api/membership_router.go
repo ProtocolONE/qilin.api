@@ -60,8 +60,8 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 	route.PUT("/memberships/:userId", res.changeUserRoles, nil)
 	route.GET("/memberships/:userId/permissions", res.getUserPermissions, []string{"*", model.RoleUserType, model.VendorDomain})
 
-	route.POST("/memberships/invites", res.sendInvite, nil)
-	route.PUT("/memberships/invites/:inviteId", res.acceptInvite, nil)
+	route.POST("/memberships/invites", res.sendInvite, []string{"*", model.InvitesType, model.VendorDomain})
+	route.PUT("/memberships/invites/:inviteId", res.acceptInvite, []string{"*", model.InvitesType, model.VendorDomain})
 
 	//TODO: Hack. Remove after needed functionality implemented
 	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
