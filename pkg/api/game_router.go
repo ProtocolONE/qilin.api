@@ -266,7 +266,7 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService, packageService model.PackageService) (*GameRouter, error) {
 	Router := GameRouter{service,userService,packageService}
 
-	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.GameListType, model.VendorDomain})
+	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.VendorGameType, model.VendorDomain})
 	r.GET("/games", Router.GetList, nil)
 	r.POST("/games", Router.Create, nil)
 

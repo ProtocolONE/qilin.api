@@ -34,17 +34,19 @@ type RoleRestriction struct {
 }
 
 const GameType string = "games"
-const GameListType string = "vendor.games"
-const DocumentsType string = "vendor.documents"
-const MessagesType string = "vendor.messages"
-const VendorType string = "vendor"
-const AdminDocumentsType string = "admin.vendor.documents"
-const RoleUserType string = "roles.user"
-const RolesType string = "roles"
+const GameListType string = "vendors.games"
 const PackageType string = "packages"
 const RoleBundle string = "bundles"
-const PackageListType string = "vendor.packages"
-const RoleBundleList string = "vendor.bundles"
+const PackageListType string = "vendors.packages"
+const RoleBundleList string = "vendors.bundles"
+const VendorGameType string = "vendors.games"
+const DocumentsType string = "vendors.documents.*"
+const MessagesType string = "vendors.messages.*"
+const VendorType string = "vendors"
+const AdminDocumentsType string = "admin.vendors.*"
+const RoleUserType string = "vendors.memberships"
+const RolesType string = "vendors.memberships.permissions"
+const InvitesType string = "vendors.memberships.invites"
 const GlobalType string = "global"
 
 type ResourceMeta struct {

@@ -10,6 +10,7 @@ import (
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"strings"
 )
 
 type MembershipRouter struct {
@@ -59,8 +60,8 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 	route.PUT("/memberships/:userId", res.changeUserRoles, nil)
 	route.GET("/memberships/:userId/permissions", res.getUserPermissions, []string{"*", model.RoleUserType, model.VendorDomain})
 
-	route.POST("/memberships/invites", res.sendInvite, nil)
-	group.PUT("/memberships/invites/:inviteId", res.acceptInvite)
+	route.POST("/memberships/invites", res.sendInvite, []string{"*", model.InvitesType, model.VendorDomain})
+	route.PUT("/memberships/invites/:inviteId", res.acceptInvite, []string{"*", model.InvitesType, model.VendorDomain})
 
 	//TODO: Hack. Remove after needed functionality implemented
 	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
@@ -79,6 +80,11 @@ func (api *MembershipRouter) addAdminRole(ctx echo.Context) error {
 }
 
 func (api *MembershipRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	//HACK: we should skip checking rights for accepting invite and returning self as owner of resource for pass
+	if strings.Contains(ctx.Path(), "/memberships/invites/:inviteId") && ctx.Request().Method == http.MethodPut {
+		return context.GetAuthUserId(ctx)
+	}
+
 	return GetOwnerForVendor(ctx)
 }
 

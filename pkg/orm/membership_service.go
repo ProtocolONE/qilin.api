@@ -35,8 +35,10 @@ func (service *membershipService) Init() error {
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.PackageListType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RoleBundle, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RoleBundleList, Effect: "deny"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.VendorGameType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RolesType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "read", ResourceType: model.RoleUserType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceType: model.AdminDocumentsType, ResourceId: "skip", Action: "any", Effect: "deny"})
 
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "read", Effect: "allow"})
@@ -44,6 +46,7 @@ func (service *membershipService) Init() error {
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.PackageListType, ResourceId: "skip", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.RoleBundle, ResourceId: "*", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.RoleBundleList, ResourceId: "skip", Action: "read", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.VendorGameType, ResourceId: "skip", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.VendorType, ResourceId: "skip", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceId: "skip", Action: "read", ResourceType: model.RoleUserType, Effect: "allow"})
 
@@ -53,6 +56,7 @@ func (service *membershipService) Init() error {
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.PackageListType, ResourceId: "skip", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.RoleBundle, ResourceId: "*", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.RoleBundleList, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.VendorGameType, ResourceId: "skip", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.MessagesType, ResourceId: "skip", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.DocumentsType, ResourceId: "skip", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.RolesType, ResourceId: "skip", Action: "read", Effect: "allow"})
@@ -269,8 +273,20 @@ func (service *membershipService) SendInvite(vendorId uuid.UUID, invite model.In
 		return nil, NewServiceErrorf(http.StatusConflict, "Invite for %s vendor and user with %s email already sent", vendorId, invite.Email)
 	}
 
+	for _, role := range invite.Roles {
+		if role.Resource.Id == "" || role.Resource.Id == "*" {
+			continue
+		}
+		game := model.Game{}
+		err := service.db.DB().Model(model.Game{}).Where("id = ?", role.Resource.Id).First(&game).Error
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, NewServiceErrorf(http.StatusUnprocessableEntity, "Game %s not found", role.Resource.Id)
+		}
+	}
+
 	invite.ID = uuid.NewV4()
 	invite.VendorId = vendorId
+
 	if err := service.db.DB().Create(&invite).Error; err != nil {
 		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Saving invite"))
 	}
