@@ -52,6 +52,8 @@ type (
 		UpdatedAt time.Time  `gorm:"default:now()"`
 		DeletedAt *time.Time `sql:"index"`
 
+		DefPackageID uuid.UUID
+
 		Product ProductEntry `gorm:"polymorphic:Entry;"`
 	}
 

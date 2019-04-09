@@ -87,7 +87,7 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	service, err := orm.NewGameService(db)
 	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
 
-	packageService, err := orm.NewPackageService(db)
+	packageService, err := orm.NewPackageService(db, service)
 	if err != nil {
 		suite.FailNow("Package fail", "%v", err)
 	}

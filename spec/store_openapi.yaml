@@ -15,37 +15,6 @@ servers:
 
 paths:
   /api/v1/vendors/:vendorId/packages:
-    get:
-      tags:
-        - "package"
-      summary: "Get list of packages"
-      operationId: "getPackages"
-      parameters:
-        - name: vendorId
-          in: "path"
-          description: "Vendor Id"
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PackageItem'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        403:
-          $ref: '#/components/responses/Forbidden'
-        409:
-          $ref: '#/components/responses/Conflict'
-        500:
-          $ref: '#/components/responses/InternalError'
     post:
       tags:
         - "package"
@@ -85,13 +54,11 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'
-
-  /api/v1/vendors/:vendorId/packages/:id:
     get:
       tags:
         - "package"
-      summary: "Get one packages"
-      operationId: "getPackage"
+      summary: "Get list of packages"
+      operationId: "getPackages"
       parameters:
         - name: vendorId
           in: "path"
@@ -100,6 +67,32 @@ paths:
           schema:
             type: string
             format: uuid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PackageItem'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/packages/:id:
+    get:
+      tags:
+        - "package"
+      summary: "Get one packages"
+      operationId: "getPackage"
+      parameters:
         - name: id
           in: "path"
           description: "Package Id"
@@ -126,16 +119,9 @@ paths:
     put:
       tags:
         - "package"
-      summary: "Update packages"
+      summary: "Update package"
       operationId: "updatePackage"
       parameters:
-        - name: vendorId
-          in: "path"
-          description: "Vendor Id"
-          required: true
-          schema:
-            type: string
-            format: uuid
         - name: id
           in: "path"
           description: "Package Id"
@@ -173,13 +159,6 @@ paths:
       summary: "Delete packages"
       operationId: "deletePackage"
       parameters:
-        - name: vendorId
-          in: "path"
-          description: "Vendor Id"
-          required: true
-          schema:
-            type: string
-            format: uuid
         - name: id
           in: "path"
           description: "Package Id"
@@ -205,7 +184,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/:vendorId/packages/:id/products:
+  /api/v1/packages/:id/products:
     post:
       tags:
         - "package"
@@ -213,13 +192,6 @@ paths:
       summary: "Append products into package"
       operationId: "appendProducts"
       parameters:
-        - name: vendorId
-          in: "path"
-          description: "Vendor Id"
-          required: true
-          schema:
-            type: string
-            format: uuid
         - name: id
           in: "path"
           description: "Package Id"
@@ -262,13 +234,6 @@ paths:
       summary: "Delete products from packages"
       operationId: "removeProducts"
       parameters:
-        - name: vendorId
-          in: "path"
-          description: "Vendor Id"
-          required: true
-          schema:
-            type: string
-            format: uuid
         - name: id
           in: "path"
           description: "Package Id"
@@ -305,13 +270,21 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/bundles/store:
+  /api/v1/vendors/:vendorId/bundles/store:
     post:
       tags:
         - "package"
         - "bundle"
       summary: "Create bundle for store"
       operationId: "createStoreBundle"
+      parameters:
+        - name: vendorId
+          in: "path"
+          description: "Vendor Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -345,6 +318,37 @@ paths:
           $ref: '#/components/responses/Conflict'
         422:
           $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - "bundle"
+      summary: "Get list of bundles"
+      operationId: "getBundles"
+      parameters:
+        - name: vendorId
+          in: "path"
+          description: "Vendor Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoreBundleItem'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
         500:
           $ref: '#/components/responses/InternalError'
 
@@ -474,37 +478,37 @@ components:
         - code
         - message
 
-  PackageItem:
-    type: object
-    properties:
-      id:
-        type: string
-        format: uuid
-        readOnly: true
-      createdAt:
-        type: string
-        format: "date-time"
-        readOnly: true
-      sku:
-        type: string
-        description: "Store number"
-      name:
-        type: string
-        example: "Buy Poly Bridge Deluxe Edition"
-      isEnabled:
-        type: boolean
-      media:
-        type: object
-        properties:
-          image:
-            type: string
-            format: uri
-          cover:
-            type: string
-            format: uri
-          thumb:
-            type: string
-            format: uri
+    PackageItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        createdAt:
+          type: string
+          format: "date-time"
+          readOnly: true
+        sku:
+          type: string
+          description: "Store number"
+        name:
+          type: string
+          example: "Buy Poly Bridge Deluxe Edition"
+        isEnabled:
+          type: boolean
+        media:
+          type: object
+          properties:
+            image:
+              type: string
+              format: uri
+            cover:
+              type: string
+              format: uri
+            thumb:
+              type: string
+              format: uri
 
     Package:
       type: object
@@ -534,20 +538,20 @@ components:
           readOnly: true
           items:
             type: object
-              properties:
-                id:
-                  type: string
-                  format: uuid
-                name:
-                  type: string
-                type:
-                  type: string
-                  enum:
-                    - games
-                    - dlcs
-                image:
-                  type: string
-                  format: uri
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              type:
+                type: string
+                enum:
+                  - games
+                  - dlcs
+              image:
+                type: string
+                format: uri
         media:
           type: object
           properties:
@@ -582,7 +586,7 @@ components:
                 type: string
                 example: ru
 
-    StoreBundle:
+    StoreBundleItem:
       type: object
       properties:
         id:
@@ -604,10 +608,16 @@ components:
           description: "Allowed to upgrade already bought package in bundle"
         isEnabled:
           type: boolean
+
+    StoreBundle:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/StoreBundleItem'
+      properties:
         packages:
           type: array
           items:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/Package'
         discountPolicy:
           type: object
           properties:

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
 	"net/http"
@@ -8,6 +9,8 @@ import (
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -41,6 +44,15 @@ type (
 		RegionalRestrinctions   bundleRegionalRestrinctionsDTO  `json:"regionalRestrinctions" validate:"required,dive"`
 		Packages                []packageDTO                    `json:"packages" validate:"required,dive"`
 	}
+
+	storeBundleItemDTO struct {
+		ID                      uuid.UUID                       `json:"id"`
+		CreatedAt               time.Time                       `json:"createdAt"`
+		Sku                     string                          `json:"sku" validate:"required"`
+		Name                    string                          `json:"name" validate:"required"`
+		IsUpgradeAllowed        bool                            `json:"isUpgradeAllowed"`
+		IsEnabled               bool                            `json:"isEnabled"`
+	}
 )
 
 func mapStoreBundleDto(bundle *model.StoreBundle, lang string) (dto storeBundleDTO, err error) {
@@ -69,23 +81,46 @@ func mapStoreBundleDto(bundle *model.StoreBundle, lang string) (dto storeBundleD
 	return dto, nil
 }
 
+func mapStoreBundleItemDto(bundle *model.StoreBundle) (dto storeBundleItemDTO) {
+	dto = storeBundleItemDTO{
+		ID: bundle.ID,
+		CreatedAt: bundle.CreatedAt,
+		Sku: bundle.Sku,
+		Name: bundle.Name,
+		IsUpgradeAllowed: bundle.IsUpgradeAllowed,
+		IsEnabled: bundle.IsEnabled,
+	}
+	return dto
+}
+
 func InitBundleRouter(group *echo.Group, service *orm.BundleService) (router *BundleRouter, err error) {
 	router = &BundleRouter{service}
 
-	packageGroup := rbac_echo.Group(group,"/vendors/:vendorId", router, []string{"vendorId", "bundleId", model.VendorType})
+	vendorRouter := rbac_echo.Group(group, "/vendors/:vendorId", router, []string{"*", model.RoleBundleList, model.VendorDomain})
+	vendorRouter.POST("/bundles/store", router.CreateStore, nil)
+	vendorRouter.GET("/bundles/store", router.GetStoreList, nil)
 
-	packageGroup.GET("/bundles/store/:bundleId", router.GetStore, nil)
-	packageGroup.POST("/bundles/store", router.CreateStore, nil)
-	packageGroup.DELETE("/bundles/:bundleId", router.Delete, nil)
+	bundleGroup := rbac_echo.Group(group, "/bundles", router, []string{"bundleId", model.RoleBundle, model.VendorDomain})
+	bundleGroup.GET("/store/:bundleId", router.GetStore, nil)
+	bundleGroup.DELETE("/:bundleId", router.Delete, nil)
 
 	return
 }
 
 func (router *BundleRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	path := ctx.Path()
+	if strings.Contains(path, "/vendors/:vendorId") {
+		return GetOwnerForVendor(ctx)
+	}
 	return GetOwnerForBundle(ctx)
 }
 
 func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+	}
+
 	params := createBundleDTO{}
 	err = ctx.Bind(&params)
 	if err != nil {
@@ -96,7 +131,7 @@ func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	bundle, err := router.service.CreateStore(params.Name, params.Packages)
+	bundle, err := router.service.CreateStore(vendorId, params.Name, params.Packages)
 	if err != nil {
 		return err
 	}
@@ -109,8 +144,36 @@ func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
 	return ctx.JSON(http.StatusCreated, dto)
 }
 
+func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
+	fmt.Println(vendorId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+	}
+	offset, err := strconv.Atoi(ctx.QueryParam("offset"))
+	if err != nil {
+		offset = 0
+	}
+	limit, err := strconv.Atoi(ctx.QueryParam("limit"))
+	if err != nil {
+		limit = 20
+	}
+	query := ctx.QueryParam("query")
+	sort := ctx.QueryParam("sort")
+	bundles, err := router.service.GetStoreList(vendorId, query, sort, offset, limit)
+	if err != nil {
+		return err
+	}
+	dto := []storeBundleItemDTO{}
+	for _, bundle := range bundles {
+		dto = append(dto, mapStoreBundleItemDto(&bundle))
+	}
+	return ctx.JSON(http.StatusOK, dto)
+}
+
 func (router *BundleRouter) GetStore(ctx echo.Context) (err error) {
 	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
+	fmt.Println(bundleId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
 	}

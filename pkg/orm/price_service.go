@@ -7,7 +7,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 // PriceService is service to interact with database and Media object.
@@ -20,67 +20,71 @@ func NewPriceService(db *Database) (*PriceService, error) {
 	return &PriceService{db.database}, nil
 }
 
-//GetBase is method for retriving base information about game pricing
+//GetBase is method for retriving base information about package pricing
 func (p *PriceService) GetBase(id uuid.UUID) (*model.BasePrice, error) {
-	result := &model.BasePrice{}
-	err := p.db.Preload("Prices").Select(model.SelectFields(result)).Where("id = ?", id).First(result).Error
-
+	result := &model.BasePrice{ID: id}
+	err := p.db.
+		Select(model.SelectFields(result)).
+		First(result).
+		Select("*").
+		Related(&result.Prices, "BasePriceID").
+		Order("created_at").
+		Error
 	if err == gorm.ErrRecordNotFound {
-		return nil, NewServiceError(http.StatusNotFound, "Game not found")
+		return nil, NewServiceError(http.StatusNotFound, "Package not found")
 	} else if err != nil {
-		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search game by id"))
+		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search package by id"))
 	}
-
 	return result, err
 }
 
-//UpdateBase is method for updating base information about game pricing
+//UpdateBase is method for updating base information about package pricing
 func (p *PriceService) UpdateBase(id uuid.UUID, price *model.BasePrice) error {
 
 	domain := &model.BasePrice{ID: id}
-	err := p.db.Preload("Prices").Select(model.SelectFields(domain)).Where("id = ?", id).First(domain).Error
-
+	err := p.db.Select(model.SelectFields(domain)).First(domain).Error
 	if err == gorm.ErrRecordNotFound {
-		return NewServiceError(http.StatusNotFound, "Game not found")
+		return NewServiceError(http.StatusNotFound, "Package not found")
 	} else if err != nil {
-		return errors.Wrap(err, "search game by id")
+		return errors.Wrap(err, "search package by id")
 	}
 
 	price.ID = domain.ID
 	now := time.Now()
 	price.UpdatedAt = &now
 
-	err = p.db.Set("gorm:association_autoupdate", false).Set("gorm:association_autocreate", false).Save(price).Error
-
+	err = p.db.
+		Set("gorm:association_autoupdate", false).
+		Set("gorm:association_autocreate", false).
+		Save(price).
+		Error
 	if err != nil {
-		return errors.Wrap(err, "save base prices for game")
-	}
-
-	if err != nil {
-		return errors.Wrap(err, "save prices for game")
+		return errors.Wrap(err, "save base prices for package")
 	}
 
 	return nil
 }
 
-//Delete is method for removing price with currency for game
+//Delete is method for removing price with currency for package
 func (p *PriceService) Delete(id uuid.UUID, price *model.Price) error {
 	domain := &model.BasePrice{ID: id}
 
 	count := 0
-	if err := p.db.Model(domain).Where("ID = ?", id).Limit(1).Count(&count).Error; err != nil {
-		return NewServiceError(http.StatusInternalServerError, "Game search")
+	if err := p.db.Model(domain).Limit(1).Count(&count).Error; err != nil {
+		return NewServiceError(http.StatusInternalServerError, "Package search")
 	}
-
 	if count == 0 {
-		return NewServiceError(http.StatusNotFound, "Game not found")
+		return NewServiceError(http.StatusNotFound, "Package not found")
 	}
 
 	var prices []model.Price
-	err := p.db.Model(domain).Association("Prices").Find(&prices).Error
-
+	err := p.db.
+		Model(domain).
+		Related(&prices, "BasePriceID").
+		Order("created_at").
+		Error
 	if err != nil {
-		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search prices for game"))
+		return NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "search prices for package"))
 	}
 
 	found := false
@@ -99,23 +103,27 @@ func (p *PriceService) Delete(id uuid.UUID, price *model.Price) error {
 	return nil
 }
 
-//Update is method for updating price with currency for game
+//Update is method for updating price with currency for package
 func (p *PriceService) Update(id uuid.UUID, price *model.Price) error {
 	domain := &model.BasePrice{ID: id}
 	var prices []model.Price
 
 	count := 0
 	if err := p.db.Model(domain).Where("ID = ?", id).Limit(1).Count(&count).Error; err != nil {
-		return NewServiceError(http.StatusInternalServerError, "Game search")
+		return NewServiceError(http.StatusInternalServerError, "Package search")
 	}
 
 	if count == 0 {
-		return NewServiceError(http.StatusNotFound, "Game not found")
+		return NewServiceError(http.StatusNotFound, "Package not found")
 	}
 
-	err := p.db.Model(domain).Association("Prices").Find(&prices).Error
+	err := p.db.
+		Model(domain).
+		Related(&prices, "BasePriceID").
+		Order("created_at").
+		Error
 	if err != nil {
-		return errors.Wrap(err, "search game by id")
+		return errors.Wrap(err, "search package by id")
 	}
 
 	price.BasePriceID = id

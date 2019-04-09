@@ -16,9 +16,9 @@ type PackagePrices struct {
 }
 
 type BasePrice struct {
-	ID uuid.UUID `gorm:"type:uuid; primary_key"`
-	UpdatedAt *time.Time
-	PackagePrices
+	ID              uuid.UUID   `gorm:"type:uuid; primary_key"`
+	UpdatedAt       *time.Time
+	PackagePrices               `field:"extend"`
 }
 
 type Price struct {

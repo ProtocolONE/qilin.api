@@ -158,12 +158,12 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	packageService, err := orm.NewPackageService(s.db)
+	packageService, err := orm.NewPackageService(s.db, gameService)
 	if err != nil {
 		return err
 	}
 
-	membershipService := orm.NewMembershipService(s.db, s.ownerProvider, s.enforcer)
+	membershipService := orm.NewMembershipService(s.db, s.ownerProvider, s.enforcer, mock.NewMailer(), "")
 	if err := membershipService.Init(); err != nil {
 		return err
 	}
@@ -214,7 +214,9 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 
 	anotherOwner := suite.createUser()
 	anotherVendor := suite.createVendor(anotherOwner)
-	anotherGame := suite.createGame(anotherVendor, anotherOwner).String()
+	anotherGameUuid := suite.createGame(anotherVendor, anotherOwner)
+	anotherGame := anotherGameUuid.String()
+	suite.createPackage(anotherVendor, anotherGameUuid, anotherOwner)
 
 	vendorId = vendor.String()
 	superAdmin := suite.createUser()
@@ -321,10 +323,6 @@ func (suite *AccessRightsTestSuite) generateTestCases() map[struct {
 		{http.MethodPut, "/api/v1/games/%game_id/descriptions", ""}: {model.Admin},
 		{http.MethodGet, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin, model.Support},
 		{http.MethodPut, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin},
-
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/packages/%package_id/prices", ""}:       {model.Admin, model.Support},
-		{http.MethodPut, "/api/v1/vendors/%vendor_id/packages/%package_id/prices", ""}:       {model.Admin},
-		{http.MethodPut, "/api/v1/vendors/%vendor_id/packages/%package_id/prices/USD", ""}:   {model.Admin},
 	}
 }
 
@@ -383,22 +381,22 @@ func (suite *AccessRightsTestSuite) createGame(vendorUuid uuid.UUID, uId string)
 }
 
 func (suite *AccessRightsTestSuite) createPackage(vendorUuid, gameUuid uuid.UUID, uId string) uuid.UUID {
-	gId := uuid.NewV4()
+	pkgId := uuid.NewV4()
 
 	require.Nil(suite.T(), suite.db.DB().Create(&model.Package{
-		Model: model.Model{ID: gId},
+		Model:        model.Model{ID: pkgId},
 		VendorID:     vendorUuid,
-		Name:        model.RandStringRunes(10),
+		Name:         model.RandStringRunes(10),
 		CreatorID:    uId,
 	}).Error)
 
 	require.Nil(suite.T(), suite.db.DB().Create(&model.PackageProduct{
-		PackageID: gId,
+		PackageID: pkgId,
 		ProductID: gameUuid,
 		Position: 1,
 	}).Error)
 
-	return gId
+	return pkgId
 }
 
 func (suite *AccessRightsTestSuite) createMessage(vendorId uuid.UUID, userId string) string {

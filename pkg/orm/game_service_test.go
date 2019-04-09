@@ -197,7 +197,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Get games list")
 	games, err := gameService.GetList(user.ID, vendor2.ID, 0, 20, "", "", "", "name+", 0)
 	require.Nil(err, "Unable retrive list of games")
-	require.Equal(len(games), 2, "Only 2 games just created")
+	require.Equal(2, len(games), "Only 2 games just created")
 	require.Equal(games[0].InternalName, gameName, "First game")
 	require.Equal(games[1].InternalName, game2Name, "Second game")
 

@@ -32,6 +32,7 @@ type (
 		AllowedCountries    pq.StringArray  `gorm:"type:text[]"`
 		// Payload
 		Products            []Product       `gorm:"-"`
+		// Prices in package
 		PackagePrices
 	}
 

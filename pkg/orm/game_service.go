@@ -16,11 +16,15 @@ import (
 // gameService is service to interact with database and Game object.
 type gameService struct {
 	db *gorm.DB
+	packageFactory packageFactory
 }
 
 // NewGameService initialize this service.
 func NewGameService(db *Database) (model.GameService, error) {
-	return &gameService{db.database}, nil
+	return &gameService{
+		db: db.database,
+		packageFactory: packageFactory{db.database},
+	}, nil
 }
 
 func (p *gameService) verifyVendor(vendorId uuid.UUID) error {
@@ -156,6 +160,7 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 	item.VendorID = vendorId
 	item.CreatorID = userId
 	item.Product.EntryID = item.ID
+	item.DefPackageID = uuid.NewV4()
 
 	err = p.db.Create(item).Error
 	if err != nil {
@@ -168,6 +173,11 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 	}).Error
 	if err != nil {
 		return nil, errors.Wrap(err, "Create descriptions for game")
+	}
+
+	err = p.packageFactory.Create(item.DefPackageID, vendorId, item.InternalName, []uuid.UUID{item.ID})
+	if err != nil {
+		return nil, err
 	}
 
 	return
@@ -306,6 +316,7 @@ func (p *gameService) UpdateInfo(game *model.Game) (err error) {
 	game.CreatedAt = gameSrc.CreatedAt
 	game.UpdatedAt = time.Now()
 	game.InternalName = gameSrc.InternalName
+	game.DefPackageID = gameSrc.DefPackageID
 
 	if game.GenreAddition == nil {
 		game.GenreAddition = []int64{}

@@ -4,6 +4,7 @@ import (
 	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -19,6 +20,7 @@ type bundleServiceTestSuite struct {
 	db          *orm.Database
 	service     *orm.BundleService
 	packages    []uuid.UUID
+	vendorId    uuid.UUID
 }
 
 func Test_BundleService(t *testing.T) {
@@ -69,7 +71,7 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 
 	ownProvider := orm.NewOwnerProvider(suite.db)
 	enf := rbac.NewEnforcer()
-	membershipService := orm.NewMembershipService(suite.db, ownProvider, enf)
+	membershipService := orm.NewMembershipService(suite.db, ownProvider, enf, mock.NewMailer(), "")
 
 	vendorService, err := orm.NewVendorService(db, membershipService)
 	suite.Nil(err, "Unable make vendor service")
@@ -85,6 +87,7 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 	}
 	_, err = vendorService.Create(&vendor)
 	suite.Nil(err, "Must create new vendor")
+	suite.vendorId = vendor.ID
 
 	// Create game
 	gameService, _ := orm.NewGameService(db)
@@ -97,7 +100,7 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 		suite.Fail("Unable to create game", "%v", err)
 	}
 
-	packageService, err := orm.NewPackageService(db)
+	packageService, err := orm.NewPackageService(db, gameService)
 	if err != nil {
 		suite.Fail("Unable to create package service", "%v", err)
 	}
@@ -126,9 +129,20 @@ func (suite *bundleServiceTestSuite) TearDownTest() {
 func (suite *bundleServiceTestSuite) TestCreateBundle() {
 	should := require.New(suite.T())
 
-	bundle, err := suite.service.CreateStore("Mega bundle", suite.packages)
+	bundle, err := suite.service.CreateStore(suite.vendorId, "Mega bundle", suite.packages)
 	should.Nil(err)
-	should.Equal(bundle.Name, "Mega bundle")
-	should.Equal(len(bundle.Packages), 2)
+	should.Equal("Mega bundle", bundle.Name)
+	should.Equal(2, len(bundle.Packages))
 	should.Equal(bundle.Packages[0].ID, suite.packages[0])
+
+	bundle2, err := suite.service.CreateStore(suite.vendorId, "Bundle Hundle", suite.packages[0:1])
+	should.Nil(err)
+	should.Equal("Bundle Hundle", bundle2.Name)
+	should.Equal(1, len(bundle2.Packages))
+	should.Equal(bundle2.Packages[0].ID, suite.packages[0])
+
+	list, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 20)
+	should.Nil(err)
+	should.Equal(2, len(list))
+	should.Equal("Bundle Hundle", list[0].Name)
 }

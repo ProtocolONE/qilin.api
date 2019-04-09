@@ -21,7 +21,8 @@ type PriceServiceTestSuite struct {
 }
 
 var (
-	ID = "029ce039-888a-481a-a831-cde7ff4e50b9"
+	gameID = "029ce039-3333-481a-a831-cde7ff4e50b9"
+	packageID = "029ce039-888a-481a-a831-cde7ff4e50b9"
 )
 
 func Test_PriceService(t *testing.T) {
@@ -45,9 +46,9 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 		assert.FailNow(suite.T(), "Unable to init tables", err)
 	}
 
-	id, _ := uuid.FromString(ID)
+	gameId, _ := uuid.FromString(gameID)
 	err = db.DB().Save(&model.Game{
-		ID:             id,
+		ID:             gameId,
 		InternalName:   "Test_game_2",
 		ReleaseDate:    time.Now(),
 		GenreAddition:  pq.Int64Array{},
@@ -55,6 +56,13 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 		FeaturesCommon: pq.StringArray{},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
+
+	pkgId, _ := uuid.FromString(packageID)
+	err = db.DB().Save(&model.Package{
+		Model:          model.Model{ID: pkgId},
+		Name:           "Test_package_2",
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make package")
 
 	suite.db = db
 }
@@ -74,8 +82,8 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 
 	assert.Nil(suite.T(), err, "Unable to media service")
 
-	id, _ := uuid.FromString(ID)
-	game := model.BasePrice{
+	id, _ := uuid.FromString(packageID)
+	pkg := model.BasePrice{
 		ID: uuid.NewV4(),
 		PackagePrices: model.PackagePrices{
 			Common: model.JSONB{
@@ -94,16 +102,16 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 		UpdatedAt: &updatedAt,
 	}
 
-	err = service.UpdateBase(id, &game)
-	assert.Nil(suite.T(), err, "Unable to update media for game")
+	err = service.UpdateBase(id, &pkg)
+	assert.Nil(suite.T(), err, "Unable to update media for package")
 
-	gameFromDb, err := service.GetBase(id)
-	assert.Nil(suite.T(), err, "Unable to get game: %v", err)
-	assert.NotNil(suite.T(), gameFromDb, "Unable to get game: %v", id)
-	assert.Equal(suite.T(), game.ID, gameFromDb.ID, "Incorrect Game ID from DB")
-	assert.Equal(suite.T(), game.Common["currency"], gameFromDb.Common["currency"], "Incorrect Common from DB")
-	assert.Equal(suite.T(), game.Common["price"], gameFromDb.Common["price"], "Incorrect Common from DB")
-	assert.Equal(suite.T(), game.PreOrder, gameFromDb.PreOrder, "Incorrect PreOrder from DB")
+	pkgFromDb, err := service.GetBase(id)
+	assert.Nil(suite.T(), err, "Unable to get package: %v", err)
+	assert.NotNil(suite.T(), pkgFromDb, "Unable to get package: %v", id)
+	assert.Equal(suite.T(), pkg.ID, pkgFromDb.ID, "Incorrect Game ID from DB")
+	assert.Equal(suite.T(), pkg.Common["currency"], pkgFromDb.Common["currency"], "Incorrect Common from DB")
+	assert.Equal(suite.T(), pkg.Common["price"], pkgFromDb.Common["price"], "Incorrect Common from DB")
+	assert.Equal(suite.T(), pkg.PreOrder, pkgFromDb.PreOrder, "Incorrect PreOrder from DB")
 }
 
 func (suite *PriceServiceTestSuite) TestPriceServiceShouldReturnError() {
@@ -143,7 +151,7 @@ func (suite *PriceServiceTestSuite) TestChangePrices() {
 
 	assert.Nil(suite.T(), err, "Unable to media service")
 
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(packageID)
 
 	price1 := model.Price{
 		Currency: "USD",
@@ -158,32 +166,32 @@ func (suite *PriceServiceTestSuite) TestChangePrices() {
 	}
 
 	err = service.Update(id, &price1)
-	assert.Nil(suite.T(), err, "Unable to update price for game")
+	assert.Nil(suite.T(), err, "Unable to update price for package")
 
 	err = service.Update(id, &price2)
-	assert.Nil(suite.T(), err, "Unable to update price for game")
+	assert.Nil(suite.T(), err, "Unable to update price for package")
 
-	gameFromDb, err := service.GetBase(id)
-	assert.Nil(suite.T(), err, "Unable to get game: %v", err)
-	assert.NotNil(suite.T(), gameFromDb, "Unable to get game: %v", id)
+	pkgFromDb, err := service.GetBase(id)
+	assert.Nil(suite.T(), err, "Unable to get package: %v", err)
+	assert.NotNil(suite.T(), pkgFromDb, "Unable to get package: %v", id)
 
-	assert.Equal(suite.T(), 2, len(gameFromDb.Prices), "Incorrect Prices from DB")
-	assert.Equal(suite.T(), price1.BasePriceID, gameFromDb.Prices[0].BasePriceID, "Incorrect Prices from DB")
-	assert.Equal(suite.T(), price1.Price, gameFromDb.Prices[0].Price, "Incorrect Prices from DB")
-	assert.Equal(suite.T(), price1.Currency, gameFromDb.Prices[0].Currency, "Incorrect Prices from DB")
+	assert.Equal(suite.T(), 2, len(pkgFromDb.Prices), "Incorrect Prices from DB")
+	assert.Equal(suite.T(), price1.BasePriceID, pkgFromDb.Prices[0].BasePriceID, "Incorrect Prices from DB")
+	assert.Equal(suite.T(), price1.Price, pkgFromDb.Prices[0].Price, "Incorrect Prices from DB")
+	assert.Equal(suite.T(), price1.Currency, pkgFromDb.Prices[0].Currency, "Incorrect Prices from DB")
 
-	assert.Equal(suite.T(), price2.BasePriceID, gameFromDb.Prices[1].BasePriceID, "Incorrect Prices from DB")
-	assert.Equal(suite.T(), price2.Price, gameFromDb.Prices[1].Price, "Incorrect Prices from DB")
-	assert.Equal(suite.T(), price2.Currency, gameFromDb.Prices[1].Currency, "Incorrect Prices from DB")
+	assert.Equal(suite.T(), price2.BasePriceID, pkgFromDb.Prices[1].BasePriceID, "Incorrect Prices from DB")
+	assert.Equal(suite.T(), price2.Price, pkgFromDb.Prices[1].Price, "Incorrect Prices from DB")
+	assert.Equal(suite.T(), price2.Currency, pkgFromDb.Prices[1].Currency, "Incorrect Prices from DB")
 
 	err = service.Delete(id, &price1)
 	assert.Nil(suite.T(), err, "Unable to delete price: %v", err)
-	gameFromDb, err = service.GetBase(id)
-	assert.Equal(suite.T(), 1, len(gameFromDb.Prices), "Incorrect Prices from DB")
+	pkgFromDb, err = service.GetBase(id)
+	assert.Equal(suite.T(), 1, len(pkgFromDb.Prices), "Incorrect Prices from DB")
 
 	err = service.Delete(id, &price2)
 	assert.Nil(suite.T(), err, "Unable to delete price: %v", err)
-	gameFromDb, err = service.GetBase(id)
-	assert.Equal(suite.T(), 0, len(gameFromDb.Prices), "Incorrect Prices from DB")
+	pkgFromDb, err = service.GetBase(id)
+	assert.Equal(suite.T(), 0, len(pkgFromDb.Prices), "Incorrect Prices from DB")
 
 }

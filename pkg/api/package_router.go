@@ -11,6 +11,7 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -57,7 +58,7 @@ type (
 		Media                   packageMediaDTO                      `json:"media" validate:"required,dive"`
 		DiscountPolicy          packageDiscountPolicyDTO             `json:"discountPolicy" validate:"required,dive"`
 		RegionalRestrinctions   packageRegionalRestrinctionsDTO      `json:"regionalRestrinctions" validate:"required,dive"`
-		Commercial              PricesDTO
+		Commercial              pricesDTO                            `json:"commercial" validate:"-"`
 	}
 
 	packageItemDTO struct {
@@ -73,22 +74,25 @@ type (
 func InitPackageRouter(group *echo.Group, service *orm.PackageService) (router *PackageRouter, err error) {
 	router = &PackageRouter{service}
 
-	packageGroup := rbac_echo.Group(group,"/vendors/:vendorId/packages/:packageId", router, []string{"vendorId", "packageId", model.VendorType})
+	vendorRouter := rbac_echo.Group(group, "/vendors/:vendorId", router, []string{"*", model.PackageListType, model.VendorDomain})
+	vendorRouter.GET("/packages", router.GetList, nil)
+	vendorRouter.POST("/packages", router.Create, nil)
 
-	packageGroup.GET("/", router.GetList, nil)
-	packageGroup.POST("/", router.Create, nil)
-
-	packageGroup.GET("/:packageId", router.Get, nil)
-	packageGroup.PUT("/:packageId", router.Update, nil)
-	packageGroup.DELETE("/:packageId", router.Remove, nil)
-
-	packageGroup.POST("/:packageId/products", router.AddProducts, nil)
-	packageGroup.DELETE("/:packageId/products", router.RemoveProducts, nil)
+	packageGroup := rbac_echo.Group(group, "/packages/:packageId", router, []string{"packageId", model.PackageType, model.VendorDomain})
+	packageGroup.GET("/", router.Get, nil)
+	packageGroup.PUT("/", router.Update, nil)
+	packageGroup.DELETE("/", router.Remove, nil)
+	packageGroup.POST("/products", router.AddProducts, nil)
+	packageGroup.DELETE("/products", router.RemoveProducts, nil)
 
 	return
 }
 
 func (router *PackageRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	path := ctx.Path()
+	if strings.Contains(path, "/vendors/:vendorId") {
+		return GetOwnerForVendor(ctx)
+	}
 	return GetOwnerForPackage(ctx)
 }
 
@@ -137,7 +141,7 @@ func mapPackageDto(pkg *model.Package, lang string) (dto packageDTO, err error) 
 			Image: p.GetImage(lang),
 		})
 	}
-	err = mapper.Map(pkg.Prices, &dto.Commercial)
+	err = mapper.Map(pkg.PackagePrices, &dto.Commercial)
 	if err != nil {
 		return dto, errors.Wrap(err, "Map prices")
 	}

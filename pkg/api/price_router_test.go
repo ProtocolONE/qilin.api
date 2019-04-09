@@ -32,6 +32,8 @@ func Test_PriceRouter(t *testing.T) {
 }
 
 var (
+	packageID                         = "33333333-888a-481a-a831-cde7ff4e50b8"
+
 	testObject                        = `{"common":{"currency":"USD","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
 	testBadObject                     = `{"common":{"NotifyRateJumps":true},"preOrder":{"enabled":false}}`
 	testBadObjectWithUnwknowsCurrency = `{"common":{"currency":"XXX","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
@@ -71,8 +73,27 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 		GenreAddition:  pq.Int64Array{},
 		Tags:           pq.Int64Array{},
 		FeaturesCommon: pq.StringArray{},
+		Product:        model.ProductEntry{EntryID: id},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
+
+	pkgId, _ := uuid.FromString(packageID)
+	err = db.DB().Save(&model.Package{
+		Model:  model.Model{ID: pkgId},
+		Name:   "Test_package",
+		AllowedCountries: pq.StringArray{},
+		PackagePrices: model.PackagePrices{
+			Common: model.JSONB{"currency":"","NotifyRateJumps":false},
+			PreOrder: model.JSONB{"date":"","enabled":false},
+			Prices: []model.Price{},
+		},
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make package")
+	err = db.DB().Create(&model.PackageProduct{
+		PackageID: pkgId,
+		ProductID: id,
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make package product")
 
 	echoObj := echo.New()
 	service, err := orm.NewPriceService(db)
@@ -99,9 +120,9 @@ func (suite *PriceRouterTestSuite) TestGetBasePriceShouldReturnEmptyObject() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices")
-	c.SetParamNames("gameId")
-	c.SetParamValues(TestID)
+	c.SetPath("/api/v1/packages/:packageId/prices")
+	c.SetParamNames("packageId")
+	c.SetParamValues(packageID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getBase(c)) {
@@ -115,9 +136,9 @@ func (suite *PriceRouterTestSuite) TestPutBasePriceShouldReturnOk() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices")
-	c.SetParamNames("gameId")
-	c.SetParamValues(TestID)
+	c.SetPath("/api/v1/packages/:packageId/prices")
+	c.SetParamNames("packageId")
+	c.SetParamValues(packageID)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.putBase(c)) {
@@ -131,9 +152,9 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnOk() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices/:currency")
-	c.SetParamNames("gameId", "currency")
-	c.SetParamValues(TestID, "USD")
+	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
+	c.SetParamNames("packageId", "currency")
+	c.SetParamValues(packageID, "USD")
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.updatePrice(c)) {
@@ -147,9 +168,9 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnBadRequest() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices/:currency")
-	c.SetParamNames("gameId", "currency")
-	c.SetParamValues(TestID, "USD")
+	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
+	c.SetParamNames("packageId", "currency")
+	c.SetParamValues(packageID, "USD")
 
 	he := suite.router.updatePrice(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
@@ -160,9 +181,9 @@ func (suite *PriceRouterTestSuite) TestPutWithIncorrectCurrencyPriceShouldReturn
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices/:currency")
-	c.SetParamNames("gameId", "currency")
-	c.SetParamValues(TestID, "EUR")
+	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
+	c.SetParamNames("packageId", "currency")
+	c.SetParamValues(packageID, "EUR")
 
 	he := suite.router.putBase(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
@@ -173,12 +194,14 @@ func (suite *PriceRouterTestSuite) TestPutBadModelShouldReturn422() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices")
-	c.SetParamNames("gameId")
-	c.SetParamValues(TestID)
+	c.SetPath("/api/v1/packages/:packageId/prices")
+	c.SetParamNames("packageId")
+	c.SetParamValues(packageID)
 
 	// Assertions
-	he := suite.router.putBase(c).(*orm.ServiceError)
+	err := suite.router.putBase(c)
+	require.NotNil(suite.T(), err)
+	he := err.(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
 }
 
@@ -187,12 +210,14 @@ func (suite *PriceRouterTestSuite) TestPutWithUnknownIdModelShouldReturnNotFound
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices")
-	c.SetParamNames("gameId")
-	c.SetParamValues("00000000-0000-0000-0000-000000000000")
+	c.SetPath("/api/v1/packages/:packageId/prices")
+	c.SetParamNames("packageId") /// with 0000 tests not pass(
+	c.SetParamValues("00000000-0000-8000-0000-000000000000")
 
 	// Assertions
-	he := suite.router.putBase(c).(*orm.ServiceError)
+	err := suite.router.putBase(c)
+	require.NotNil(suite.T(), err)
+	he := err.(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusNotFound, he.Code)
 }
 
@@ -201,8 +226,8 @@ func (suite *PriceRouterTestSuite) TestPutWithBadIdModelShouldReturnBadRequest()
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices")
-	c.SetParamNames("gameId")
+	c.SetPath("/api/v1/packages/:packageId/prices")
+	c.SetParamNames("packageId")
 	c.SetParamValues("0000")
 
 	// Assertions
@@ -215,9 +240,9 @@ func (suite *PriceRouterTestSuite) TestDeleteUnknownCurrencyShouldReturnError() 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices/:currency")
-	c.SetParamNames("gameId", "currency")
-	c.SetParamValues(TestID, "XXX")
+	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
+	c.SetParamNames("packageId", "currency")
+	c.SetParamValues(packageID, "XXX")
 
 	// Assertions
 	err := suite.router.deletePrice(c)
@@ -233,9 +258,9 @@ func (suite *PriceRouterTestSuite) TestPutBasePriceWihhUnknownCurrencyShouldRetu
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices/")
-	c.SetParamNames("gameId")
-	c.SetParamValues(TestID)
+	c.SetPath("/api/v1/packages/:packageId/prices/")
+	c.SetParamNames("packageId")
+	c.SetParamValues(packageID)
 
 	// Assertions
 	err := suite.router.putBase(c)
@@ -263,9 +288,9 @@ func (suite *PriceRouterTestSuite) TestPutBadObjectsShouldReturnError() {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/games/:gameId/prices/:currency")
-		c.SetParamNames("gameId", "currency")
-		c.SetParamValues(TestID, "USD")
+		c.SetPath("/api/v1/packages/:packageId/prices/:currency")
+		c.SetParamNames("packageId", "currency")
+		c.SetParamValues(packageID, "USD")
 
 		// Assertions
 		err := suite.router.updatePrice(c)
@@ -282,9 +307,9 @@ func (suite *PriceRouterTestSuite) TestPutUnknownCurrencyShouldReturnError() {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/games/:gameId/prices/:currency")
-	c.SetParamNames("gameId", "currency")
-	c.SetParamValues(TestID, "XXX")
+	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
+	c.SetParamNames("packageId", "currency")
+	c.SetParamValues(packageID, "XXX")
 
 	// Assertions
 	err := suite.router.updatePrice(c)

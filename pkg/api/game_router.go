@@ -109,8 +109,9 @@ type (
 	GameDTO struct {
 		ID uuid.UUID `json:"id"`
 		BaseGameDTO
-		Genres GameGenreDTO `json:"genres" validate:"required,dive"`
-		Tags   []int64      `json:"tags" validate:"required"`
+		Genres GameGenreDTO     `json:"genres" validate:"required,dive"`
+		Tags   []int64          `json:"tags" validate:"required"`
+		DefPackageID uuid.UUID  `json:"defPackageId"`
 	}
 
 	UpdateGameDTO struct {
@@ -221,6 +222,7 @@ func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err
 			Addition: game.GenreAddition,
 		},
 		Tags: game.Tags,
+		DefPackageID: game.DefPackageID,
 	}, nil
 }
 
@@ -391,13 +393,6 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-
-	// Create default package for Game
-	_, err = api.packageService.Create(vendorId, params.InternalName, []uuid.UUID{game.ID})
-	if err != nil {
-		return err
-	}
-
 	return ctx.JSON(http.StatusCreated, dto)
 }
 

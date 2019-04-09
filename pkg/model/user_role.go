@@ -42,6 +42,9 @@ const AdminDocumentsType string = "admin.vendor.documents"
 const RoleUserType string = "roles.user"
 const RolesType string = "roles"
 const PackageType string = "packages"
+const RoleBundle string = "bundles"
+const PackageListType string = "vendor.packages"
+const RoleBundleList string = "vendor.bundles"
 const GlobalType string = "global"
 
 type ResourceMeta struct {

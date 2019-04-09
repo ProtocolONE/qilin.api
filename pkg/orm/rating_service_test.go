@@ -58,7 +58,7 @@ func (suite *RatingServiceTestSuite) SetupTest() {
 		assert.FailNow(suite.T(), "Unable to init tables", err)
 	}
 
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(gameID)
 	err = db.DB().Create(&model.Game{
 		ID:             id,
 		InternalName:   "Test_game_2",
@@ -133,7 +133,7 @@ func (suite *RatingServiceTestSuite) TearDownTest() {
 }
 
 func (suite *RatingServiceTestSuite) TestGetRatingsForGameShouldReturnEmptyObject() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(gameID)
 
 	ratings, err := suite.service.GetRatingsForGame(id)
 
@@ -142,7 +142,7 @@ func (suite *RatingServiceTestSuite) TestGetRatingsForGameShouldReturnEmptyObjec
 }
 
 func (suite *RatingServiceTestSuite) TestGetRatingsForGameShouldReturnFullObject() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(gameID)
 	testModel := &model.GameRating{
 		BBFC: model.JSONB{
 			"displayOnlineNotice": true,
@@ -197,7 +197,7 @@ func (suite *RatingServiceTestSuite) TestGetRatingsForGameShouldReturnFullObject
 }
 
 func (suite *RatingServiceTestSuite) TestChangeRatingsForGameShouldReturnChangeInDB() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(gameID)
 	testModel := &model.GameRating{
 		BBFC: model.JSONB{
 			"displayOnlineNotice": true,
@@ -279,7 +279,7 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadIdShouldReturnError
 }
 
 func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldReturnError() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(gameID)
 	testModel := &model.GameRating{
 		BBFC: model.JSONB{
 			"displayOnlineNotice": true,
@@ -355,7 +355,7 @@ func (suite *RatingServiceTestSuite) TestChangeRatingsWithBadDescriptorsShouldRe
 }
 
 func (suite *RatingServiceTestSuite) TestChangeRatingsShouldReturnOk() {
-	id, _ := uuid.FromString(ID)
+	id, _ := uuid.FromString(gameID)
 	testModel := &model.GameRating{
 		BBFC: model.JSONB{
 			"displayOnlineNotice":  true,

@@ -11,37 +11,55 @@ import (
 	"time"
 )
 
+type packageFactory struct {
+	db *gorm.DB
+}
+
 type PackageService struct {
 	db *gorm.DB
 	gameService model.GameService
+	factory packageFactory
 }
 
-func NewPackageService(db *Database) (*PackageService, error) {
-	gameService, _ := NewGameService(db)
-	return &PackageService{db.database, gameService}, nil
+func NewPackageService(db *Database, gameService model.GameService) (*PackageService, error) {
+	return &PackageService{
+		db: db.database,
+		gameService: gameService,
+		factory: packageFactory{db.database},
+	}, nil
 }
 
-func (p *PackageService) Create(vendorId uuid.UUID, name string, prods []uuid.UUID) (result *model.Package, err error) {
+func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, name string, prods []uuid.UUID) (err error) {
 	entries := []model.ProductEntry{}
 	if len(prods) > 0 {
 		err = p.db.Where("entry_id in (?)", prods).Find(&entries).Error
 		if err != nil {
-			return nil, errors.Wrap(err, "Search products")
+			return errors.Wrap(err, "Search products")
 		}
 	}
 	if len(entries) == 0 {
-		return nil, NewServiceError(http.StatusUnprocessableEntity, "No any products")
+		return NewServiceError(http.StatusUnprocessableEntity, "No any products")
 	}
-
 	newPack := model.Package{
-		Model: model.Model{ID: uuid.NewV4()},
+		Model: model.Model{ID: pkgId},
 		Sku: random.String(8, "123456789"),
 		Name: name,
 		VendorID: vendorId,
+		PackagePrices: model.PackagePrices{
+			Common: model.JSONB{
+				"currency":         "USD",
+				"notifyRateJumps":  false,
+			},
+			PreOrder: model.JSONB{
+				"date":    time.Now().String(),
+				"enabled": false,
+			},
+			Prices: []model.Price{},
+		},
 	}
 	err = p.db.Create(&newPack).Error
 	if err != nil {
-		return nil, errors.Wrap(err, "While create new package")
+		return errors.Wrap(err, "While create new package")
 	}
 
 	db := p.db.Begin()
@@ -52,12 +70,21 @@ func (p *PackageService) Create(vendorId uuid.UUID, name string, prods []uuid.UU
 			Position: index + 1,
 		}).Error
 		if err != nil {
-			return nil, errors.Wrap(err, "While append products into package")
+			return errors.Wrap(err, "While append products into package")
 		}
 	}
 	db.Commit()
 
-	return p.Get(newPack.ID)
+	return
+}
+
+func (p *PackageService) Create(vendorId uuid.UUID, name string, prods []uuid.UUID) (result *model.Package, err error) {
+	pkgId := uuid.NewV4()
+	err = p.factory.Create(pkgId, vendorId, name, prods)
+	if err != nil {
+		return nil, err
+	}
+	return p.Get(pkgId)
 }
 
 func (p *PackageService) AddProducts(packageId uuid.UUID, prods []uuid.UUID) (result *model.Package, err error) {
@@ -159,10 +186,8 @@ func (p *PackageService) Get(packageId uuid.UUID) (result *model.Package, err er
 	result.Products = prods
 
 	err = p.db.
-		Model(model.Package{}).
-		Where("id = ?", packageId).
-		Association("Prices").
-		Find(&result.Prices).Error
+		Model(model.BasePrice{ID: packageId}).
+		Related(&result.Prices).Error
 	if err != nil {
 		return nil, errors.Wrap(err, "Fetch prices for package")
 	}
@@ -176,6 +201,10 @@ func (p *PackageService) GetList(vendorId uuid.UUID, query, sort string, offset,
 	orderBy = "created_at ASC"
 	if sort != "" {
 		switch sort {
+		case "-date":
+			orderBy = "created_at DESC"
+		case "+date":
+			orderBy = "created_at ASC"
 		case "-name":
 			orderBy = "name DESC"
 		case "+name":
@@ -220,12 +249,13 @@ func (p *PackageService) Update(pkg *model.Package) (*model.Package, error) {
 	pkg.CreatedAt = exist.CreatedAt
 	pkg.UpdatedAt = time.Now()
 	pkg.VendorID = exist.VendorID
-	pkg.Products = []model.Product{}
+	pkg.PackagePrices = exist.PackagePrices
+	// Products also ignored
 	err = p.db.Save(pkg).Error
 	if err != nil {
 		return nil, errors.Wrap(err, "Save package")
 	}
-	return pkg, err
+	return p.Get(pkg.ID)
 }
 
 func (p *PackageService) Remove(packageId uuid.UUID) (err error) {
