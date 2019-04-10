@@ -82,8 +82,8 @@ func InitPackageRouter(group *echo.Group, service *orm.PackageService) (router *
 	packageGroup.GET("/", router.Get, nil)
 	packageGroup.PUT("/", router.Update, nil)
 	packageGroup.DELETE("/", router.Remove, nil)
-	packageGroup.POST("/products", router.AddProducts, nil)
-	packageGroup.DELETE("/products", router.RemoveProducts, nil)
+	packageGroup.POST("/products/add", router.AddProducts, nil)
+	packageGroup.POST("/products/remove", router.RemoveProducts, nil)
 
 	return
 }

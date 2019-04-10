@@ -6,12 +6,14 @@ info:
   contact:
     email: maksim.blinenkov@protocol.one
 tags:
-  - name: "package"
-    description: "Composition of products"
+  - description: "Composition of products"
+    name: "package"
+
 
 servers:
-  - uri: https://qilinapi.tst.protocol.one
-    description: Master test server
+  - description: Master test server
+    url: https://qilinapi.tst.protocol.one
+
 
 paths:
   /api/v1/vendors/:vendorId/packages:
@@ -69,6 +71,7 @@ paths:
             format: uuid
       responses:
         200:
+          description: Return array with short information about packages
           content:
             application/json:
               schema:
@@ -102,6 +105,7 @@ paths:
             format: uuid
       responses:
         200:
+          description: Return package information
           content:
             application/json:
               schema:
@@ -137,6 +141,7 @@ paths:
               $ref: '#/components/schemas/Package'
       responses:
         200:
+          description: Return package information
           content:
             application/json:
               schema:
@@ -168,6 +173,7 @@ paths:
             format: uuid
       responses:
         200:
+          description: Retrun Ok
           content:
             application/json:
               schema:
@@ -184,7 +190,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/packages/:id/products:
+  /api/v1/packages/:id/products/add:
     post:
       tags:
         - "package"
@@ -211,6 +217,7 @@ paths:
                 format: uuid
       responses:
         200:
+          description: Retrun package information
           content:
             application/json:
               schema:
@@ -227,7 +234,9 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'
-    delete:
+
+  /api/v1/packages/:id/products/remove:
+    post:
       tags:
         - "package"
         - "product"
@@ -253,6 +262,7 @@ paths:
                 format: uuid
       responses:
         200:
+          description: Retrun package information
           content:
             application/json:
               schema:
@@ -335,6 +345,7 @@ paths:
             format: uuid
       responses:
         200:
+          description: Retrun array of short bundle information
           content:
             application/json:
               schema:
@@ -369,7 +380,7 @@ paths:
             format: uuid
       responses:
         200:
-          description: OK
+          description: Return store bundle struct
           content:
             application/json:
               schema:
@@ -397,6 +408,7 @@ paths:
             format: uuid
       responses:
         200:
+          description: Return Ok
           content:
             application/json:
               schema:
