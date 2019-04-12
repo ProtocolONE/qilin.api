@@ -22,7 +22,6 @@ import (
 type GameRouter struct {
 	gameService model.GameService
 	userService model.UserService
-	packageService model.PackageService
 }
 
 type (
@@ -263,8 +262,8 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 	}
 }
 
-func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService, packageService model.PackageService) (*GameRouter, error) {
-	Router := GameRouter{service,userService,packageService}
+func InitGameRoutes(router *echo.Group, service model.GameService, userService model.UserService) (*GameRouter, error) {
+	Router := GameRouter{service,userService}
 
 	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.VendorGameType, model.VendorDomain})
 	r.GET("/games", Router.GetList, nil)

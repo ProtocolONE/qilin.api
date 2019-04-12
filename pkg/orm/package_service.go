@@ -148,8 +148,10 @@ func (p *PackageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) 
 func (p *PackageService) Get(packageId uuid.UUID) (result *model.Package, err error)  {
 	result = &model.Package{}
 	err = p.db.Where("id = ?", packageId.String()).First(result).Error
-	if err != nil {
-		return nil, errors.Wrap(err, "Get package by id")
+	if err == gorm.ErrRecordNotFound {
+		return nil, NewServiceError(http.StatusNotFound, "Package not found")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "Retrieve package")
 	}
 
 	type PackageProductJoin struct {
@@ -243,8 +245,10 @@ func (p *PackageService) GetList(vendorId uuid.UUID, query, sort string, offset,
 func (p *PackageService) Update(pkg *model.Package) (*model.Package, error) {
 	exist := &model.Package{Model: model.Model{ID: pkg.ID}}
 	err := p.db.First(exist).Error
-	if err != nil {
-		return nil, errors.Wrap(err, "Get package by id")
+	if err == gorm.ErrRecordNotFound {
+		return nil, NewServiceError(http.StatusNotFound, "Package not found")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "Retrieve package")
 	}
 	pkg.CreatedAt = exist.CreatedAt
 	pkg.UpdatedAt = time.Now()
@@ -261,8 +265,10 @@ func (p *PackageService) Update(pkg *model.Package) (*model.Package, error) {
 func (p *PackageService) Remove(packageId uuid.UUID) (err error) {
 	exist := &model.Package{Model: model.Model{ID: packageId}}
 	err = p.db.First(exist).Error
-	if err != nil {
-		return errors.Wrap(err, "Get package by id")
+	if err == gorm.ErrRecordNotFound {
+		return NewServiceError(http.StatusNotFound, "Package not found")
+	} else if err != nil {
+		return errors.Wrap(err, "Retrieve package")
 	}
 	err = p.db.Delete(exist).Error
 	if err != nil {

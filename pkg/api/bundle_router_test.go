@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
+	"strings"
 	"testing"
 	"time"
 
@@ -199,5 +201,43 @@ func (suite *BundleRouterTestSuite) TestGetBundleShouldReturnEmptyObject() {
 	if assert.NoError(suite.T(), suite.router.GetStore(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 		assert.JSONEq(suite.T(), emptyBaseBundle, rec.Body.String())
+	}
+}
+
+func (suite *BundleRouterTestSuite) TestGetBundleShouldCreateBundle() {
+	should := assert.New(suite.T())
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name": "Mega bundle 2", "packages": ["33333333-888a-481a-a831-cde7ff4e50b8"]}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:vendorId/bundles/store")
+	c.SetParamNames("vendorId")
+	c.SetParamValues(vendorId)
+
+	if assert.NoError(suite.T(), suite.router.CreateStore(c)) {
+		should.Equal(http.StatusCreated, rec.Code)
+		dto := storeBundleDTO{}
+		err := json.Unmarshal(rec.Body.Bytes(), &dto)
+		should.Nil(err)
+		should.Equal("Mega bundle 2", dto.Name)
+		should.Equal(1, len(dto.Packages))
+		should.Equal("33333333-888a-481a-a831-cde7ff4e50b8", dto.Packages[0].ID.String())
+		should.Equal(1, len(dto.Packages[0].Products))
+		should.Equal("Test_game_1", dto.Packages[0].Products[0].Name)
+	}
+}
+
+func (suite *BundleRouterTestSuite) TestGetBundleShouldReturnStoreList() {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/vendors/:vendorId/bundles/store")
+	c.SetParamNames("vendorId")
+	c.SetParamValues(vendorId)
+
+	if assert.NoError(suite.T(), suite.router.GetStoreList(c)) {
+		assert.Equal(suite.T(), http.StatusOK, rec.Code)
+		assert.JSONEq(suite.T(), `[{"id":"44444444-888a-481a-a831-cde7ff4e50b8","createdAt":"1970-01-01T00:00:00Z","sku":"","name":"Mega bundle","isUpgradeAllowed":false,"isEnabled":false}]`, rec.Body.String())
 	}
 }

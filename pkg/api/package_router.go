@@ -78,12 +78,12 @@ func InitPackageRouter(group *echo.Group, service *orm.PackageService) (router *
 	vendorRouter.GET("/packages", router.GetList, nil)
 	vendorRouter.POST("/packages", router.Create, nil)
 
-	packageGroup := rbac_echo.Group(group, "/packages/:packageId", router, []string{"packageId", model.PackageType, model.VendorDomain})
-	packageGroup.GET("/", router.Get, nil)
-	packageGroup.PUT("/", router.Update, nil)
-	packageGroup.DELETE("/", router.Remove, nil)
-	packageGroup.POST("/products/add", router.AddProducts, nil)
-	packageGroup.POST("/products/remove", router.RemoveProducts, nil)
+	packageGroup := rbac_echo.Group(group, "/packages", router, []string{"packageId", model.PackageType, model.VendorDomain})
+	packageGroup.GET("/:packageId", router.Get, nil)
+	packageGroup.PUT("/:packageId", router.Update, nil)
+	packageGroup.DELETE("/:packageId", router.Remove, nil)
+	packageGroup.POST("/:packageId/products/add", router.AddProducts, nil)
+	packageGroup.POST("/:packageId/products/remove", router.RemoveProducts, nil)
 
 	return
 }

@@ -389,3 +389,57 @@ func appendIfMissing(slice []string, users []string, skipNames []string) []strin
 
 	return slice
 }
+
+func (service *membershipService) RemoveRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.User{}, userId); !(exist && err == nil) {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get user by id `%s`", userId))
+		}
+		return NewServiceErrorf(http.StatusNotFound, "User `%s` not found", userId)
+	}
+
+	isGlobal := len(resourceId) == 0
+	restrict := []string{"*"}
+
+	if !isGlobal {
+		restrict = resourceId
+	}
+
+	owner, err := service.ownerProvider.GetOwnerForVendor(vendorId)
+	if err != nil {
+		return err
+	}
+
+	if service.enforcer.RemoveRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: restrict}) == false {
+		return NewServiceErrorf(http.StatusInternalServerError, "Could not remove role `%s` to user `%s`", role, userId)
+	}
+
+	return nil
+}
+
+func (service *membershipService) AddRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.User{}, userId); !(exist && err == nil) {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get user by id `%s`", userId))
+		}
+		return NewServiceErrorf(http.StatusNotFound, "User `%s` not found", userId)
+	}
+
+	isGlobal := len(resourceId) == 0
+	restrict := []string{"*"}
+
+	if !isGlobal {
+		restrict = resourceId
+	}
+
+	owner, err := service.ownerProvider.GetOwnerForVendor(vendorId)
+	if err != nil {
+		return err
+	}
+
+	if service.enforcer.AddRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: restrict}) == false {
+		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role, userId)
+	}
+
+	return nil
+}

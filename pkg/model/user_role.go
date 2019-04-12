@@ -37,8 +37,8 @@ const GameType string = "games"
 const GameListType string = "vendors.games"
 const PackageType string = "packages"
 const RoleBundle string = "bundles"
-const PackageListType string = "vendors.packages"
-const RoleBundleList string = "vendors.bundles"
+const PackageListType string = "vendors.packages.*"
+const RoleBundleList string = "vendors.bundles.*"
 const VendorGameType string = "vendors.games"
 const DocumentsType string = "vendors.documents.*"
 const MessagesType string = "vendors.messages.*"
@@ -71,4 +71,6 @@ type MembershipService interface {
 	RemoveRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error
 	SendInvite(vendorId uuid.UUID, invite Invite) (*InviteCreated, error)
 	AcceptInvite(vendorId uuid.UUID, inviteId uuid.UUID, userId string) error
+	AddRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error
+	RemoveRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error
 }

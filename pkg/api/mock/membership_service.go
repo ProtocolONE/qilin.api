@@ -30,11 +30,19 @@ func (memebershipService) AddRoleToUserInGame(vendorId uuid.UUID, userId string,
 	return nil
 }
 
+func (memebershipService) AddRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error {
+	return nil
+}
+
 func (memebershipService) AddRoleToUser(userId string, owner string, role string) error {
 	return nil
 }
 
 func (memebershipService) RemoveRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error {
+	return nil
+}
+
+func (memebershipService) RemoveRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error {
 	return nil
 }
 

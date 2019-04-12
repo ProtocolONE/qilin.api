@@ -4,6 +4,7 @@ import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/random"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -33,7 +34,7 @@ func Test_GamesRouter(t *testing.T) {
 }
 
 var (
-	userId             = uuid.NewV4().String()
+	userId             = random.String(16, "0123456789")
 	vendorId           = uuid.NewV4().String()
 	createGamesPayload = `{"InternalName":"new_game"}`
 )
@@ -87,14 +88,9 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	service, err := orm.NewGameService(db)
 	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
 
-	packageService, err := orm.NewPackageService(db, service)
-	if err != nil {
-		suite.FailNow("Package fail", "%v", err)
-	}
-
 	groupApi := echoObj.Group("/api/v1")
 	userService, err := orm.NewUserService(db, nil)
-	router, err := InitRoutes(groupApi, service, userService, packageService)
+	router, err := InitGameRoutes(groupApi, service, userService)
 	if err != nil {
 		suite.FailNow("Init routes fail", "%v", err)
 	}

@@ -56,14 +56,14 @@ func (provider *ownerProvider) GetOwnerForPackage(packageId uuid.UUID) (string, 
 
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return "", NewServiceErrorf(http.StatusNotFound, "Package `%s` not found ", packageId)
+			return "", NewServiceErrorf(http.StatusNotFound, "Package `%s` not found", packageId)
 		}
 		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get package"))
 	}
 
 	if err := provider.db.DB().Model(&model.Vendor{}).Where("id = ?", pkg.VendorID).First(&vendor).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found ", packageId)
+			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", packageId)
 		}
 		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get vendor"))
 	}

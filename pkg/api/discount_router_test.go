@@ -85,7 +85,7 @@ func (suite *DiscountRouterTestSuite) TearDownTest() {
 	}
 }
 
-func (suite *DiscountRouterTestSuite) TEstGetDiscountsShouldReturnObjects() {
+func (suite *DiscountRouterTestSuite) TestGetDiscountsShouldReturnObjects() {
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDiscounts))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -97,7 +97,7 @@ func (suite *DiscountRouterTestSuite) TEstGetDiscountsShouldReturnObjects() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), emptyDiscounts, rec.Body.String())
+		assert.JSONEq(suite.T(), emptyDiscounts, rec.Body.String())
 	}
 }
 

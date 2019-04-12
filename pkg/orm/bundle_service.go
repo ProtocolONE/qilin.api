@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"qilin-api/pkg/model"
 	"strings"
+	"time"
 )
 
 type BundleService struct {
@@ -165,4 +166,26 @@ func (p *BundleService) Delete(bundleId uuid.UUID) (err error) {
 	}
 
 	return nil
+}
+
+func (p *BundleService) UpdateStore(bundle *model.StoreBundle) (result *model.StoreBundle, err error) {
+	exist := &model.StoreBundle{Model: model.Model{ID: bundle.ID}}
+	err = p.db.First(exist).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, NewServiceError(http.StatusNotFound, "Bundle not found")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "Retrieve bundle entry")
+	}
+	bundle.CreatedAt = exist.CreatedAt
+	bundle.UpdatedAt = time.Now()
+	bundle.VendorID = exist.VendorID
+	bundle.Packages = []model.Package{}
+	err = p.db.Save(bundle).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Save package")
+	}
+
+	bu, err := p.Get(bundle.ID)
+
+	return bu.(*model.StoreBundle), err
 }

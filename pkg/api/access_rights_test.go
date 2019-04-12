@@ -5,6 +5,7 @@ import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/random"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -163,6 +164,11 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
+	bundleService, err := orm.NewBundleService(s.db)
+	if err != nil {
+		return err
+	}
+
 	membershipService := orm.NewMembershipService(s.db, s.ownerProvider, s.enforcer, mock.NewMailer(), "")
 	if err := membershipService.Init(); err != nil {
 		return err
@@ -172,7 +178,15 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	if _, err := InitRoutes(s.Router, gameService, userService, packageService); err != nil {
+	if _, err := InitBundleRouter(s.Router, bundleService); err != nil {
+		return err
+	}
+
+	if _, err := InitPackageRouter(s.Router, packageService); err != nil {
+		return err
+	}
+
+	if _, err := InitGameRoutes(s.Router, gameService, userService); err != nil {
 		return err
 	}
 
@@ -197,13 +211,16 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 	vendor := suite.createVendor(owner)
 	gameIdUuid := suite.createGame(vendor, owner)
 	gameId := gameIdUuid.String()
-	packageId := suite.createPackage(vendor, gameIdUuid, owner).String()
+	packageIdUuid := suite.createPackage(vendor, gameIdUuid, owner)
+	packageId := packageIdUuid.String()
+	bundleId := suite.createBundle(vendor, packageIdUuid, owner).String()
 
 	notApprovedOwner := suite.createUser()
 	vendorForNotApprovedOwner := suite.createVendor(notApprovedOwner)
 	gameForNotApprovedOwner := suite.createGame(vendorForNotApprovedOwner, notApprovedOwner)
 	messageForNotApprovedOwner := suite.createMessage(vendorForNotApprovedOwner, notApprovedOwner)
 	packageForNotApprovedOwner := suite.createPackage(vendorForNotApprovedOwner, gameForNotApprovedOwner, notApprovedOwner)
+	bundleForNotApprovedOwner := suite.createBundle(vendorForNotApprovedOwner, packageForNotApprovedOwner, notApprovedOwner)
 
 	admin := suite.createUser()
 	globalAdmin := suite.createUser()
@@ -217,6 +234,9 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 	anotherGameUuid := suite.createGame(anotherVendor, anotherOwner)
 	anotherGame := anotherGameUuid.String()
 	suite.createPackage(anotherVendor, anotherGameUuid, anotherOwner)
+	anotherPackageUuid := suite.createPackage(anotherVendor, anotherGameUuid, anotherOwner)
+	anotherPackage := anotherPackageUuid.String()
+	anotherBundle := suite.createBundle(anotherVendor, anotherPackageUuid, anotherOwner).String()
 
 	vendorId = vendor.String()
 	superAdmin := suite.createUser()
@@ -230,7 +250,7 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 	suite.checkAccess("super admin", http.MethodGet, "/admin/api/v1/vendors/reviews", "", superAdmin, true)
 
 	for key, values := range testCases {
-		url := format(key.url, vendorId, gameId, messageId, packageId)
+		url := format(key.url, vendorId, gameId, messageId, packageId, bundleId)
 		method := key.method
 		body := key.body
 
@@ -242,7 +262,8 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 			vendorForNotApprovedOwner.String(),
 			gameForNotApprovedOwner.String(),
 			messageForNotApprovedOwner,
-			packageForNotApprovedOwner.String())
+			packageForNotApprovedOwner.String(),
+			bundleForNotApprovedOwner.String())
 		suite.checkAccess("notApprovedOwner", method, urlUnapproved, body, notApprovedOwner, contains(values, model.NotApproved) || contains(values, model.AnyRole))
 
 		for _, role := range roles {
@@ -260,13 +281,13 @@ func (suite *AccessRightsTestSuite) TestRoutes() {
 			suite.checkAccess(role, method, url, body, testUser, accept)
 			shouldBe.Nil(suite.service.RemoveRoleToUserInGame(vendor, testUser, "*", role))
 
-			shouldBe.Nil(suite.service.AddRoleToUserInGame(vendor, testUser, gameId, role))
+			shouldBe.Nil(suite.service.AddRoleToUserInResource(vendor, testUser, []string{packageId, bundleId, gameId}, role))
 			suite.checkAccess(role, method, url, body, testUser, accept)
-			shouldBe.Nil(suite.service.RemoveRoleToUserInGame(vendor, testUser, gameId, role))
+			shouldBe.Nil(suite.service.RemoveRoleToUserInResource(vendor, testUser, []string{packageId, bundleId, gameId}, role))
 
-			shouldBe.Nil(suite.service.AddRoleToUserInGame(anotherVendor, testUser, anotherGame, role))
+			shouldBe.Nil(suite.service.AddRoleToUserInResource(anotherVendor, testUser, []string{anotherPackage, anotherBundle, anotherGame}, role))
 			suite.checkAccess(role, method, url, body, testUser, contains(values, model.AnyRole))
-			shouldBe.Nil(suite.service.RemoveRoleToUserInGame(anotherVendor, testUser, anotherGame, role))
+			shouldBe.Nil(suite.service.RemoveRoleToUserInResource(anotherVendor, testUser, []string{anotherPackage, anotherBundle, anotherGame}, role))
 		}
 	}
 }
@@ -280,11 +301,12 @@ func contains(arr []string, s string) bool {
 	return false
 }
 
-func format(s, vendorId, gameId, messageId, packageId string) string {
+func format(s, vendorId, gameId, messageId, packageId, bundleId string) string {
 	url := strings.Replace(s, "%vendor_id", vendorId, 1)
 	url = strings.Replace(url, "%game_id", gameId, 1)
 	url = strings.Replace(url, "%message_id", messageId, 1)
 	url = strings.Replace(url, "%package_id", packageId, 1)
+	url = strings.Replace(url, "%bundle_id", bundleId, 1)
 	return url
 }
 
@@ -323,6 +345,20 @@ func (suite *AccessRightsTestSuite) generateTestCases() map[struct {
 		{http.MethodPut, "/api/v1/games/%game_id/descriptions", ""}: {model.Admin},
 		{http.MethodGet, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin, model.Support},
 		{http.MethodPut, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin},
+
+
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/packages", ""}:  {model.Admin, model.Support},
+		{http.MethodPost, "/api/v1/vendors/%vendor_id/packages", ""}: {model.Admin},
+		{http.MethodGet, "/api/v1/packages/%package_id", ""}:              {model.Admin, model.Support},
+		{http.MethodPut, "/api/v1/packages/%package_id", ""}:              {model.Admin},
+		{http.MethodDelete, "/api/v1/packages/%package_id", ""}:              {model.Admin},
+		{http.MethodPost, "/api/v1/packages/%package_id/products/add", ""}:              {model.Admin},
+		{http.MethodPost, "/api/v1/packages/%package_id/products/remove", ""}:              {model.Admin},
+
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/bundles", ""}:  {model.Admin, model.Support},
+		{http.MethodPost, "/api/v1/vendors/%vendor_id/bundles", ""}: {model.Admin},
+		{http.MethodGet, "/api/v1/bundles/store/%bundle_id", ""}:              {model.Admin, model.Support},
+		{http.MethodDelete, "/api/v1/bundles/%bundle_id", ""}:              {model.Admin},
 	}
 }
 
@@ -399,6 +435,25 @@ func (suite *AccessRightsTestSuite) createPackage(vendorUuid, gameUuid uuid.UUID
 	return pkgId
 }
 
+func (suite *AccessRightsTestSuite) createBundle(vendorUuid, pkgId uuid.UUID, uId string) uuid.UUID {
+	bundleId := uuid.NewV4()
+
+	require.Nil(suite.T(), suite.db.DB().Create(&model.StoreBundle{
+		Model:        model.Model{ID: bundleId},
+		VendorID:     vendorUuid,
+		Name:         model.RandStringRunes(10),
+		CreatorID:    uId,
+	}).Error)
+
+	require.Nil(suite.T(), suite.db.DB().Create(&model.BundlePackage{
+		PackageID: pkgId,
+		BundleID: bundleId,
+		Position: 1,
+	}).Error)
+
+	return pkgId
+}
+
 func (suite *AccessRightsTestSuite) createMessage(vendorId uuid.UUID, userId string) string {
 	gId := uuid.NewV4()
 
@@ -415,7 +470,7 @@ func (suite *AccessRightsTestSuite) createMessage(vendorId uuid.UUID, userId str
 }
 
 func (suite *AccessRightsTestSuite) createUser() string {
-	uId := uuid.NewV4().String()
+	uId := random.String(8, "123456789")
 	require.Nil(suite.T(), suite.db.DB().Save(&model.User{
 		ID:       uId,
 		Nickname: model.RandStringRunes(10),

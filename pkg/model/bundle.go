@@ -59,6 +59,7 @@ type (
 	BundleService interface {
 		CreateStore(vendorId uuid.UUID, name string, packages []uuid.UUID) (bundle *StoreBundle, err error)
 		GetStoreList(vendorId uuid.UUID) (bundles []StoreBundle, err error)
+		UpdateStore(bundle *StoreBundle) (result *StoreBundle, err error)
 		Get(bundleId uuid.UUID) (bundle Bundle, err error)
 		Delete(bundleId uuid.UUID) (err error)
 	}
