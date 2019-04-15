@@ -8,7 +8,7 @@ import (
 type Currency string
 
 const (
-	Ruble         Currency = "RUR"
+	Ruble         Currency = "RUB"
 	Euro          Currency = "EUR"
 	UsDollar      Currency = "USD"
 	PoundSterling Currency = "GBP"
