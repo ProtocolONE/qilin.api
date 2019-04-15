@@ -4,6 +4,8 @@ github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible h1
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190329122021-aa7178c82afb h1:xexVnYD1Eo/1+d2Mxnl/z82wkIYDEzcK8CZLNwDQyyk=
 github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190329122021-aa7178c82afb/go.mod h1:cAqWSwjCImM8kWcq/DjvE/ccyQdVpz3GafmV7pl0Ncc=
+github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190415120635-9cfb6c93ff5e h1:zxGUTcObLZg1R898VXxx6URLhshthCLwCZXGr0TP2LY=
+github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190415120635-9cfb6c93ff5e/go.mod h1:Y08DOxaKiUb2Jhb3bAYgsr9O+NvW423Dk5NyLtJMRTw=
 github.com/ProtocolONE/rbac v0.0.0-20190401151328-815cfc48cab5 h1:Jzq6xfoK2uogDzd2pi/+qBd/xVCOj6vFlvH9meHUna0=
 github.com/ProtocolONE/rbac v0.0.0-20190401151328-815cfc48cab5/go.mod h1:mZUivEYBdQhUhScMwSdCphoANrh2GU6+RnSm6WTVYwo=
 github.com/billcobbler/casbin-redis-watcher v0.0.0-20180829182704-69cab1cdcf44 h1:6IUAqiLy9jbnkun5V2TE+RzFu4fy+qqn/bS80I+L0B4=

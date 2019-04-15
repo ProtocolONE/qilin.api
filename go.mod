@@ -2,7 +2,7 @@ module qilin-api
 
 require (
 	cloud.google.com/go v0.34.0 // indirect
-	github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190329122021-aa7178c82afb
+	github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190415120635-9cfb6c93ff5e
 	github.com/ProtocolONE/rbac v0.0.0-20190401151328-815cfc48cab5
 	github.com/casbin/redis-adapter v0.0.0-20190105032110-b36d844dade5
 	github.com/centrifugal/gocent v2.0.2+incompatible
