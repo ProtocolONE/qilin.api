@@ -159,12 +159,12 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	packageService, err := orm.NewPackageService(s.db, gameService)
+	packageService, err := mock.NewPackageService()
 	if err != nil {
 		return err
 	}
 
-	bundleService, err := orm.NewBundleService(s.db)
+	bundleService, err := mock.NewBundleService()
 	if err != nil {
 		return err
 	}
@@ -355,9 +355,9 @@ func (suite *AccessRightsTestSuite) generateTestCases() map[struct {
 		{http.MethodPost, "/api/v1/packages/%package_id/products/add", ""}:              {model.Admin},
 		{http.MethodPost, "/api/v1/packages/%package_id/products/remove", ""}:              {model.Admin},
 
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/bundles", ""}:  {model.Admin, model.Support},
-		{http.MethodPost, "/api/v1/vendors/%vendor_id/bundles", ""}: {model.Admin},
-		{http.MethodGet, "/api/v1/bundles/store/%bundle_id", ""}:              {model.Admin, model.Support},
+		{http.MethodPost, "/api/v1/vendors/%vendor_id/bundles/store", ""}: {model.Admin},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/bundles/store", ""}:  {model.Admin, model.Support},
+		{http.MethodGet, "/api/v1/bundles/%bundle_id/store", ""}:              {model.Admin, model.Support},
 		{http.MethodDelete, "/api/v1/bundles/%bundle_id", ""}:              {model.Admin},
 	}
 }
@@ -451,7 +451,7 @@ func (suite *AccessRightsTestSuite) createBundle(vendorUuid, pkgId uuid.UUID, uI
 		Position: 1,
 	}).Error)
 
-	return pkgId
+	return bundleId
 }
 
 func (suite *AccessRightsTestSuite) createMessage(vendorId uuid.UUID, userId string) string {

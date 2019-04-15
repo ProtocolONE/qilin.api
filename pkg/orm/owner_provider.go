@@ -78,14 +78,14 @@ func (provider *ownerProvider) GetOwnerForBundle(bundleId uuid.UUID) (string, er
 
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return "", NewServiceErrorf(http.StatusNotFound, "Bundle `%s` not found ", bundleId)
+			return "", NewServiceErrorf(http.StatusNotFound, "Bundle `%s` not found", bundleId)
 		}
 		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get bundle"))
 	}
 
 	if err := provider.db.DB().Model(&model.Vendor{}).Where("id = ?", bundle.VendorID).First(&vendor).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found ", bundleId)
+			return "", NewServiceErrorf(http.StatusNotFound, "Vendor `%s` not found", bundleId)
 		}
 		return "", NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get vendor"))
 	}

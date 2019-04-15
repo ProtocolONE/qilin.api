@@ -11,19 +11,19 @@ import (
 	"time"
 )
 
-type BundleService struct {
+type bundleService struct {
 	db *gorm.DB
 	gameService model.GameService
 	packageService model.PackageService
 }
 
-func NewBundleService(db *Database) (*BundleService, error) {
+func NewBundleService(db *Database) (model.BundleService, error) {
 	gameService, _ := NewGameService(db)
 	packageService, _ := NewPackageService(db, gameService)
-	return &BundleService{db.database, gameService, packageService}, nil
+	return &bundleService{db.database, gameService, packageService}, nil
 }
 
-func (p *BundleService) CreateStore(vendorId uuid.UUID, name string, packages []uuid.UUID) (bundle *model.StoreBundle, err error) {
+func (p *bundleService) CreateStore(vendorId uuid.UUID, name string, packages []uuid.UUID) (bundle *model.StoreBundle, err error) {
 	pkgObjs := []model.Package{}
 	if len(packages) > 0 {
 		err = p.db.Where("id in (?)", packages).Find(&pkgObjs).Error
@@ -71,7 +71,7 @@ func (p *BundleService) CreateStore(vendorId uuid.UUID, name string, packages []
 	return bundleIfce.(*model.StoreBundle), nil
 }
 
-func (p *BundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (result []model.StoreBundle, err error) {
+func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (result []model.StoreBundle, err error) {
 	orderBy := ""
 	orderBy = "created_at ASC"
 	if sort != "" {
@@ -111,7 +111,7 @@ func (p *BundleService) GetStoreList(vendorId uuid.UUID, query, sort string, off
 	return
 }
 
-func (p *BundleService) Get(bundleId uuid.UUID) (bundle model.Bundle, err error) {
+func (p *bundleService) Get(bundleId uuid.UUID) (bundle model.Bundle, err error) {
 
 	entry := model.BundleEntry{}
 	err = p.db.Where(model.BundleEntry{EntryID: bundleId}).Find(&entry).Error
@@ -148,7 +148,7 @@ func (p *BundleService) Get(bundleId uuid.UUID) (bundle model.Bundle, err error)
 	return
 }
 
-func (p *BundleService) Delete(bundleId uuid.UUID) (err error) {
+func (p *bundleService) Delete(bundleId uuid.UUID) (err error) {
 
 	entry := model.BundleEntry{}
 	err = p.db.Where(model.BundleEntry{EntryID: bundleId}).Find(&entry).Error
@@ -168,7 +168,7 @@ func (p *BundleService) Delete(bundleId uuid.UUID) (err error) {
 	return nil
 }
 
-func (p *BundleService) UpdateStore(bundle *model.StoreBundle) (result *model.StoreBundle, err error) {
+func (p *bundleService) UpdateStore(bundle *model.StoreBundle) (result *model.StoreBundle, err error) {
 	exist := &model.StoreBundle{Model: model.Model{ID: bundle.ID}}
 	err = p.db.First(exist).Error
 	if err == gorm.ErrRecordNotFound {

@@ -18,7 +18,7 @@ import (
 type bundleServiceTestSuite struct {
 	suite.Suite
 	db          *orm.Database
-	service     *orm.BundleService
+	service     model.BundleService
 	packages    []uuid.UUID
 	vendorId    uuid.UUID
 }

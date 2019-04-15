@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
 	"net/http"
@@ -16,7 +15,7 @@ import (
 
 type (
 	BundleRouter struct {
-		service *orm.BundleService
+		service model.BundleService
 	}
 
 	createBundleDTO struct {
@@ -93,7 +92,7 @@ func mapStoreBundleItemDto(bundle *model.StoreBundle) (dto storeBundleItemDTO) {
 	return dto
 }
 
-func InitBundleRouter(group *echo.Group, service *orm.BundleService) (router *BundleRouter, err error) {
+func InitBundleRouter(group *echo.Group, service model.BundleService) (router *BundleRouter, err error) {
 	router = &BundleRouter{service}
 
 	vendorRouter := rbac_echo.Group(group, "/vendors/:vendorId", router, []string{"*", model.RoleBundleList, model.VendorDomain})
@@ -101,7 +100,7 @@ func InitBundleRouter(group *echo.Group, service *orm.BundleService) (router *Bu
 	vendorRouter.GET("/bundles/store", router.GetStoreList, nil)
 
 	bundleGroup := rbac_echo.Group(group, "/bundles", router, []string{"bundleId", model.RoleBundle, model.VendorDomain})
-	bundleGroup.GET("/store/:bundleId", router.GetStore, nil)
+	bundleGroup.GET("/:bundleId/store", router.GetStore, nil)
 	bundleGroup.DELETE("/:bundleId", router.Delete, nil)
 
 	return
@@ -146,7 +145,6 @@ func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
 
 func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
-	fmt.Println(vendorId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
 	}
@@ -173,7 +171,6 @@ func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 
 func (router *BundleRouter) GetStore(ctx echo.Context) (err error) {
 	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
-	fmt.Println(bundleId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
 	}

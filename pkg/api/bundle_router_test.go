@@ -193,7 +193,7 @@ func (suite *BundleRouterTestSuite) TestGetBundleShouldReturnEmptyObject() {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/bundles/store/:bundleId")
+	c.SetPath("/api/v1/bundles/:bundleId/store")
 	c.SetParamNames("bundleId")
 	c.SetParamValues(bundleID)
 

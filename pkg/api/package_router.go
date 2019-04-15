@@ -17,7 +17,7 @@ import (
 
 type (
 	PackageRouter struct {
-		service *orm.PackageService
+		service model.PackageService
 	}
 
 	createPackageDTO struct {
@@ -71,7 +71,7 @@ type (
 	}
 )
 
-func InitPackageRouter(group *echo.Group, service *orm.PackageService) (router *PackageRouter, err error) {
+func InitPackageRouter(group *echo.Group, service model.PackageService) (router *PackageRouter, err error) {
 	router = &PackageRouter{service}
 
 	vendorRouter := rbac_echo.Group(group, "/vendors/:vendorId", router, []string{"*", model.PackageListType, model.VendorDomain})
