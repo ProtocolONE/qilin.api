@@ -105,24 +105,24 @@ func (suite *GameServiceTestSuite) TearDownTest() {
 }
 
 func (suite *GameServiceTestSuite) TestGames() {
-	require := require.New(suite.T())
+	should := require.New(suite.T())
 
 	gameService, err := orm.NewGameService(suite.db)
-	require.Nil(err, "Unable make game service")
+	should.Nil(err, "Unable make game service")
 
 	ow := orm.NewOwnerProvider(suite.db)
 	enf := rbac.NewEnforcer()
 	memService := orm.NewMembershipService(suite.db, ow, enf, mock.NewMailer(), "")
 
 	vendorService, err := orm.NewVendorService(suite.db, memService)
-	require.Nil(err, "Unable make vendor service")
+	should.Nil(err, "Unable make vendor service")
 
 	userService, err := orm.NewUserService(suite.db, nil)
-	require.Nil(err, "Unable make user service")
+	should.Nil(err, "Unable make user service")
 
 	suite.T().Log("Register new user")
 	user, err := userService.Create(uuid.NewV4().String(), "test@protocol.one", "ru")
-	require.Nil(err, "Unable to register user1")
+	should.Nil(err, "Unable to register user1")
 
 	suite.userId = user.ID
 
@@ -135,7 +135,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 		ManagerID:       user.ID,
 	}
 	vendor2, err := vendorService.Create(&vendor)
-	require.Nil(err, "Must create new vendor")
+	should.Nil(err, "Must create new vendor")
 
 	suite.T().Log("Makes more game-tags")
 	err = gameService.CreateTags([]model.GameTag{
@@ -152,7 +152,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 			Title: utils.LocalizedString{EN: "Tanks", RU: "Танки"},
 		},
 	})
-	require.Nil(err, "Unable to create game tags")
+	should.Nil(err, "Unable to create game tags")
 
 	suite.T().Log("Makes more genres")
 	err = gameService.CreateGenres([]model.GameGenre{
@@ -169,64 +169,64 @@ func (suite *GameServiceTestSuite) TestGames() {
 			Title: utils.LocalizedString{EN: "genre-3", RU: "Жанр-3"},
 		}},
 	})
-	require.Nil(err, "Unable to create genres")
+	should.Nil(err, "Unable to create genres")
 
 	suite.T().Log("Create game")
 	gameName := "game1"
 	game, err := gameService.Create(user.ID, vendor2.ID, gameName)
-	require.Nil(err, "Unable to create game")
-	require.NotEqual(game.ID, uuid.Nil, "Wrong ID for created game")
-	require.Equal(game.InternalName, gameName, "Incorrect Game Name from DB")
+	should.Nil(err, "Unable to create game")
+	should.NotEqual(game.ID, uuid.Nil, "Wrong ID for created game")
+	should.Equal(game.InternalName, gameName, "Incorrect Game Name from DB")
 
 	suite.T().Log("Fetch created game")
 	game2, err := gameService.GetInfo(game.ID)
-	require.Nil(err, "Get exists game")
-	require.Equal(game2.InternalName, gameName, "Incorrect Game Name from DB")
+	should.Nil(err, "Get exists game")
+	should.Equal(game2.InternalName, gameName, "Incorrect Game Name from DB")
 
 	suite.T().Log("Try to create game with same name")
 	_, err = gameService.Create(user.ID, vendor2.ID, gameName)
-	require.NotNil(err, "Must rise error abount same internalName")
+	should.NotNil(err, "Must rise error abount same internalName")
 
 	suite.T().Log("Create anther game")
 	game2Name := "game2"
 	game3, err := gameService.Create(user.ID, vendor2.ID, game2Name)
-	require.Nil(err, "Unable to create game")
-	require.NotEqual(game3.ID, uuid.Nil, "Wrong ID for created game")
-	require.Equal(game3.InternalName, game2Name, "Incorrect Game Name from DB")
+	should.Nil(err, "Unable to create game")
+	should.NotEqual(game3.ID, uuid.Nil, "Wrong ID for created game")
+	should.Equal(game3.InternalName, game2Name, "Incorrect Game Name from DB")
 
 	suite.T().Log("Get games list")
 	games, err := gameService.GetList(user.ID, vendor2.ID, 0, 20, "", "", "", "name+", 0)
-	require.Nil(err, "Unable retrive list of games")
-	require.Equal(2, len(games), "Only 2 games just created")
-	require.Equal(games[0].InternalName, gameName, "First game")
-	require.Equal(games[1].InternalName, game2Name, "Second game")
+	should.Nil(err, "Unable retrive list of games")
+	should.Equal(2, len(games), "Only 2 games just created")
+	should.Equal(games[0].InternalName, gameName, "First game")
+	should.Equal(games[1].InternalName, game2Name, "Second game")
 
 	suite.T().Log("Check filter with offset and sort")
 	games2, err := gameService.GetList(user.ID, vendor2.ID, 1, 20, "", "", "", "name-", 0)
-	require.Nil(err, "Unable retrive list of games")
-	require.Equal(len(games2), 1, "Only 1 retrivied")
-	require.Equal(games2[0].InternalName, game2Name, "Second game name")
+	should.Nil(err, "Unable retrive list of games")
+	should.Equal(len(games2), 1, "Only 1 retrivied")
+	should.Equal(games2[0].InternalName, game2Name, "Second game name")
 
 	suite.T().Log("Check filter with name")
 	games3, err := gameService.GetList(user.ID, vendor2.ID, 0, 20, game2Name, "", "", "name-", 0)
-	require.Nil(err, "Unable retrive list of games")
-	require.Equal(len(games3), 1, "Only 1 retrivied")
-	require.Equal(games3[0].InternalName, game2Name, "Second game name")
+	should.Nil(err, "Unable retrive list of games")
+	should.Equal(len(games3), 1, "Only 1 retrivied")
+	should.Equal(games3[0].InternalName, game2Name, "Second game name")
 
 	suite.T().Log("Delete first game")
 	err = gameService.Delete(user.ID, game.ID)
-	require.Nil(err, "Game deletion must be without error")
+	should.Nil(err, "Game deletion must be without error")
 
 	suite.T().Log("Try to fetch deleted game")
 	game4, err := gameService.GetInfo(game.ID)
-	require.NotNil(err, "Rise error because game already removed")
-	require.Nil(game4, "Game must be null")
+	should.NotNil(err, "Rise error because game already removed")
+	should.Nil(game4, "Game must be null")
 
 	suite.T().Log("Get games list with one game")
 	games, err = gameService.GetList(user.ID, vendor2.ID, 0, 20, "", "", "", "name+", 0)
-	require.Nil(err, "Unable retrive list of games")
-	require.Equal(len(games), 1, "Only 1 games must be")
-	require.Equal(games[0].InternalName, game2Name, "Second game")
+	should.Nil(err, "Unable retrive list of games")
+	should.Equal(len(games), 1, "Only 1 games must be")
+	should.Equal(games[0].InternalName, game2Name, "Second game")
 
 	suite.T().Log("Update game")
 	game3.Tags = []int64{1, 2}
@@ -240,25 +240,25 @@ func (suite *GameServiceTestSuite) TestGames() {
 	game3.GenreAddition = []int64{2, 3}
 
 	err = gameService.UpdateInfo(game3)
-	require.Nil(err, "Must be save without error")
+	should.Nil(err, "Must be save without error")
 
 	suite.T().Log("Retrive updated game")
 	game5, err := gameService.GetInfo(game3.ID)
-	require.Nil(err, "Error must be null")
-	require.Equal(game5.Developers, game3.Developers, "Must be same")
-	require.Equal(game5.InternalName, game3.InternalName, "Must be same")
-	require.Equal(game5.Platforms.Windows, game3.Platforms.Windows, "Must be same")
-	require.Equal(game5.Platforms.Linux, game3.Platforms.Linux, "Must be same")
-	require.Equal(game5.Requirements.Windows.Recommended.Graphics, "4200ti", "Must be same")
-	require.Equal(game5.Publishers, game3.Publishers, "Must be same")
-	require.Equal(len(game5.Tags), 2, "Must be same")
-	require.Equal(len(game5.GenreAddition), 2, "Must be 3 extra genres")
-	require.Equal(game5.GenreMain, int64(1), "Genre with id 1")
+	should.Nil(err, "Error must be null")
+	should.Equal(game5.Developers, game3.Developers, "Must be same")
+	should.Equal(game5.InternalName, game3.InternalName, "Must be same")
+	should.Equal(game5.Platforms.Windows, game3.Platforms.Windows, "Must be same")
+	should.Equal(game5.Platforms.Linux, game3.Platforms.Linux, "Must be same")
+	should.Equal(game5.Requirements.Windows.Recommended.Graphics, "4200ti", "Must be same")
+	should.Equal(game5.Publishers, game3.Publishers, "Must be same")
+	should.Equal(len(game5.Tags), 2, "Must be same")
+	should.Equal(len(game5.GenreAddition), 2, "Must be 3 extra genres")
+	should.Equal(game5.GenreMain, int64(1), "Genre with id 1")
 
 	suite.T().Log("Get game descriptions")
 	gameDescr, err := gameService.GetDescr(game5.ID)
-	require.Nil(err, "Error must be null")
-	require.Equal(gameDescr.GameID, game5.ID, "Same as game")
+	should.Nil(err, "Error must be null")
+	should.Equal(gameDescr.GameID, game5.ID, "Same as game")
 
 	suite.T().Log("Update game descriptions")
 	gameDescr.Reviews = bto.GameReviews{bto.GameReview{
@@ -280,22 +280,22 @@ func (suite *GameServiceTestSuite) TestGames() {
 		RU: "ru-descr",
 	}
 	err = gameService.UpdateDescr(gameDescr)
-	require.Nil(err, "Error must be null")
+	should.Nil(err, "Error must be null")
 
 	suite.T().Log("Get updated game description")
 	gameDescr2, err := gameService.GetDescr(game5.ID)
-	require.Nil(err, "Error must be null")
-	require.Equal(len(gameDescr2.Reviews), 2, "Must be two review")
-	require.Equal(gameDescr2.Reviews[0].Link, "Link", "Same value")
-	require.Equal(gameDescr2.Reviews[1].Quote, "555", "Same value")
-	require.Equal(gameDescr2.Socials.Facebook, gameDescr.Socials.Facebook, "Same value")
-	require.Equal(gameDescr2.GameSite, gameDescr.GameSite, "Same value")
-	require.Equal(gameDescr2.Description.EN, gameDescr.Description.EN, "Same value")
+	should.Nil(err, "Error must be null")
+	should.Equal(len(gameDescr2.Reviews), 2, "Must be two review")
+	should.Equal(gameDescr2.Reviews[0].Link, "Link", "Same value")
+	should.Equal(gameDescr2.Reviews[1].Quote, "555", "Same value")
+	should.Equal(gameDescr2.Socials.Facebook, gameDescr.Socials.Facebook, "Same value")
+	should.Equal(gameDescr2.GameSite, gameDescr.GameSite, "Same value")
+	should.Equal(gameDescr2.Description.EN, gameDescr.Description.EN, "Same value")
 
 	suite.T().Log("Retrive tags with user", user.ID)
 	tags, err := gameService.FindTags(user.ID, "Стрелялки", 20, 0)
-	require.Equal(len(tags), 1, "Must be one match")
-	require.Equal(tags[0].ID, 1, "Same value")
+	should.Equal(len(tags), 1, "Must be one match")
+	should.Equal(tags[0].ID, 1, "Same value")
 }
 
 func (suite *GameServiceTestSuite) TestDescriptors() {
@@ -304,37 +304,37 @@ func (suite *GameServiceTestSuite) TestDescriptors() {
 		RU: "Кровь",
 	},
 		System: "CERO"}
-	require := require.New(suite.T())
+	should := require.New(suite.T())
 
 	gameService, err := orm.NewGameService(suite.db)
-	require.NoError(err)
+	should.NoError(err)
 
 	descriptors, err := gameService.GetRatingDescriptors("")
-	require.NoError(err)
-	require.Equal(4, len(descriptors))
+	should.NoError(err)
+	should.Equal(4, len(descriptors))
 
 	descriptors, err = gameService.GetRatingDescriptors("CERO")
-	require.NoError(err)
-	require.Equal(1, len(descriptors))
-	require.Equal(testDescr.System, descriptors[0].System)
-	require.Equal(testDescr.Title, descriptors[0].Title)
+	should.NoError(err)
+	should.Equal(1, len(descriptors))
+	should.Equal(testDescr.System, descriptors[0].System)
+	should.Equal(testDescr.Title, descriptors[0].Title)
 }
 
 func (suite *GameServiceTestSuite) TestFindAllGenres() {
-	require := require.New(suite.T())
+	should := require.New(suite.T())
 
 	gameService, err := orm.NewGameService(suite.db)
-	require.NoError(err)
+	should.NoError(err)
 
 	genres, err := gameService.FindGenres(suite.userId, "", 10, 0)
-	require.NoError(err)
-	require.Equal(3, len(genres))
-	require.Equal(1, genres[0].ID)
-	require.Equal("Action", genres[0].Title.EN)
+	should.NoError(err)
+	should.Equal(3, len(genres))
+	should.Equal(1, genres[0].ID)
+	should.Equal("Action", genres[0].Title.EN)
 
 	genres2, err := gameService.FindGenres(suite.userId, "", 1, 1)
-	require.NoError(err)
-	require.Equal(1, len(genres2))
-	require.Equal(2, genres2[0].ID)
-	require.Equal("Test", genres2[0].Title.EN)
+	should.NoError(err)
+	should.Equal(1, len(genres2))
+	should.Equal(2, genres2[0].ID)
+	should.Equal("Test", genres2[0].Title.EN)
 }

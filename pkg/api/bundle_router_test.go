@@ -21,7 +21,10 @@ import (
 )
 
 var (
-	bundleID = "44444444-888a-481a-a831-cde7ff4e50b8"
+	bundleVendorId      = "11112222-888a-481a-a831-cde7ff4e50b8"
+	bundleID 			= "44444444-888a-481a-a831-cde7ff4e50b8"
+	bundleGameId 		= "029ce039-888a-481a-a831-cde7ff4e50b8"
+	bundlePackageId     = "33333333-888a-481a-a831-cde7ff4e50b8"
 	emptyBaseBundle = `{
   "id": "44444444-888a-481a-a831-cde7ff4e50b8",
   "createdAt": "1970-01-01T00:00:00Z",
@@ -108,10 +111,18 @@ func (suite *BundleRouterTestSuite) SetupTest() {
 		assert.FailNow(suite.T(), "Unable to init tables", err)
 	}
 
-	venId, err := uuid.FromString(vendorId)
+	vendorId, err := uuid.FromString(bundleVendorId)
 	require.Nil(suite.T(), err, "Decode vendor uuid")
 
-	id, _ := uuid.FromString(TestID)
+	err = db.DB().Save(&model.Vendor{
+		ID:             vendorId,
+		Name:			"Vendor",
+		Domain3:		"domain",
+		ManagerID:		userId,
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make game")
+
+	id, _ := uuid.FromString(bundleGameId)
 	err = db.DB().Save(&model.Game{
 		ID:             id,
 		CreatedAt:      time.Unix(0, 0),
@@ -121,11 +132,11 @@ func (suite *BundleRouterTestSuite) SetupTest() {
 		Tags:           pq.Int64Array{},
 		FeaturesCommon: pq.StringArray{},
 		Product:        model.ProductEntry{EntryID: id},
-		VendorID:       venId,
+		VendorID:       vendorId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 
-	pkgId, _ := uuid.FromString(packageID)
+	pkgId, _ := uuid.FromString(bundlePackageId)
 	err = db.DB().Save(&model.Package{
 		Model:  model.Model{
 			ID: pkgId,
@@ -138,7 +149,7 @@ func (suite *BundleRouterTestSuite) SetupTest() {
 			PreOrder: model.JSONB{"date":"","enabled":false},
 			Prices: []model.Price{},
 		},
-		VendorID:       venId,
+		VendorID:       vendorId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make package")
 	err = db.DB().Create(&model.PackageProduct{
@@ -155,7 +166,7 @@ func (suite *BundleRouterTestSuite) SetupTest() {
 		},
 		Name:   "Mega bundle",
 		AllowedCountries: pq.StringArray{},
-		VendorID: venId,
+		VendorID: vendorId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make bundle")
 	err = db.DB().Create(&model.BundlePackage{
@@ -213,7 +224,7 @@ func (suite *BundleRouterTestSuite) TestGetBundleShouldCreateBundle() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/vendors/:vendorId/bundles/store")
 	c.SetParamNames("vendorId")
-	c.SetParamValues(vendorId)
+	c.SetParamValues(bundleVendorId)
 
 	if assert.NoError(suite.T(), suite.router.CreateStore(c)) {
 		should.Equal(http.StatusCreated, rec.Code)
@@ -234,10 +245,25 @@ func (suite *BundleRouterTestSuite) TestGetBundleShouldReturnStoreList() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/vendors/:vendorId/bundles/store")
 	c.SetParamNames("vendorId")
-	c.SetParamValues(vendorId)
+	c.SetParamValues(bundleVendorId)
 
 	if assert.NoError(suite.T(), suite.router.GetStoreList(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
 		assert.JSONEq(suite.T(), `[{"id":"44444444-888a-481a-a831-cde7ff4e50b8","createdAt":"1970-01-01T00:00:00Z","sku":"","name":"Mega bundle","isUpgradeAllowed":false,"isEnabled":false}]`, rec.Body.String())
 	}
 }
+
+func (suite *BundleRouterTestSuite) TestGetBundleShouldDeleteBundle() {
+	req := httptest.NewRequest(http.MethodDelete, "/", nil)
+	rec := httptest.NewRecorder()
+	c := suite.echo.NewContext(req, rec)
+	c.SetPath("/api/v1/bundles/:bundleId")
+	c.SetParamNames("bundleId")
+	c.SetParamValues(bundleID)
+
+	if assert.NoError(suite.T(), suite.router.Delete(c)) {
+		assert.Equal(suite.T(), http.StatusOK, rec.Code)
+	}
+
+}
+

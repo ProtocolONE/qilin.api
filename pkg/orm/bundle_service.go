@@ -7,6 +7,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/orm/utils"
 	"strings"
 	"time"
 )
@@ -24,6 +25,11 @@ func NewBundleService(db *Database) (model.BundleService, error) {
 }
 
 func (p *bundleService) CreateStore(vendorId uuid.UUID, name string, packages []uuid.UUID) (bundle *model.StoreBundle, err error) {
+
+	if len(strings.Trim(name, " \r\n\t")) == 0 {
+		return nil, NewServiceError(http.StatusUnprocessableEntity, "Name is empty")
+	}
+
 	pkgObjs := []model.Package{}
 	if len(packages) > 0 {
 		err = p.db.Where("id in (?)", packages).Find(&pkgObjs).Error
@@ -35,11 +41,20 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, name string, packages []
 		return nil, NewServiceError(http.StatusUnprocessableEntity, "No any package")
 	}
 
+	vendorFound, err := utils.CheckExists(p.db, model.Vendor{}, vendorId)
+	if err != nil {
+		return nil, errors.Wrap(err, "Vendor exists")
+	}
+	if !vendorFound {
+		return nil, NewServiceError(http.StatusUnprocessableEntity, "Invalid vendor")
+	}
+
 	newBundle := model.StoreBundle{
 		Model: model.Model{ID: uuid.NewV4()},
 		Sku: random.String(8, "123456789"),
 		Name: name,
 		VendorID: vendorId,
+		IsEnabled: false,
 	}
 	newBundle.Bundle.EntryID = newBundle.ID
 	err = p.db.Create(&newBundle).Error
@@ -60,11 +75,15 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, name string, packages []
 				Position:  index + 1,
 			}).Error
 			if err != nil {
+				db.Rollback()
 				return nil, errors.Wrap(err, "While append packages into bundle")
 			}
 		}
 	}
-	db.Commit()
+	err = db.Commit().Error
+	if err != nil {
+		return nil, errors.Wrap(err, "While commit packages")
+	}
 
 	bundleIfce, err := p.Get(newBundle.ID)
 

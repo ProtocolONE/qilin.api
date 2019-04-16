@@ -32,7 +32,7 @@ func Test_PriceRouter(t *testing.T) {
 }
 
 var (
-	packageID                         = "33333333-888a-481a-a831-cde7ff4e50b8"
+	packagePriceId                    = "33333333-888a-481a-a831-cde7ff4e50b8"
 
 	testObject                        = `{"common":{"currency":"USD","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
 	testBadObject                     = `{"common":{"NotifyRateJumps":true},"preOrder":{"enabled":false}}`
@@ -77,7 +77,7 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 
-	pkgId, _ := uuid.FromString(packageID)
+	pkgId, _ := uuid.FromString(packagePriceId)
 	err = db.DB().Save(&model.Package{
 		Model:  model.Model{ID: pkgId},
 		Name:   "Test_package",
@@ -122,7 +122,7 @@ func (suite *PriceRouterTestSuite) TestGetBasePriceShouldReturnEmptyObject() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices")
 	c.SetParamNames("packageId")
-	c.SetParamValues(packageID)
+	c.SetParamValues(packagePriceId)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.getBase(c)) {
@@ -138,7 +138,7 @@ func (suite *PriceRouterTestSuite) TestPutBasePriceShouldReturnOk() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices")
 	c.SetParamNames("packageId")
-	c.SetParamValues(packageID)
+	c.SetParamValues(packagePriceId)
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.putBase(c)) {
@@ -154,7 +154,7 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnOk() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
 	c.SetParamNames("packageId", "currency")
-	c.SetParamValues(packageID, "USD")
+	c.SetParamValues(packagePriceId, "USD")
 
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.updatePrice(c)) {
@@ -170,7 +170,7 @@ func (suite *PriceRouterTestSuite) TestPutPriceShouldReturnBadRequest() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
 	c.SetParamNames("packageId", "currency")
-	c.SetParamValues(packageID, "USD")
+	c.SetParamValues(packagePriceId, "USD")
 
 	he := suite.router.updatePrice(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
@@ -183,7 +183,7 @@ func (suite *PriceRouterTestSuite) TestPutWithIncorrectCurrencyPriceShouldReturn
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
 	c.SetParamNames("packageId", "currency")
-	c.SetParamValues(packageID, "EUR")
+	c.SetParamValues(packagePriceId, "EUR")
 
 	he := suite.router.putBase(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusUnprocessableEntity, he.Code)
@@ -196,7 +196,7 @@ func (suite *PriceRouterTestSuite) TestPutBadModelShouldReturn422() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices")
 	c.SetParamNames("packageId")
-	c.SetParamValues(packageID)
+	c.SetParamValues(packagePriceId)
 
 	// Assertions
 	err := suite.router.putBase(c)
@@ -242,7 +242,7 @@ func (suite *PriceRouterTestSuite) TestDeleteUnknownCurrencyShouldReturnError() 
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
 	c.SetParamNames("packageId", "currency")
-	c.SetParamValues(packageID, "XXX")
+	c.SetParamValues(packagePriceId, "XXX")
 
 	// Assertions
 	err := suite.router.deletePrice(c)
@@ -260,7 +260,7 @@ func (suite *PriceRouterTestSuite) TestPutBasePriceWihhUnknownCurrencyShouldRetu
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices/")
 	c.SetParamNames("packageId")
-	c.SetParamValues(packageID)
+	c.SetParamValues(packagePriceId)
 
 	// Assertions
 	err := suite.router.putBase(c)
@@ -290,7 +290,7 @@ func (suite *PriceRouterTestSuite) TestPutBadObjectsShouldReturnError() {
 		c := suite.echo.NewContext(req, rec)
 		c.SetPath("/api/v1/packages/:packageId/prices/:currency")
 		c.SetParamNames("packageId", "currency")
-		c.SetParamValues(packageID, "USD")
+		c.SetParamValues(packagePriceId, "USD")
 
 		// Assertions
 		err := suite.router.updatePrice(c)
@@ -309,7 +309,7 @@ func (suite *PriceRouterTestSuite) TestPutUnknownCurrencyShouldReturnError() {
 	c := suite.echo.NewContext(req, rec)
 	c.SetPath("/api/v1/packages/:packageId/prices/:currency")
 	c.SetParamNames("packageId", "currency")
-	c.SetParamValues(packageID, "XXX")
+	c.SetParamValues(packagePriceId, "XXX")
 
 	// Assertions
 	err := suite.router.updatePrice(c)

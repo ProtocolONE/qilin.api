@@ -182,7 +182,12 @@ func (router *PackageRouter) Create(ctx echo.Context) error {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	pkg, err := router.service.Create(vendorId, params.Name, params.Products)
+	userId, err := context.GetAuthUserId(ctx)
+	if err != nil {
+		return err
+	}
+
+	pkg, err := router.service.Create(vendorId, userId, params.Name, params.Products)
 	if err != nil {
 		return err
 	}
@@ -212,7 +217,7 @@ func (router *PackageRouter) AddProducts(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusCreated, dto)
+	return ctx.JSON(http.StatusOK, dto)
 }
 
 func (router *PackageRouter) RemoveProducts(ctx echo.Context) (err error) {

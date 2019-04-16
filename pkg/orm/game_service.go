@@ -175,7 +175,7 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 		return nil, errors.Wrap(err, "Create descriptions for game")
 	}
 
-	err = p.packageFactory.Create(item.DefPackageID, vendorId, item.InternalName, []uuid.UUID{item.ID})
+	err = p.packageFactory.Create(item.DefPackageID, vendorId, userId, item.InternalName, []uuid.UUID{item.ID})
 	if err != nil {
 		return nil, err
 	}

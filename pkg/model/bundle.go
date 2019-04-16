@@ -16,6 +16,7 @@ const (
 type (
 	// Main Bundle interface
 	Bundle interface {
+		GetName() string
 		IsContains(productId uuid.UUID) (bool, error)
 		GetPrice(customerId uuid.UUID) (float64, error)
 		GetPackages() ([]Package, error)
@@ -67,6 +68,10 @@ type (
 
 func (p *BundleEntry) TableName() string {
 	return "bundles"
+}
+
+func (b *StoreBundle) GetName() string {
+	return b.Name
 }
 
 func (b *StoreBundle) IsContains(productId uuid.UUID) (contains bool, err error) {

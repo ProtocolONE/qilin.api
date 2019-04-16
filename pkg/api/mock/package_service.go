@@ -12,11 +12,11 @@ func NewPackageService() (model.PackageService, error) {
 	return &packageService{}, nil
 }
 
-func (*packageFactory) Create(pkgId, vendorId uuid.UUID, name string, prods []uuid.UUID) (err error) {
+func (*packageFactory) Create(pkgId, vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (err error) {
 	return
 }
 
-func (*packageService) Create(vendorId uuid.UUID, name string, prods []uuid.UUID) (result *model.Package, err error) {
+func (*packageService) Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (result *model.Package, err error) {
 	return &model.Package{}, nil
 }
 

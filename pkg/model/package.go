@@ -43,7 +43,7 @@ type (
 	}
 
 	PackageService interface {
-		Create(vendorId uuid.UUID, name string, prods []uuid.UUID) (*Package, error)
+		Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (*Package, error)
 		Get(packageId uuid.UUID) (result *Package, err error)
 		GetList(vendorId uuid.UUID, query, orderBy string, offset, limit int) (result []Package, err error)
 		AddProducts(packageId uuid.UUID, prods []uuid.UUID) (*Package, error)

@@ -29,7 +29,12 @@ func NewPackageService(db *Database, gameService model.GameService) (*PackageSer
 	}, nil
 }
 
-func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, name string, prods []uuid.UUID) (err error) {
+func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (err error) {
+
+	if len(strings.Trim(name, " \r\n\t")) == 0 {
+		return NewServiceError(http.StatusUnprocessableEntity, "Name is empty")
+	}
+
 	entries := []model.ProductEntry{}
 	if len(prods) > 0 {
 		err = p.db.Where("entry_id in (?)", prods).Find(&entries).Error
@@ -45,6 +50,7 @@ func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, name string, prods []
 		Sku: random.String(8, "123456789"),
 		Name: name,
 		VendorID: vendorId,
+		CreatorID: userId,
 		PackagePrices: model.PackagePrices{
 			Common: model.JSONB{
 				"currency":         "USD",
@@ -70,17 +76,21 @@ func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, name string, prods []
 			Position: index + 1,
 		}).Error
 		if err != nil {
+			db.Rollback()
 			return errors.Wrap(err, "While append products into package")
 		}
 	}
-	db.Commit()
+	err = db.Commit().Error
+	if err != nil {
+		return errors.Wrap(err, "While commit products")
+	}
 
 	return
 }
 
-func (p *PackageService) Create(vendorId uuid.UUID, name string, prods []uuid.UUID) (result *model.Package, err error) {
+func (p *PackageService) Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (result *model.Package, err error) {
 	pkgId := uuid.NewV4()
-	err = p.factory.Create(pkgId, vendorId, name, prods)
+	err = p.factory.Create(pkgId, vendorId, userId, name, prods)
 	if err != nil {
 		return nil, err
 	}
