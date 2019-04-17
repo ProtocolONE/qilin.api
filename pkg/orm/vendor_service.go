@@ -57,6 +57,17 @@ func (p *VendorService) Create(item *model.Vendor) (result *model.Vendor, err er
 
 	tx := p.db.Begin()
 
+	count := 0
+	if err := p.db.Model(&model.Vendor{}).Where("manager_id = ?", vendor.ManagerID).Count(&count).Error; err != nil {
+		tx.Rollback()
+		return nil, NewServiceError(http.StatusInternalServerError, err)
+	}
+
+	if count > 0 {
+		tx.Rollback()
+		return nil, NewServiceError(http.StatusConflict, "User can be owner for one vendor only.")
+	}
+
 	err = tx.Create(&vendor).Error
 	if err != nil && strings.Index(err.Error(), "duplicate key value") > -1 {
 		tx.Rollback()
