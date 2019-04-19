@@ -285,7 +285,7 @@ func (service *membershipService) SendInvite(vendorId uuid.UUID, invite model.In
 		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Saving invite"))
 	}
 
-	url := fmt.Sprintf("%s?token=%s", service.host, invite.ID)
+	url := fmt.Sprintf("%s/vendors/%s/invites/%s", service.host, vendorId, invite.ID)
 
 	//TODO: add localization
 	err := service.mailer.Send(invite.Email, "Invitation to Qilin service", fmt.Sprintf("Body. Url: %s", url))
