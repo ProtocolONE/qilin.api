@@ -17,6 +17,7 @@ const (
 
 	AnyRole     string = "any"
 	NotApproved string = "not_approved"
+	VendorOwner       string = "owner"
 
 	VendorDomain string = "vendor"
 )

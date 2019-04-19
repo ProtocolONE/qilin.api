@@ -13,9 +13,9 @@ import (
 
 // AdminOnboardingService is service to interact with vendor requests objects with admin rights
 type AdminOnboardingService struct {
-	db *gorm.DB
+	db                *gorm.DB
 	membershipService model.MembershipService
-	ownerProvider model.OwnerProvider
+	ownerProvider     model.OwnerProvider
 }
 
 func NewAdminOnboardingService(db *Database, membershipService model.MembershipService, ownerProvider model.OwnerProvider) (*AdminOnboardingService, error) {
@@ -132,6 +132,7 @@ func (p *AdminOnboardingService) ChangeStatus(id uuid.UUID, status model.ReviewS
 
 		//Error is ignored here
 		_ = p.membershipService.RemoveRoleToUserInGame(doc.VendorID, owner, "*", model.NotApproved)
+		_ = p.membershipService.AddRoleToUserInGame(doc.VendorID, owner, "*", model.VendorOwner)
 	}
 
 	return nil
