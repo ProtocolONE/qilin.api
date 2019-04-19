@@ -1,14 +1,17 @@
 package model
 
-import "github.com/satori/go.uuid"
+import (
+	"github.com/satori/go.uuid"
+	"qilin-api/pkg/model/utils"
+)
 
 type (
 	Dlc struct {
 		Model
-		Image           string
+		Image 			JSONB 			`gorm:"type:jsonb"`
 		GameID          uuid.UUID
 		Game            Game
-		Product         ProductEntry `gorm:"polymorphic:Entry;"`
+		Product         ProductEntry 	`gorm:"polymorphic:Entry;"`
 	}
 )
 
@@ -24,6 +27,11 @@ func (p *Dlc) GetType() ProductType {
 	return ProductDLC
 }
 
-func (p *Dlc) GetImage(lang string) string {
-	return p.Image
+func (p *Dlc) GetImage() (res *utils.LocalizedString) {
+	res = &utils.LocalizedString{}
+	if p.Image == nil {
+		return
+	}
+	_ = p.Image.Scan(res)
+	return
 }

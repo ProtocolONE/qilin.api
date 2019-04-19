@@ -164,6 +164,11 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
+	productService, err := mock.NewProductService()
+	if err != nil {
+		return err
+	}
+
 	bundleService, err := mock.NewBundleService()
 	if err != nil {
 		return err
@@ -182,7 +187,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	if _, err := InitPackageRouter(s.Router, packageService); err != nil {
+	if _, err := InitPackageRouter(s.Router, packageService, productService); err != nil {
 		return err
 	}
 

@@ -183,7 +183,7 @@ func mapReqsBTO(r *MachineRequirementsDTO) bto.MachineRequirements {
 	}
 }
 
-func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err error) {
+func mapGameInfo(game *model.Game, service model.GameService) *GameDTO {
 	return &GameDTO{
 		ID: game.ID,
 		BaseGameDTO: BaseGameDTO{
@@ -214,6 +214,11 @@ func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err
 			Languages: GameLangsDTO{
 				EN: LangsDTO{game.Languages.EN.Voice, game.Languages.EN.Interface, game.Languages.EN.Subtitles},
 				RU: LangsDTO{game.Languages.RU.Voice, game.Languages.RU.Interface, game.Languages.RU.Subtitles},
+				FR: LangsDTO{game.Languages.FR.Voice, game.Languages.FR.Interface, game.Languages.FR.Subtitles},
+				ES: LangsDTO{game.Languages.ES.Voice, game.Languages.ES.Interface, game.Languages.ES.Subtitles},
+				DE: LangsDTO{game.Languages.DE.Voice, game.Languages.DE.Interface, game.Languages.DE.Subtitles},
+				IT: LangsDTO{game.Languages.IT.Voice, game.Languages.IT.Interface, game.Languages.IT.Subtitles},
+				PT: LangsDTO{game.Languages.PT.Voice, game.Languages.PT.Interface, game.Languages.PT.Subtitles},
 			},
 		},
 		Genres: GameGenreDTO{
@@ -222,11 +227,11 @@ func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err
 		},
 		Tags: game.Tags,
 		DefPackageID: game.DefPackageID,
-	}, nil
+	}
 }
 
-func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
-	return model.Game{
+func mapGameInfoBTO(game *UpdateGameDTO) *model.Game {
+	return &model.Game{
 		InternalName:         game.InternalName,
 		Title:                game.Title,
 		Developers:           game.Developers,
@@ -388,10 +393,7 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	dto, err := mapGameInfo(game, api.gameService)
-	if err != nil {
-		return err
-	}
+	dto := mapGameInfo(game, api.gameService)
 	return ctx.JSON(http.StatusCreated, dto)
 }
 
@@ -405,10 +407,7 @@ func (api *GameRouter) GetInfo(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	dto, err := mapGameInfo(game, api.gameService)
-	if err != nil {
-		return err
-	}
+	dto := mapGameInfo(game, api.gameService)
 	return ctx.JSON(http.StatusOK, dto)
 }
 
@@ -443,7 +442,7 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 	}
 	game := mapGameInfoBTO(dto)
 	game.ID = gameId
-	err = api.gameService.UpdateInfo(&game)
+	err = api.gameService.UpdateInfo(game)
 	if err != nil {
 		return err
 	}

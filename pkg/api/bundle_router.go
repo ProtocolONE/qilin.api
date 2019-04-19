@@ -1,7 +1,9 @@
 package api
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/context"
@@ -25,7 +27,7 @@ type (
 
 	bundleDiscountPolicyDTO struct {
 		Discount    uint                `json:"discount"`
-		BuyOption   model.BuyOption     `json:"buyOption"`
+		BuyOption   string     			`json:"buyOption"`
 	}
 
 	bundleRegionalRestrinctionsDTO struct {
@@ -41,7 +43,7 @@ type (
 		IsEnabled               bool                            `json:"isEnabled"`
 		DiscountPolicy          bundleDiscountPolicyDTO         `json:"discountPolicy" validate:"required,dive"`
 		RegionalRestrinctions   bundleRegionalRestrinctionsDTO  `json:"regionalRestrinctions" validate:"required,dive"`
-		Packages                []packageDTO                    `json:"packages" validate:"required,dive"`
+		Packages                []*packageDTO                   `json:"packages" validate:"-"`
 	}
 
 	storeBundleItemDTO struct {
@@ -54,8 +56,8 @@ type (
 	}
 )
 
-func mapStoreBundleDto(bundle *model.StoreBundle, lang string) (dto storeBundleDTO, err error) {
-	dto = storeBundleDTO{
+func mapStoreBundleDto(bundle *model.StoreBundle) (dto *storeBundleDTO, err error) {
+	dto = &storeBundleDTO{
 		ID: bundle.ID,
 		CreatedAt: bundle.CreatedAt,
 		Sku: bundle.Sku,
@@ -64,24 +66,24 @@ func mapStoreBundleDto(bundle *model.StoreBundle, lang string) (dto storeBundleD
 		IsEnabled: bundle.IsEnabled,
 		DiscountPolicy: bundleDiscountPolicyDTO{
 			Discount: bundle.Discount,
-			BuyOption: bundle.DiscountBuyOpt,
+			BuyOption: bundle.DiscountBuyOpt.String(),
 		},
 		RegionalRestrinctions: bundleRegionalRestrinctionsDTO{
 			AllowedCountries: bundle.AllowedCountries,
 		},
 	}
 	for _, p := range bundle.Packages {
-		pkg, err := mapPackageDto(&p, lang)
+		pkg, err := mapPackageDto(&p)
 		if err != nil {
-			return dto, err
+			return nil, err
 		}
 		dto.Packages = append(dto.Packages, pkg)
 	}
 	return dto, nil
 }
 
-func mapStoreBundleItemDto(bundle *model.StoreBundle) (dto storeBundleItemDTO) {
-	dto = storeBundleItemDTO{
+func mapStoreBundleItemDto(bundle *model.StoreBundle) *storeBundleItemDTO {
+	return &storeBundleItemDTO{
 		ID: bundle.ID,
 		CreatedAt: bundle.CreatedAt,
 		Sku: bundle.Sku,
@@ -89,7 +91,19 @@ func mapStoreBundleItemDto(bundle *model.StoreBundle) (dto storeBundleItemDTO) {
 		IsUpgradeAllowed: bundle.IsUpgradeAllowed,
 		IsEnabled: bundle.IsEnabled,
 	}
-	return dto
+}
+
+func mapStoreBundleModel(bundle *storeBundleDTO) *model.StoreBundle {
+	return &model.StoreBundle{
+		Model: model.Model{ID: bundle.ID},
+		Sku: bundle.Sku,
+		Name: bundle.Name,
+		IsUpgradeAllowed: bundle.IsUpgradeAllowed,
+		IsEnabled: bundle.IsEnabled,
+		Discount: bundle.DiscountPolicy.Discount,
+		DiscountBuyOpt: model.NewBuyOption(bundle.DiscountPolicy.BuyOption),
+		AllowedCountries: bundle.RegionalRestrinctions.AllowedCountries,
+	}
 }
 
 func InitBundleRouter(group *echo.Group, service model.BundleService) (router *BundleRouter, err error) {
@@ -101,7 +115,10 @@ func InitBundleRouter(group *echo.Group, service model.BundleService) (router *B
 
 	bundleGroup := rbac_echo.Group(group, "/bundles", router, []string{"bundleId", model.RoleBundle, model.VendorDomain})
 	bundleGroup.GET("/:bundleId/store", router.GetStore, nil)
+	bundleGroup.PUT("/:bundleId/store", router.UpdateStore, nil)
 	bundleGroup.DELETE("/:bundleId", router.Delete, nil)
+	bundleGroup.POST("/:bundleId/add", router.AddPackages, nil)
+	bundleGroup.POST("/:bundleId/remove", router.RemovePackages, nil)
 
 	return
 }
@@ -130,13 +147,21 @@ func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	bundle, err := router.service.CreateStore(vendorId, params.Name, params.Packages)
+	userId, err := context.GetAuthUserId(ctx)
 	if err != nil {
 		return err
 	}
-	lang := context.GetLang(ctx)
+	qilinCtx := ctx.(rbac_echo.AppContext)
+	err = router.checkRBAC(userId, &qilinCtx, params.Packages)
+	if err != nil {
+		return err
+	}
 
-	dto, err := mapStoreBundleDto(bundle, lang)
+	bundle, err := router.service.CreateStore(vendorId, userId, params.Name, params.Packages)
+	if err != nil {
+		return err
+	}
+	dto, err := mapStoreBundleDto(bundle)
 	if err != nil {
 		return err
 	}
@@ -162,7 +187,7 @@ func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	dto := []storeBundleItemDTO{}
+	dto := []*storeBundleItemDTO{}
 	for _, bundle := range bundles {
 		dto = append(dto, mapStoreBundleItemDto(&bundle))
 	}
@@ -184,9 +209,34 @@ func (router *BundleRouter) GetStore(ctx echo.Context) (err error) {
 	if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bundle not for store")
 	}
-	lang := context.GetLang(ctx)
+	dto, err := mapStoreBundleDto(bundleStore)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, dto)
+}
 
-	dto, err := mapStoreBundleDto(bundleStore, lang)
+func (router *BundleRouter) UpdateStore(ctx echo.Context) (err error) {
+	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid bundle Id")
+	}
+	storeDto := &storeBundleDTO{}
+	err = ctx.Bind(storeDto)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, errors.Wrap(err, "Wrong store bundle in body").Error())
+	}
+	if errs := ctx.Validate(storeDto); errs != nil {
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
+	}
+
+	store := mapStoreBundleModel(storeDto)
+	store.ID = bundleId
+	storeRes, err := router.service.UpdateStore(store)
+	if err != nil {
+		return err
+	}
+	dto, err := mapStoreBundleDto(storeRes)
 	if err != nil {
 		return err
 	}
@@ -205,4 +255,63 @@ func (router *BundleRouter) Delete(ctx echo.Context) (err error) {
 	}
 
 	return ctx.JSON(http.StatusOK, "Ok")
+}
+
+func (router *BundleRouter) checkRBAC(userId string, qilinCtx *rbac_echo.AppContext, packagesIds []uuid.UUID) error {
+	for _, packageId := range packagesIds {
+		owner, err := qilinCtx.GetOwnerForPackage(packageId)
+		if err != nil {
+			return err
+		}
+		if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.PackageType, packageId.String(), owner, "read") != nil {
+			return orm.NewServiceError(http.StatusForbidden, fmt.Sprintf("Access restricted for package `%s`", packageId.String()))
+		}
+	}
+	return nil
+}
+
+func (router *BundleRouter) AddPackages(ctx echo.Context) (err error) {
+	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid bundle Id")
+	}
+	packages := []uuid.UUID{}
+	err = ctx.Bind(&packages)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong package array in body")
+	}
+
+	userId, err := context.GetAuthUserId(ctx)
+	if err != nil {
+		return err
+	}
+	qilinCtx := ctx.(rbac_echo.AppContext)
+
+	err = router.checkRBAC(userId, &qilinCtx, packages)
+	if err != nil {
+		return err
+	}
+
+	err = router.service.AddPackages(bundleId, packages)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, "OK")
+}
+
+func (router *BundleRouter) RemovePackages(ctx echo.Context) (err error) {
+	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid bundle Id")
+	}
+	packages := []uuid.UUID{}
+	err = ctx.Bind(&packages)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong package array in body")
+	}
+	err = router.service.RemovePackages(bundleId, packages)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, "OK")
 }

@@ -101,7 +101,7 @@ func (router *DiscountsRouter) get(ctx echo.Context) error {
 	dto := make([]Discount, len(discounts))
 	err = mapper.Map(discounts, &dto)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, errors.Wrap(err, "Can't decode domain to dto"))
+		return echo.NewHTTPError(http.StatusInternalServerError, errors.Wrap(err, "Can't decode domain to dto").Error())
 	}
 
 	if dto == nil {

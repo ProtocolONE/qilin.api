@@ -24,20 +24,20 @@ func NewBundleService(db *Database) (model.BundleService, error) {
 	return &bundleService{db.database, gameService, packageService}, nil
 }
 
-func (p *bundleService) CreateStore(vendorId uuid.UUID, name string, packages []uuid.UUID) (bundle *model.StoreBundle, err error) {
+func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, packageIds []uuid.UUID) (bundle *model.StoreBundle, err error) {
 
 	if len(strings.Trim(name, " \r\n\t")) == 0 {
 		return nil, NewServiceError(http.StatusUnprocessableEntity, "Name is empty")
 	}
 
-	pkgObjs := []model.Package{}
-	if len(packages) > 0 {
-		err = p.db.Where("id in (?)", packages).Find(&pkgObjs).Error
+	packages := []model.Package{}
+	if len(packageIds) > 0 {
+		err = p.db.Where("id in (?)", packageIds).Find(&packages).Error
 		if err != nil {
 			return nil, errors.Wrap(err, "Search packages")
 		}
 	}
-	if len(pkgObjs) == 0 {
+	if len(packages) == 0 {
 		return nil, NewServiceError(http.StatusUnprocessableEntity, "No any package")
 	}
 
@@ -55,6 +55,7 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, name string, packages []
 		Name: name,
 		VendorID: vendorId,
 		IsEnabled: false,
+		CreatorID: userId,
 	}
 	newBundle.Bundle.EntryID = newBundle.ID
 	err = p.db.Create(&newBundle).Error
@@ -63,9 +64,9 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, name string, packages []
 	}
 
 	db := p.db.Begin()
-	// We walks `packages` first cuz want to persistent ordering
-	for index, pkgID := range packages {
-		for _, pkg := range pkgObjs {
+	// We walks `packageIds` first cuz want to persistent ordering
+	for index, pkgID := range packageIds {
+		for _, pkg := range packages {
 			if pkgID != pkg.ID {
 				continue
 			}
@@ -164,7 +165,7 @@ func (p *bundleService) Get(bundleId uuid.UUID) (bundle model.Bundle, err error)
 		return bundle, nil
 	}
 
-	return
+	return nil, NewServiceError(http.StatusNotImplemented, "Only store bundle, yet")
 }
 
 func (p *bundleService) Delete(bundleId uuid.UUID) (err error) {
@@ -182,6 +183,8 @@ func (p *bundleService) Delete(bundleId uuid.UUID) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "Retrieve store bundle")
 		}
+	} else {
+		return NewServiceError(http.StatusNotImplemented, "Only store bundle, yet")
 	}
 
 	return nil
@@ -207,4 +210,106 @@ func (p *bundleService) UpdateStore(bundle *model.StoreBundle) (result *model.St
 	bu, err := p.Get(bundle.ID)
 
 	return bu.(*model.StoreBundle), err
+}
+
+func (p *bundleService) checkForExists(bundleId uuid.UUID) (err error) {
+	entry := model.BundleEntry{}
+	err = p.db.Where(model.BundleEntry{EntryID: bundleId}).Find(&entry).Error
+	if err == gorm.ErrRecordNotFound {
+		return NewServiceError(http.StatusNotFound, "Bundle not found")
+	} else if err != nil {
+		return errors.Wrap(err, "Retrieve bundle entry")
+	}
+	if entry.EntryType == model.BundleStore {
+		exists, err := utils.CheckExists(p.db, model.StoreBundle{}, bundleId)
+		if err != nil {
+			return errors.Wrap(err, "Retrieve store bundle")
+		}
+		if !exists {
+			return NewServiceError(http.StatusNotFound, "Bundle not found")
+		}
+	} else {
+		return NewServiceError(http.StatusNotImplemented, "Only store bundle")
+	}
+	return
+}
+
+func (p *bundleService) AddPackages(bundleId uuid.UUID, packageIds []uuid.UUID) (err error) {
+
+	// 1. Check bundle for exists
+	err = p.checkForExists(bundleId)
+	if err != nil {
+		return err
+	}
+
+	// 2. Check packages for exists
+	packages := []model.Package{}
+	if len(packageIds) > 0 {
+		err = p.db.Where("id in (?)", packageIds).Find(&packages).Error
+		if err != nil {
+			return errors.Wrap(err, "Search packages")
+		}
+	}
+
+	// 3. Filter already bound packages
+	existsIds := []model.BundlePackage{}
+	err = p.db.Where("bundle_id = ?", bundleId).Find(&existsIds).Error
+	if err != nil {
+		return errors.Wrap(err, "Retrieve bundle packages")
+	}
+	for _, exist := range existsIds {
+		for i, pkg := range packages {
+			if exist.PackageID == pkg.ID {
+				packages = append(packages[:i], packages[i+1:]...)
+				break
+			}
+		}
+	}
+	if len(packages) == 0 {
+		return NewServiceError(http.StatusUnprocessableEntity, "No any package")
+	}
+
+	// 4. Append packages with defined order
+	db := p.db.Begin()
+	// We walks `packages` first cuz want to persistent ordering
+	for index, pkgID := range packageIds {
+		for _, pkg := range packages {
+			if pkgID != pkg.ID {
+				continue
+			}
+			err = db.Create(&model.BundlePackage{
+				PackageID: pkg.ID,
+				BundleID:  bundleId,
+				Position:  len(existsIds) + index + 1,
+			}).Error
+			if err != nil {
+				db.Rollback()
+				return errors.Wrap(err, "While append packages into bundle")
+			}
+			break
+		}
+	}
+	err = db.Commit().Error
+	if err != nil {
+		return errors.Wrap(err, "While commit packages")
+	}
+
+	return
+}
+
+func (p *bundleService) RemovePackages(bundleId uuid.UUID, packages []uuid.UUID) (err error) {
+
+	err = p.checkForExists(bundleId)
+	if err != nil {
+		return err
+	}
+
+	if len(packages) > 0 {
+		err = p.db.Delete(model.BundlePackage{}, "bundle_id = ? and package_id in (?)", bundleId, packages).Error
+		if err != nil {
+			return errors.Wrap(err, "While delete packages from bundle")
+		}
+	}
+
+	return
 }

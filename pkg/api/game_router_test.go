@@ -86,6 +86,7 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	}
 
 	service, err := orm.NewGameService(db)
+	require.Nil(suite.T(), err, "Unable to make game service")
 	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
 
 	groupApi := echoObj.Group("/api/v1")

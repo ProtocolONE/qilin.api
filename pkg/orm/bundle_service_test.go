@@ -22,6 +22,8 @@ type bundleServiceTestSuite struct {
 	packages    []uuid.UUID
 	games       []uuid.UUID
 	vendorId    uuid.UUID
+	extraGames  []*model.Game
+	userId		string
 }
 
 func Test_BundleService(t *testing.T) {
@@ -63,10 +65,10 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 		Nickname: "Test",
 		Lang:     "ru",
 	}
-
 	err = db.DB().Create(&user).Error
 	suite.Nil(err, "Unable to create user")
 
+	suite.userId = user.ID
 
 	ownProvider := orm.NewOwnerProvider(suite.db)
 	enf := rbac.NewEnforcer()
@@ -98,6 +100,15 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 	if err != nil {
 		suite.Fail("Unable to create game", "%v", err)
 	}
+	gameC, err := gameService.Create(user.ID, vendor.ID, "GameC")
+	if err != nil {
+		suite.Fail("Unable to create game", "%v", err)
+	}
+	gameD, err := gameService.Create(user.ID, vendor.ID, "GameD")
+	if err != nil {
+		suite.Fail("Unable to create game", "%v", err)
+	}
+	suite.extraGames = []*model.Game{gameC, gameD}
 
 	packageService, err := orm.NewPackageService(db, gameService)
 	if err != nil {
@@ -129,42 +140,42 @@ func (suite *bundleServiceTestSuite) TearDownTest() {
 func (suite *bundleServiceTestSuite) TestBundles() {
 	should := require.New(suite.T())
 
-	bundle, err := suite.service.CreateStore(suite.vendorId, "Mega bundle", suite.packages)
+	bundle, err := suite.service.CreateStore(suite.vendorId, suite.userId,"Mega bundle", suite.packages)
 	should.Nil(err)
 	should.Equal("Mega bundle", bundle.Name)
 	should.Equal(suite.vendorId, bundle.VendorID)
 	should.Equal(2, len(bundle.Packages))
 	should.Equal(bundle.Packages[0].ID, suite.packages[0])
 
-	bundle2, err := suite.service.CreateStore(suite.vendorId, "Bundle Hundle", suite.packages[0:1])
+	bundle2, err := suite.service.CreateStore(suite.vendorId, suite.userId,"Bundle Humble", suite.packages[0:1])
 	should.Nil(err)
-	should.Equal("Bundle Hundle", bundle2.Name)
+	should.Equal("Bundle Humble", bundle2.Name)
 	should.Equal(suite.vendorId, bundle2.VendorID)
 	should.Equal(1, len(bundle2.Packages))
 	should.Equal(bundle2.Packages[0].ID, suite.packages[0])
 
-	bundleErr, err := suite.service.CreateStore(suite.vendorId, "Empty bundle", suite.packages[:0])
+	bundleErr, err := suite.service.CreateStore(suite.vendorId, suite.userId,"Empty bundle", suite.packages[:0])
 	should.NotNil(err)
 	should.Nil(bundleErr)
 
-	bundleErr, err = suite.service.CreateStore(suite.vendorId, "", suite.packages)
+	bundleErr, err = suite.service.CreateStore(suite.vendorId, suite.userId,"", suite.packages)
 	should.NotNil(err, "Empty name")
 	should.Nil(bundleErr)
 
-	bundleErr, err = suite.service.CreateStore(uuid.NamespaceDNS, "Error bundle", suite.packages)
+	bundleErr, err = suite.service.CreateStore(uuid.NamespaceDNS, suite.userId,"Error bundle", suite.packages)
 	should.NotNil(err, "Vendor not found")
 	should.Nil(bundleErr)
 
 	list, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 20)
 	should.Nil(err)
 	should.Equal(2, len(list))
-	should.Equal("Bundle Hundle", list[0].Name)
+	should.Equal("Bundle Humble", list[0].Name)
 	should.Equal("Mega bundle", list[1].Name)
 
 	list2, err := suite.service.GetStoreList(suite.vendorId, "", "+date", 1, 20)
 	should.Nil(err)
 	should.Equal(1, len(list2))
-	should.Equal("Bundle Hundle", list2[0].Name)
+	should.Equal("Bundle Humble", list2[0].Name)
 
 	list3, err := suite.service.GetStoreList(suite.vendorId, "", "-name", 0, 1)
 	should.Nil(err)
@@ -201,15 +212,48 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.NotNil(err)
 	should.Nil(bundleErr)
 
+	err = suite.service.AddPackages(bundle.ID, []uuid.UUID{
+		suite.extraGames[0].DefPackageID,
+		suite.extraGames[1].DefPackageID,
+	})
+	should.Nil(err, "Add packages")
+
+	bundleErrIface, err := suite.service.Get(bundle.ID)
+	should.Nil(err)
+	should.NotNil(bundleErrIface)
+
+	bundle, ok := bundleErrIface.(*model.StoreBundle)
+	should.Equal(true, ok, "Bundle must be for store")
+	should.Len(bundle.Packages, 4, "Bundle must have 4 packages")
+	should.Equal(bundle.Packages[0].ID, suite.packages[0])
+	should.Equal(bundle.Packages[1].ID, suite.packages[1])
+	should.Equal(bundle.Packages[2].ID, suite.extraGames[0].DefPackageID)
+	should.Equal(bundle.Packages[3].ID, suite.extraGames[1].DefPackageID)
+
+	err = suite.service.RemovePackages(bundle.ID, []uuid.UUID{suite.packages[1]})
+	should.Nil(err, "Remove package")
+
+	bundleErrIface, err = suite.service.Get(bundle.ID)
+	should.Nil(err)
+	should.NotNil(bundleErrIface)
+
+	bundle, ok = bundleErrIface.(*model.StoreBundle)
+	should.Equal(true, ok, "Bundle must be for store")
+	should.Len(bundle.Packages, 3, "Bundle must have 3 packages")
+	should.Equal(bundle.Packages[0].ID, suite.packages[0])
+	should.Equal(bundle.Packages[1].ID, suite.extraGames[0].DefPackageID)
+	should.Equal(bundle.Packages[2].ID, suite.extraGames[1].DefPackageID)
+
+	// Removing bundle and tries do some actions with it
 	err = suite.service.Delete(bundle.ID)
 	should.Nil(err, "Remove bundle")
 
 	list, err = suite.service.GetStoreList(suite.vendorId, "", "+date", 0, 20)
 	should.Nil(err)
 	should.Equal(1, len(list))
-	should.Equal("Bundle Hundle", list[0].Name)
+	should.Equal("Bundle Humble", list[0].Name)
 
-	bundleErrIface, err := suite.service.Get(bundle.ID)
+	bundleErrIface, err = suite.service.Get(bundle.ID)
 	should.NotNil(err)
 	should.Nil(bundleErrIface)
 

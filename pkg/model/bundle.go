@@ -58,11 +58,13 @@ type (
 	}
 
 	BundleService interface {
-		CreateStore(vendorId uuid.UUID, name string, packages []uuid.UUID) (bundle *StoreBundle, err error)
+		CreateStore(vendorId uuid.UUID, userId, name string, packages []uuid.UUID) (bundle *StoreBundle, err error)
 		GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (bundles []StoreBundle, err error)
 		UpdateStore(bundle *StoreBundle) (result *StoreBundle, err error)
 		Get(bundleId uuid.UUID) (bundle Bundle, err error)
 		Delete(bundleId uuid.UUID) (err error)
+		AddPackages(bundleId uuid.UUID, packages []uuid.UUID) (err error)
+		RemovePackages(bundleId uuid.UUID, packages []uuid.UUID) (err error)
 	}
 )
 

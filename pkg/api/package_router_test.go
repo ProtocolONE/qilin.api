@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	jwtverifier "github.com/ProtocolONE/authone-jwt-verifier-golang"
+	"github.com/ProtocolONE/rbac"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/api/mock"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -24,6 +28,7 @@ import (
 )
 
 var (
+	packageVendorId = "22334455-888a-481a-a831-cde7ff4e50b8"
 	packageId       = "33333333-888a-481a-a831-cde7ff4e50b8"
 	packageGameId_1 = "029ce039-888a-481a-a831-cde7ff4e50b8"
 	packageGameId_2 = "4444e039-888a-481a-a831-cde7ff4e50b8"
@@ -39,7 +44,7 @@ var (
       "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
       "name": "Test_game_1",
       "type": "games",
-      "image": ""
+      "image": {"en": ""}
     }
   ],
   "media": {
@@ -49,7 +54,7 @@ var (
   },
   "discountPolicy": {
     "discount": 0,
-    "buyOption": ""
+    "buyOption": "whole"
   },
   "regionalRestrinctions": {
     "allowedCountries": []
@@ -78,7 +83,7 @@ var (
       "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
       "name": "Test_game_1",
       "type": "games",
-      "image": ""
+      "image": {"en": ""}
     }
   ],
   "media": {
@@ -88,7 +93,7 @@ var (
   },
   "discountPolicy": {
     "discount": 0,
-    "buyOption": ""
+    "buyOption": "whole"
   },
   "regionalRestrinctions": {
     "allowedCountries": []
@@ -110,9 +115,8 @@ var (
 
 type PackageRouterTestSuite struct {
 	suite.Suite
-	db     *orm.Database
-	echo   *echo.Echo
-	router *PackageRouter
+	db     	*orm.Database
+	echo   	*echo.Echo
 }
 
 func Test_PackageRouter(t *testing.T) {
@@ -136,8 +140,15 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 		assert.FailNow(suite.T(), "Unable to init tables", err)
 	}
 
-	venId, err := uuid.FromString(vendorId)
+	vendorId, err := uuid.FromString(packageVendorId)
 	require.Nil(suite.T(), err, "Decode vendor uuid")
+	err = db.DB().Save(&model.Vendor{
+		ID:             vendorId,
+		Name:			"Vendor",
+		Domain3:		"domain",
+		ManagerID:		userId,
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make game")
 
 	gameId_1, _ := uuid.FromString(packageGameId_1)
 	err = db.DB().Save(&model.Game{
@@ -149,7 +160,7 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 		Tags:           pq.Int64Array{},
 		FeaturesCommon: pq.StringArray{},
 		Product:        model.ProductEntry{EntryID: gameId_1},
-		VendorID:       venId,
+		VendorID:       vendorId,
 		CreatorID:      userId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
@@ -164,18 +175,18 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 		Tags:           pq.Int64Array{},
 		FeaturesCommon: pq.StringArray{},
 		Product:        model.ProductEntry{EntryID: gameId_2},
-		VendorID:       venId,
+		VendorID:       vendorId,
 		CreatorID:      userId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 	
 	pkgId, _ := uuid.FromString(packageId)
 	err = db.DB().Save(&model.Package{
-		Model:  model.Model{
+		Model: model.Model{
 			ID: pkgId,
 			CreatedAt: time.Unix(0, 0),
 		},
-		Name:   "Test_package",
+		Name: "Test_package",
 		CreatorID: userId,
 		AllowedCountries: pq.StringArray{},
 		PackagePrices: model.PackagePrices{
@@ -183,7 +194,7 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 			PreOrder: model.JSONB{"date":"","enabled":false},
 			Prices: []model.Price{},
 		},
-		VendorID:       venId,
+		VendorID: vendorId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make package")
 	err = db.DB().Create(&model.PackageProduct{
@@ -196,13 +207,32 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 	require.Nil(suite.T(), err)
 
 	echoObj := echo.New()
-	service, err := orm.NewPackageService(db, gameService)
-	router, err := InitPackageRouter(echoObj.Group("/api/v1"), service)
-
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
+	echoObj.HTTPErrorHandler = func(e error, context echo.Context) {
+		QilinErrorHandler(e, context, true)
+	}
+
+	enforcer := rbac.NewEnforcer()
+	ownerProvider := orm.NewOwnerProvider(db)
+	membership := orm.NewMembershipService(db, ownerProvider, enforcer, mock.NewMailer(), "")
+	err = membership.Init()
+	if err != nil {
+		suite.FailNow("Membership fail", "%v", err)
+	}
+
+	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
+	echoObj.Use(suite.localAuth())
+
+	service, err := orm.NewPackageService(db, gameService)
+	require.Nil(suite.T(), err)
+
+	productService, err := orm.NewProductService(db)
+	require.Nil(suite.T(), err)
+
+	_, err = InitPackageRouter(echoObj.Group("/api/v1"), service, productService)
+	require.Nil(suite.T(), err)
 
 	suite.db = db
-	suite.router = router
 	suite.echo = echoObj
 }
 
@@ -215,136 +245,129 @@ func (suite *PackageRouterTestSuite) TearDownTest() {
 	}
 }
 
-func (suite *PackageRouterTestSuite) TestShouldReturnPackage() {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/packages/:packageId")
-	c.SetParamNames("packageId")
-	c.SetParamValues(packageId)
-
-	// Assertions
-	if assert.NoError(suite.T(), suite.router.Get(c)) {
-		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.JSONEq(suite.T(), packageJson, rec.Body.String())
+func (suite *PackageRouterTestSuite) localAuth() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) (err error) {
+			c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: userId})
+			return next(c)
+		}
 	}
 }
 
-func (suite *PackageRouterTestSuite) TestShouldCreatePackage() {
-	should := assert.New(suite.T())
+func (suite *PackageRouterTestSuite) TestShouldReturnPackage() {
+	url := fmt.Sprintf("/api/v1/packages/%s", packageId)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
+	rec := httptest.NewRecorder()
 
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name": "New_package_2", "products": ["029ce039-888a-481a-a831-cde7ff4e50b8"]}`))
+	suite.echo.ServeHTTP(rec, req)
+
+	assert.Equal(suite.T(), http.StatusOK, rec.Code)
+	assert.JSONEq(suite.T(), packageJson, rec.Body.String())
+}
+
+func (suite *PackageRouterTestSuite) TestShouldCreatePackage() {
+	should := require.New(suite.T())
+
+	url := fmt.Sprintf("/api/v1/vendors/%s/packages", packageVendorId)
+	reader := strings.NewReader(`{"name": "New_package_2", "products": ["029ce039-888a-481a-a831-cde7ff4e50b8"]}`)
+	req := httptest.NewRequest(http.MethodPost, url, reader)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:vendorId/packages")
-	c.SetParamNames("vendorId")
-	c.SetParamValues(vendorId)
-	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: userId})
 
-	if assert.NoError(suite.T(), suite.router.Create(c)) {
-		should.Equal(http.StatusCreated, rec.Code)
-		dto := packageDTO{}
-		err := json.Unmarshal(rec.Body.Bytes(), &dto)
-		should.Nil(err)
-		should.Equal("New_package_2", dto.Name)
-		should.Equal(1, len(dto.Products))
-		should.Equal(packageGameId_1, dto.Products[0].ID.String())
-		should.Equal("Test_game_1", dto.Products[0].Name)
-		should.Equal(model.ProductGame, model.ProductType(dto.Products[0].Type))
-		should.True(time.Now().Unix() - dto.CreatedAt.Unix() >= 0)
-		should.True(time.Now().Unix() - dto.CreatedAt.Unix() <= 5)
-	}
+	suite.echo.ServeHTTP(rec, req)
+
+	should.Equal(http.StatusCreated, rec.Code)
+	dto := packageDTO{}
+	err := json.Unmarshal(rec.Body.Bytes(), &dto)
+	should.Nil(err)
+	should.Equal("New_package_2", dto.Name)
+	should.Equal(1, len(dto.Products))
+	should.Equal(packageGameId_1, dto.Products[0].ID.String())
+	should.Equal("Test_game_1", dto.Products[0].Name)
+	should.Equal(model.ProductGame, model.ProductType(dto.Products[0].Type))
+	should.True(time.Now().Unix() - dto.CreatedAt.Unix() >= 0)
+	should.True(time.Now().Unix() - dto.CreatedAt.Unix() <= 5)
 }
 
 func (suite *PackageRouterTestSuite) TestShouldReturnPackageList() {
 	should := assert.New(suite.T())
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	url := fmt.Sprintf("/api/v1/vendors/%s/packages", packageVendorId)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:vendorId/packages")
-	c.SetParamNames("vendorId")
-	c.SetParamValues(vendorId)
 
-	if assert.NoError(suite.T(), suite.router.GetList(c)) {
-		should.Equal(http.StatusOK, rec.Code)
+	suite.echo.ServeHTTP(rec, req)
 
-		dto := []packageItemDTO{}
-		err := json.Unmarshal(rec.Body.Bytes(), &dto)
-		should.Nil(err)
-		should.Equal(len(dto), 1)
-		should.Equal("Test_package", dto[0].Name)
-		should.Equal(packageId, dto[0].ID.String())
-	}
+	should.Equal(http.StatusOK, rec.Code)
+
+	dto := []packageItemDTO{}
+	err := json.Unmarshal(rec.Body.Bytes(), &dto)
+	should.Nil(err)
+	should.Equal(len(dto), 1)
+	should.Equal("Test_package", dto[0].Name)
+	should.Equal(packageId, dto[0].ID.String())
 }
 
 func (suite *PackageRouterTestSuite) TestShouldUpdatePackage() {
 	should := assert.New(suite.T())
 
-	req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(updatePackageJson))
+	url := fmt.Sprintf("/api/v1/packages/%s", packageId)
+	req := httptest.NewRequest(http.MethodPut, url, strings.NewReader(updatePackageJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/package/:packageId")
-	c.SetParamNames("packageId")
-	c.SetParamValues(packageId)
 
-	if assert.NoError(suite.T(), suite.router.Update(c)) {
-		should.Equal(http.StatusOK, rec.Code)
-		should.JSONEq(updatePackageJson, rec.Body.String())
-	}
+	suite.echo.ServeHTTP(rec, req)
+
+	should.Equal(http.StatusOK, rec.Code)
+	should.JSONEq(updatePackageJson, rec.Body.String())
 }
 
-func (suite *PackageRouterTestSuite) TestShouldAppendRemoveGame() {
+func (suite *PackageRouterTestSuite) TestShouldManageGames() {
 	should := assert.New(suite.T())
 
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`["%s"]`, packageGameId_2)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/package/:packageId/products/add")
-	c.SetParamNames("packageId")
-	c.SetParamValues(packageId)
+	{
+		url := fmt.Sprintf("/api/v1/packages/%s/products/add", packageId)
+		reader := strings.NewReader(fmt.Sprintf(`["%s"]`, packageGameId_2))
 
-	if assert.NoError(suite.T(), suite.router.AddProducts(c)) {
+		req := httptest.NewRequest(http.MethodPost, url, reader)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		suite.echo.ServeHTTP(rec, req)
+
+		log.Println(rec.Body.String())
+
 		should.Equal(http.StatusOK, rec.Code)
 		dto := packageDTO{}
 		err := json.Unmarshal(rec.Body.Bytes(), &dto)
 		should.Nil(err)
-		should.Len(dto.Products,2)
+		should.Len(dto.Products, 2)
 		should.Equal(packageGameId_2, dto.Products[1].ID.String())
 	}
 
 	{
-		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(fmt.Sprintf(`["%s"]`, packageGameId_1)))
+		url := fmt.Sprintf("/api/v1/packages/%s/products/remove", packageId)
+		req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(fmt.Sprintf(`["%s"]`, packageGameId_1)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
-		c := suite.echo.NewContext(req, rec)
-		c.SetPath("/api/v1/package/:packageId/products/remove")
-		c.SetParamNames("packageId")
-		c.SetParamValues(packageId)
 
-		if assert.NoError(suite.T(), suite.router.RemoveProducts(c)) {
-			should.Equal(http.StatusOK, rec.Code)
-			dto := packageDTO{}
-			err := json.Unmarshal(rec.Body.Bytes(), &dto)
-			should.Nil(err)
-			should.Len(dto.Products, 1)
-			should.Equal(packageGameId_2, dto.Products[0].ID.String())
-		}
+		suite.echo.ServeHTTP(rec, req)
+
+		should.Equal(http.StatusOK, rec.Code)
+		dto := packageDTO{}
+		err := json.Unmarshal(rec.Body.Bytes(), &dto)
+		should.Nil(err)
+		should.Len(dto.Products, 1)
+		should.Equal(packageGameId_2, dto.Products[0].ID.String())
 	}
 }
 
 func (suite *PackageRouterTestSuite) TestGetPackageShouldDeletePackage() {
-	req := httptest.NewRequest(http.MethodDelete, "/", nil)
+	url := fmt.Sprintf("/api/v1/packages/%s", packageId)
+	req := httptest.NewRequest(http.MethodDelete, url, nil)
 	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/packages/:packageId")
-	c.SetParamNames("packageId")
-	c.SetParamValues(packageId)
 
-	if assert.NoError(suite.T(), suite.router.Remove(c)) {
-		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-	}
+	suite.echo.ServeHTTP(rec, req)
+
+	assert.Equal(suite.T(), http.StatusOK, rec.Code)
 }

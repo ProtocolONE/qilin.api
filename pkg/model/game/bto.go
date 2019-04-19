@@ -39,6 +39,11 @@ type (
 	GameLangs struct {
 		EN Langs `json:"en"`
 		RU Langs `json:"ru"`
+		FR Langs `json:"fr"`
+		ES Langs `json:"es"`
+		DE Langs `json:"de"`
+		IT Langs `json:"it"`
+		PT Langs `json:"pt"`
 	}
 
 	GameReviews []GameReview

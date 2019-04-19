@@ -89,14 +89,14 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/packages/:id:
+  /api/v1/packages/:packageId:
     get:
       tags:
         - "package"
       summary: "Get one packages"
       operationId: "getPackage"
       parameters:
-        - name: id
+        - name: packageId
           in: "path"
           description: "Package Id"
           required: true
@@ -126,7 +126,7 @@ paths:
       summary: "Update package"
       operationId: "updatePackage"
       parameters:
-        - name: id
+        - name: packageId
           in: "path"
           description: "Package Id"
           required: true
@@ -164,7 +164,7 @@ paths:
       summary: "Delete packages"
       operationId: "deletePackage"
       parameters:
-        - name: id
+        - name: packageId
           in: "path"
           description: "Package Id"
           required: true
@@ -190,7 +190,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/packages/:id/products/add:
+  /api/v1/packages/:packageId/products/add:
     post:
       tags:
         - "package"
@@ -198,7 +198,7 @@ paths:
       summary: "Append products into package"
       operationId: "appendProducts"
       parameters:
-        - name: id
+        - name: packageId
           in: "path"
           description: "Package Id"
           required: true
@@ -235,7 +235,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/packages/:id/products/remove:
+  /api/v1/packages/:packageId/products/remove:
     post:
       tags:
         - "package"
@@ -243,7 +243,7 @@ paths:
       summary: "Delete products from packages"
       operationId: "removeProducts"
       parameters:
-        - name: id
+        - name: packageId
           in: "path"
           description: "Package Id"
           required: true
@@ -425,6 +425,98 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/bundles/:bundleId/add:
+    post:
+      tags:
+        - "bundle"
+        - "package"
+      summary: "Append package into bundle"
+      operationId: "appendPackage"
+      parameters:
+        - name: bundleId
+          in: "path"
+          description: "Bundle Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: "Array of packages"
+              items:
+                type: string
+                format: uuid
+      responses:
+        200:
+          description: Retrun OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "OK"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/bundles/:bundleId/remove:
+    post:
+      tags:
+        - "bundle"
+        - "package"
+      summary: "Remove packages from bundle"
+      operationId: "removePackage"
+      parameters:
+        - name: bundleId
+          in: "path"
+          description: "Bundle Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: "Array of packages"
+              items:
+                type: string
+                format: uuid
+      responses:
+        200:
+          description: Retrun OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "OK"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -522,6 +614,22 @@ components:
               type: string
               format: uri
 
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - games
+            - dlcs
+        image:
+          $ref: '#/components/schemas/LocalizedString'
+
     Package:
       type: object
       properties:
@@ -549,21 +657,7 @@ components:
           description: "Composition of package"
           readOnly: true
           items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              name:
-                type: string
-              type:
-                type: string
-                enum:
-                  - games
-                  - dlcs
-              image:
-                type: string
-                format: uri
+            $ref: '#/components/schemas/Product'
         media:
           type: object
           properties:
@@ -651,3 +745,21 @@ components:
               items:
                 type: string
                 example: ru
+
+    LocalizedString:
+      type: object
+      properties:
+        en:
+          type: string
+        ru:
+          type: string
+        fr:
+          type: string
+        es:
+          type: string
+        de:
+          type: string
+        it:
+          type: string
+        pt:
+          type: string

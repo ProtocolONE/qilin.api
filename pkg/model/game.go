@@ -122,10 +122,11 @@ func (p *ProductGameImpl) GetType() ProductType {
 	return ProductGame
 }
 
-func (p *ProductGameImpl) GetImage(lang string) string {
+func (p *ProductGameImpl) GetImage() (res *utils.LocalizedString) {
+	res = &utils.LocalizedString{}
 	if p.Media.CoverImage == nil {
-		return ""
+		return
 	}
-	found, _ := p.Media.CoverImage[lang]
-	return found.(string)
+	_ = p.Media.CoverImage.Scan(res)
+	return
 }

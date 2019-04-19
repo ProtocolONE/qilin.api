@@ -13,7 +13,7 @@ func NewBundleService() (*bundleService, error) {
 	return &bundleService{}, nil
 }
 
-func (*bundleService) CreateStore(vendorId uuid.UUID, name string, packages []uuid.UUID) (bundle *model.StoreBundle, err error) {
+func (*bundleService) CreateStore(vendorId uuid.UUID, userId, name string, packages []uuid.UUID) (bundle *model.StoreBundle, err error) {
 	return &model.StoreBundle{}, nil
 }
 
@@ -31,4 +31,12 @@ func (*bundleService) Delete(bundleId uuid.UUID) (err error) {
 
 func (*bundleService) UpdateStore(bundle *model.StoreBundle) (result *model.StoreBundle, err error) {
 	return bundle, nil
+}
+
+func (p *bundleService) AddPackages(bundleId uuid.UUID, packageIds []uuid.UUID) (err error) {
+	return nil
+}
+
+func (p *bundleService) RemovePackages(bundleId uuid.UUID, packages []uuid.UUID) (err error)  {
+	return nil
 }

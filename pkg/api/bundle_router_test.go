@@ -2,10 +2,17 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	jwtverifier "github.com/ProtocolONE/authone-jwt-verifier-golang"
+	"github.com/ProtocolONE/rbac"
+	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/api/mock"
+	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -23,9 +30,11 @@ import (
 var (
 	bundleVendorId      = "11112222-888a-481a-a831-cde7ff4e50b8"
 	bundleID 			= "44444444-888a-481a-a831-cde7ff4e50b8"
-	bundleGameId 		= "029ce039-888a-481a-a831-cde7ff4e50b8"
-	bundlePackageId     = "33333333-888a-481a-a831-cde7ff4e50b8"
-	emptyBaseBundle = `{
+	bundleGameId_1 		= "029ce039-888a-481a-a831-cde7ff4e50b8"
+	bundleGameId_2		= "6666e039-888a-481a-a831-cde7ff4e50b8"
+	bundlePackageId_1   = "33333333-888a-481a-a831-cde7ff4e50b8"
+	bundlePackageId_2   = "00022233-888a-481a-a831-cde7ff4e50b8"
+	emptyStoreBundleJson = `{
   "id": "44444444-888a-481a-a831-cde7ff4e50b8",
   "createdAt": "1970-01-01T00:00:00Z",
   "sku": "",
@@ -34,7 +43,7 @@ var (
   "isEnabled": false,
   "discountPolicy": {
     "discount": 0,
-    "buyOption": ""
+    "buyOption": "whole"
   },
   "regionalRestrinctions": {
     "allowedCountries": []
@@ -52,7 +61,7 @@ var (
           "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
           "name": "Test_game_1",
           "type": "games",
-          "image": ""
+          "image": {"en": ""}
         }
       ],
       "media": {
@@ -62,7 +71,63 @@ var (
       },
       "discountPolicy": {
         "discount": 0,
-        "buyOption": ""
+        "buyOption": "whole"
+      },
+      "regionalRestrinctions": {
+        "allowedCountries": []
+      },
+      "commercial": {
+        "common": {
+          "currency": "",
+          "notifyRateJumps": false
+        },
+        "preOrder": {
+          "date": "",
+          "enabled": false
+        },
+        "prices": null
+      }
+    }
+  ]
+}`
+	updateStoreBundleJson = `{
+  "id": "44444444-888a-481a-a831-cde7ff4e50b8",
+  "createdAt": "1970-01-01T00:00:00Z",
+  "sku": "555666222",
+  "name": "Mega bundle 2",
+  "isUpgradeAllowed": true,
+  "isEnabled": true,
+  "discountPolicy": {
+    "discount": 10,
+    "buyOption": "part"
+  },
+  "regionalRestrinctions": {
+    "allowedCountries": []
+  },
+  "packages": [
+    {
+      "id": "33333333-888a-481a-a831-cde7ff4e50b8",
+      "createdAt": "1970-01-01T00:00:00Z",
+      "sku": "",
+      "name": "Test_package",
+      "isUpgradeAllowed": false,
+      "isEnabled": false,
+      "products": [
+        {
+          "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
+          "name": "Test_game_1",
+          "type": "games",
+          "image": {"en": ""}
+        }
+      ],
+      "media": {
+        "image": "",
+        "cover": "",
+        "thumb": ""
+      },
+      "discountPolicy": {
+        "discount": 0,
+        "buyOption": "whole"
       },
       "regionalRestrinctions": {
         "allowedCountries": []
@@ -87,11 +152,85 @@ type BundleRouterTestSuite struct {
 	suite.Suite
 	db     *orm.Database
 	echo   *echo.Echo
-	router *BundleRouter
 }
 
 func Test_BundleRouter(t *testing.T) {
 	suite.Run(t, new(BundleRouterTestSuite))
+}
+
+func (suite *BundleRouterTestSuite) makeGame(db *gorm.DB, gameId, name string) uuid.UUID {
+	vendorId, err := uuid.FromString(bundleVendorId)
+	require.Nil(suite.T(), err, "Decode vendor uuid")
+
+	id, _ := uuid.FromString(gameId)
+	err = db.Save(&model.Game{
+		ID:             id,
+		CreatedAt:      time.Unix(0, 0),
+		InternalName:   name,
+		ReleaseDate:    time.Unix(0, 0),
+		GenreAddition:  pq.Int64Array{},
+		Tags:           pq.Int64Array{},
+		FeaturesCommon: pq.StringArray{},
+		Product:        model.ProductEntry{EntryID: id},
+		VendorID:       vendorId,
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make game")
+
+	return id
+}
+
+func (suite *BundleRouterTestSuite) makePackage(db *gorm.DB, packageId, name string, gameId uuid.UUID) uuid.UUID {
+	vendorId, err := uuid.FromString(bundleVendorId)
+	require.Nil(suite.T(), err, "Decode vendor uuid")
+
+	id, _ := uuid.FromString(packageId)
+	err = db.Save(&model.Package{
+		Model:  model.Model{
+			ID: id,
+			CreatedAt: time.Unix(0, 0),
+		},
+		Name: name,
+		AllowedCountries: pq.StringArray{},
+		PackagePrices: model.PackagePrices{
+			Common: model.JSONB{"currency":"","NotifyRateJumps":false},
+			PreOrder: model.JSONB{"date":"","enabled":false},
+			Prices: []model.Price{},
+		},
+		VendorID: vendorId,
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make package")
+	err = db.Create(&model.PackageProduct{
+		PackageID: id,
+		ProductID: gameId,
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make package product")
+
+	return id
+}
+
+func (suite *BundleRouterTestSuite) makeBundle(db *gorm.DB, bundleId, name string, packageId uuid.UUID) uuid.UUID {
+	vendorId, err := uuid.FromString(bundleVendorId)
+	require.Nil(suite.T(), err, "Decode vendor uuid")
+
+	id, _ := uuid.FromString(bundleId)
+	err = db.Create(&model.StoreBundle{
+		Model:  model.Model{
+			ID: id,
+			CreatedAt: time.Unix(0, 0),
+		},
+		Name: name,
+		AllowedCountries: pq.StringArray{},
+		VendorID: vendorId,
+		Bundle: model.BundleEntry{EntryID: id},
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make bundle")
+	err = db.Create(&model.BundlePackage{
+		PackageID: packageId,
+		BundleID:  id,
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make bundle package")
+
+	return id
 }
 
 func (suite *BundleRouterTestSuite) SetupTest() {
@@ -122,72 +261,38 @@ func (suite *BundleRouterTestSuite) SetupTest() {
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 
-	id, _ := uuid.FromString(bundleGameId)
-	err = db.DB().Save(&model.Game{
-		ID:             id,
-		CreatedAt:      time.Unix(0, 0),
-		InternalName:   "Test_game_1",
-		ReleaseDate:    time.Now(),
-		GenreAddition:  pq.Int64Array{},
-		Tags:           pq.Int64Array{},
-		FeaturesCommon: pq.StringArray{},
-		Product:        model.ProductEntry{EntryID: id},
-		VendorID:       vendorId,
-	}).Error
-	require.Nil(suite.T(), err, "Unable to make game")
+	gameId_1 := suite.makeGame(db.DB(), bundleGameId_1, "Test_game_1")
+	gameId_2 := suite.makeGame(db.DB(), bundleGameId_2, "Test_game_2")
 
-	pkgId, _ := uuid.FromString(bundlePackageId)
-	err = db.DB().Save(&model.Package{
-		Model:  model.Model{
-			ID: pkgId,
-			CreatedAt: time.Unix(0, 0),
-		},
-		Name:   "Test_package",
-		AllowedCountries: pq.StringArray{},
-		PackagePrices: model.PackagePrices{
-			Common: model.JSONB{"currency":"","NotifyRateJumps":false},
-			PreOrder: model.JSONB{"date":"","enabled":false},
-			Prices: []model.Price{},
-		},
-		VendorID:       vendorId,
-	}).Error
-	require.Nil(suite.T(), err, "Unable to make package")
-	err = db.DB().Create(&model.PackageProduct{
-		PackageID: pkgId,
-		ProductID: id,
-	}).Error
-	require.Nil(suite.T(), err, "Unable to make package product")
+	packageId := suite.makePackage(db.DB(), bundlePackageId_1, "Test_package", gameId_1)
+	suite.makeBundle(db.DB(), bundleID, "Mega bundle", packageId)
 
-	buId, _ := uuid.FromString(bundleID)
-	err = db.DB().Create(&model.StoreBundle{
-		Model:  model.Model{
-			ID: buId,
-			CreatedAt: time.Unix(0, 0),
-		},
-		Name:   "Mega bundle",
-		AllowedCountries: pq.StringArray{},
-		VendorID: vendorId,
-	}).Error
-	require.Nil(suite.T(), err, "Unable to make bundle")
-	err = db.DB().Create(&model.BundlePackage{
-		PackageID: pkgId,
-		BundleID:  buId,
-	}).Error
-	require.Nil(suite.T(), err, "Unable to make bundle package")
-	err = db.DB().Create(&model.BundleEntry{
-		EntryID:  buId,
-		EntryType: model.BundleStore,
-	}).Error
-	require.Nil(suite.T(), err, "Unable to make bundle entry")
+	suite.makePackage(db.DB(), bundlePackageId_2, "Test_package", gameId_2)
 
 	echoObj := echo.New()
-	service, err := orm.NewBundleService(db)
-	router, err := InitBundleRouter(echoObj.Group("/api/v1"), service)
-
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
+	echoObj.HTTPErrorHandler = func(e error, context echo.Context) {
+		QilinErrorHandler(e, context, true)
+	}
+
+	ownerProvider := orm.NewOwnerProvider(db)
+	enforcer := rbac.NewEnforcer()
+	membership := orm.NewMembershipService(db, ownerProvider, enforcer, mock.NewMailer(), "")
+	err = membership.Init()
+	if err != nil {
+		suite.FailNow("Membership fail", "%v", err)
+	}
+
+	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
+	echoObj.Use(suite.localAuth())
+
+	service, err := orm.NewBundleService(db)
+	require.Nil(suite.T(), err)
+
+	_, err = InitBundleRouter(echoObj.Group("/api/v1"), service)
+	require.Nil(suite.T(), err, "Unable to init router")
 
 	suite.db = db
-	suite.router = router
 	suite.echo = echoObj
 }
 
@@ -200,70 +305,101 @@ func (suite *BundleRouterTestSuite) TearDownTest() {
 	}
 }
 
-func (suite *BundleRouterTestSuite) TestGetBundleShouldReturnEmptyObject() {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/bundles/:bundleId/store")
-	c.SetParamNames("bundleId")
-	c.SetParamValues(bundleID)
-
-	// Assertions
-	if assert.NoError(suite.T(), suite.router.GetStore(c)) {
-		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.JSONEq(suite.T(), emptyBaseBundle, rec.Body.String())
+func (suite *BundleRouterTestSuite) localAuth() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) (err error) {
+			c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: userId})
+			return next(c)
+		}
 	}
 }
 
-func (suite *BundleRouterTestSuite) TestGetBundleShouldCreateBundle() {
+func (suite *BundleRouterTestSuite) TestShouldReturnStoreBundle() {
+	url := fmt.Sprintf("/api/v1/bundles/%s/store", bundleID)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
+	rec := httptest.NewRecorder()
+
+	suite.echo.ServeHTTP(rec, req)
+
+	assert.Equal(suite.T(), http.StatusOK, rec.Code)
+	assert.JSONEq(suite.T(), emptyStoreBundleJson, rec.Body.String())
+}
+
+func (suite *BundleRouterTestSuite) TestShouldCreateBundle() {
 	should := assert.New(suite.T())
 
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name": "Mega bundle 2", "packages": ["33333333-888a-481a-a831-cde7ff4e50b8"]}`))
+	reader := strings.NewReader(`{"name": "Mega bundle 2", "packages": ["33333333-888a-481a-a831-cde7ff4e50b8"]}`)
+	url := fmt.Sprintf("/api/v1/vendors/%s/bundles/store", bundleVendorId)
+	req := httptest.NewRequest(http.MethodPost, url, reader)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:vendorId/bundles/store")
-	c.SetParamNames("vendorId")
-	c.SetParamValues(bundleVendorId)
 
-	if assert.NoError(suite.T(), suite.router.CreateStore(c)) {
-		should.Equal(http.StatusCreated, rec.Code)
-		dto := storeBundleDTO{}
-		err := json.Unmarshal(rec.Body.Bytes(), &dto)
-		should.Nil(err)
-		should.Equal("Mega bundle 2", dto.Name)
-		should.Equal(1, len(dto.Packages))
-		should.Equal("33333333-888a-481a-a831-cde7ff4e50b8", dto.Packages[0].ID.String())
-		should.Equal(1, len(dto.Packages[0].Products))
-		should.Equal("Test_game_1", dto.Packages[0].Products[0].Name)
-	}
+	suite.echo.ServeHTTP(rec, req)
+
+	should.Equal(http.StatusCreated, rec.Code)
+	dto := storeBundleDTO{}
+	err := json.Unmarshal(rec.Body.Bytes(), &dto)
+	should.Nil(err)
+	should.Equal("Mega bundle 2", dto.Name)
+	should.Equal(1, len(dto.Packages))
+	should.Equal("33333333-888a-481a-a831-cde7ff4e50b8", dto.Packages[0].ID.String())
+	should.Equal(1, len(dto.Packages[0].Products))
+	should.Equal("Test_game_1", dto.Packages[0].Products[0].Name)
 }
 
-func (suite *BundleRouterTestSuite) TestGetBundleShouldReturnStoreList() {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+func (suite *BundleRouterTestSuite) TestShouldReturnStoreList() {
+	url := fmt.Sprintf("/api/v1/vendors/%s/bundles/store", bundleVendorId)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/vendors/:vendorId/bundles/store")
-	c.SetParamNames("vendorId")
-	c.SetParamValues(bundleVendorId)
 
-	if assert.NoError(suite.T(), suite.router.GetStoreList(c)) {
-		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.JSONEq(suite.T(), `[{"id":"44444444-888a-481a-a831-cde7ff4e50b8","createdAt":"1970-01-01T00:00:00Z","sku":"","name":"Mega bundle","isUpgradeAllowed":false,"isEnabled":false}]`, rec.Body.String())
-	}
+	suite.echo.ServeHTTP(rec, req)
+
+	assert.Equal(suite.T(), http.StatusOK, rec.Code)
+	assert.JSONEq(suite.T(), `[{"id":"44444444-888a-481a-a831-cde7ff4e50b8","createdAt":"1970-01-01T00:00:00Z","sku":"","name":"Mega bundle","isUpgradeAllowed":false,"isEnabled":false}]`, rec.Body.String())
 }
 
-func (suite *BundleRouterTestSuite) TestGetBundleShouldDeleteBundle() {
-	req := httptest.NewRequest(http.MethodDelete, "/", nil)
+func (suite *BundleRouterTestSuite) TestShouldAppendPackages() {
+	url := fmt.Sprintf("/api/v1/bundles/%s/add", bundleID)
+	req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(`["00022233-888a-481a-a831-cde7ff4e50b8"]`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
-	c := suite.echo.NewContext(req, rec)
-	c.SetPath("/api/v1/bundles/:bundleId")
-	c.SetParamNames("bundleId")
-	c.SetParamValues(bundleID)
 
-	if assert.NoError(suite.T(), suite.router.Delete(c)) {
-		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-	}
+	suite.echo.ServeHTTP(rec, req)
 
+	assert.Equal(suite.T(), http.StatusOK, rec.Code)
 }
 
+func (suite *BundleRouterTestSuite) TestShouldUpdateBundle() {
+	should := assert.New(suite.T())
+
+	url := fmt.Sprintf("/api/v1/bundles/%s/store", bundleID)
+	req := httptest.NewRequest(http.MethodPut, url, strings.NewReader(updateStoreBundleJson))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+
+	suite.echo.ServeHTTP(rec, req)
+
+	should.Equal(http.StatusOK, rec.Code)
+	should.JSONEq(updateStoreBundleJson, rec.Body.String())
+}
+
+func (suite *BundleRouterTestSuite) TestShouldRemovePackages() {
+	url := fmt.Sprintf("/api/v1/bundles/%s/remove", bundleID)
+	req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(`["33333333-888a-481a-a831-cde7ff4e50b8"]`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+
+	suite.echo.ServeHTTP(rec, req)
+
+	assert.Equal(suite.T(), http.StatusOK, rec.Code)
+}
+
+func (suite *BundleRouterTestSuite) TestShouldDeleteBundle() {
+	url := fmt.Sprintf("/api/v1/bundles/%s", bundleID)
+	req := httptest.NewRequest(http.MethodDelete, url, nil)
+	rec := httptest.NewRecorder()
+
+	suite.echo.ServeHTTP(rec, req)
+
+	assert.Equal(suite.T(), http.StatusOK, rec.Code)
+}

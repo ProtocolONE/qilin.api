@@ -202,7 +202,11 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 	if err != nil {
 		return err
 	}
-	if _, err := InitPackageRouter(s.Router, packageService); err != nil {
+	productService, err := orm.NewProductService(s.db)
+	if err != nil {
+		return err
+	}
+	if _, err := InitPackageRouter(s.Router, packageService, productService); err != nil {
 		return err
 	}
 

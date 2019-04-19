@@ -5,11 +5,11 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-type BuyOption string
+type BuyOption int
 
 const (
-	Whole BuyOption = "whole"
-	Part BuyOption = "part"
+	BuyOption_Whole BuyOption = iota
+	BuyOption_Part
 )
 
 type (
@@ -52,3 +52,15 @@ type (
 		Remove(packageId uuid.UUID) (err error)
 	}
 )
+
+func (s BuyOption) String() string {
+	return [...]string{"whole", "part"}[s]
+}
+
+func NewBuyOption(name string) (r BuyOption) {
+	r = BuyOption_Whole
+	if name == "part" {
+		r = BuyOption_Part
+	}
+	return
+}

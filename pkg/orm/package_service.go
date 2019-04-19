@@ -15,14 +15,14 @@ type packageFactory struct {
 	db *gorm.DB
 }
 
-type PackageService struct {
+type packageService struct {
 	db *gorm.DB
 	gameService model.GameService
 	factory packageFactory
 }
 
-func NewPackageService(db *Database, gameService model.GameService) (*PackageService, error) {
-	return &PackageService{
+func NewPackageService(db *Database, gameService model.GameService) (*packageService, error) {
+	return &packageService{
 		db: db.database,
 		gameService: gameService,
 		factory: packageFactory{db.database},
@@ -45,6 +45,7 @@ func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, userId, name string, 
 	if len(entries) == 0 {
 		return NewServiceError(http.StatusUnprocessableEntity, "No any products")
 	}
+
 	newPack := model.Package{
 		Model: model.Model{ID: pkgId},
 		Sku: random.String(8, "123456789"),
@@ -69,10 +70,10 @@ func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, userId, name string, 
 	}
 
 	db := p.db.Begin()
-	for index, prodId := range prods {
+	for index, entry := range entries {
 		err = db.Create(model.PackageProduct{
 			PackageID: newPack.ID,
-			ProductID: prodId,
+			ProductID: entry.EntryID,
 			Position: index + 1,
 		}).Error
 		if err != nil {
@@ -88,7 +89,7 @@ func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, userId, name string, 
 	return
 }
 
-func (p *PackageService) Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (result *model.Package, err error) {
+func (p *packageService) Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (result *model.Package, err error) {
 	pkgId := uuid.NewV4()
 	err = p.factory.Create(pkgId, vendorId, userId, name, prods)
 	if err != nil {
@@ -97,7 +98,7 @@ func (p *PackageService) Create(vendorId uuid.UUID, userId, name string, prods [
 	return p.Get(pkgId)
 }
 
-func (p *PackageService) AddProducts(packageId uuid.UUID, prods []uuid.UUID) (result *model.Package, err error) {
+func (p *packageService) AddProducts(packageId uuid.UUID, prods []uuid.UUID) (result *model.Package, err error) {
 	entries := []model.ProductEntry{}
 	if len(prods) > 0 {
 		err = p.db.Where("entry_id in (?)", prods).Find(&entries).Error
@@ -143,7 +144,7 @@ func (p *PackageService) AddProducts(packageId uuid.UUID, prods []uuid.UUID) (re
 	return p.Get(packageId)
 }
 
-func (p *PackageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) (result *model.Package, err error) {
+func (p *packageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) (result *model.Package, err error) {
 
 	if len(prods) > 0 {
 		err = p.db.Delete(model.PackageProduct{}, "package_id = ? and product_id in (?)", packageId, prods).Error
@@ -155,7 +156,7 @@ func (p *PackageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) 
 	return p.Get(packageId)
 }
 
-func (p *PackageService) Get(packageId uuid.UUID) (result *model.Package, err error)  {
+func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err error)  {
 	result = &model.Package{}
 	err = p.db.Where("id = ?", packageId.String()).First(result).Error
 	if err == gorm.ErrRecordNotFound {
@@ -207,7 +208,7 @@ func (p *PackageService) Get(packageId uuid.UUID) (result *model.Package, err er
 	return
 }
 
-func (p *PackageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int) (result []model.Package, err error) {
+func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int) (result []model.Package, err error) {
 
 	orderBy := ""
 	orderBy = "created_at ASC"
@@ -252,7 +253,7 @@ func (p *PackageService) GetList(vendorId uuid.UUID, query, sort string, offset,
 	return
 }
 
-func (p *PackageService) Update(pkg *model.Package) (*model.Package, error) {
+func (p *packageService) Update(pkg *model.Package) (*model.Package, error) {
 	exist := &model.Package{Model: model.Model{ID: pkg.ID}}
 	err := p.db.First(exist).Error
 	if err == gorm.ErrRecordNotFound {
@@ -272,7 +273,7 @@ func (p *PackageService) Update(pkg *model.Package) (*model.Package, error) {
 	return p.Get(pkg.ID)
 }
 
-func (p *PackageService) Remove(packageId uuid.UUID) (err error) {
+func (p *packageService) Remove(packageId uuid.UUID) (err error) {
 	exist := &model.Package{Model: model.Model{ID: packageId}}
 	err = p.db.First(exist).Error
 	if err == gorm.ErrRecordNotFound {

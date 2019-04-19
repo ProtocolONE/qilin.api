@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
@@ -9,6 +10,7 @@ import (
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"strconv"
 	"strings"
@@ -16,8 +18,9 @@ import (
 )
 
 type (
-	PackageRouter struct {
+	packageRouter struct {
 		service model.PackageService
+		productsService model.ProductService
 	}
 
 	createPackageDTO struct {
@@ -33,7 +36,7 @@ type (
 
 	packageDiscountPolicyDTO struct {
 		Discount    uint                `json:"discount"`
-		BuyOption   model.BuyOption     `json:"buyOption"`
+		BuyOption   string     			`json:"buyOption"`
 	}
 
 	packageRegionalRestrinctionsDTO struct {
@@ -41,10 +44,10 @@ type (
 	}
 
 	productDTO struct {
-		ID          uuid.UUID           `json:"id" validate:"required"`
-		Name        string              `json:"name"`
-		Type        string              `json:"type" validate:"required"`
-		Image       string              `json:"image"`
+		ID          uuid.UUID           	`json:"id" validate:"required"`
+		Name        string              	`json:"name"`
+		Type        string              	`json:"type" validate:"required"`
+		Image       *utils.LocalizedString  `json:"image" validate:"dive"`
 	}
 
 	packageDTO struct {
@@ -71,8 +74,11 @@ type (
 	}
 )
 
-func InitPackageRouter(group *echo.Group, service model.PackageService) (router *PackageRouter, err error) {
-	router = &PackageRouter{service}
+func InitPackageRouter(group *echo.Group, service model.PackageService, productService model.ProductService) (router *packageRouter, err error) {
+	router = &packageRouter{
+		service: service,
+		productsService: productService,
+	}
 
 	vendorRouter := rbac_echo.Group(group, "/vendors/:vendorId", router, []string{"*", model.PackageListType, model.VendorDomain})
 	vendorRouter.GET("/packages", router.GetList, nil)
@@ -88,7 +94,7 @@ func InitPackageRouter(group *echo.Group, service model.PackageService) (router 
 	return
 }
 
-func (router *PackageRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+func (router *packageRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 	path := ctx.Path()
 	if strings.Contains(path, "/vendors/:vendorId") {
 		return GetOwnerForVendor(ctx)
@@ -96,8 +102,8 @@ func (router *PackageRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) 
 	return GetOwnerForPackage(ctx)
 }
 
-func mapPackageItemDto(pkg *model.Package) (dto packageItemDTO) {
-	dto = packageItemDTO{
+func mapPackageItemDto(pkg *model.Package) *packageItemDTO {
+	return &packageItemDTO{
 		ID: pkg.ID,
 		CreatedAt: pkg.CreatedAt,
 		Sku: pkg.Sku,
@@ -109,11 +115,10 @@ func mapPackageItemDto(pkg *model.Package) (dto packageItemDTO) {
 			Thumb: pkg.ImageThumb,
 		},
 	}
-	return dto
 }
 
-func mapPackageDto(pkg *model.Package, lang string) (dto packageDTO, err error) {
-	dto = packageDTO{
+func mapPackageDto(pkg *model.Package) (dto *packageDTO, err error) {
+	dto = &packageDTO{
 		ID: pkg.ID,
 		CreatedAt: pkg.CreatedAt,
 		Sku: pkg.Sku,
@@ -127,7 +132,7 @@ func mapPackageDto(pkg *model.Package, lang string) (dto packageDTO, err error) 
 		},
 		DiscountPolicy: packageDiscountPolicyDTO{
 			Discount: pkg.Discount,
-			BuyOption: pkg.DiscountBuyOpt,
+			BuyOption: pkg.DiscountBuyOpt.String(),
 		},
 		RegionalRestrinctions: packageRegionalRestrinctionsDTO{
 			AllowedCountries: pkg.AllowedCountries,
@@ -138,7 +143,7 @@ func mapPackageDto(pkg *model.Package, lang string) (dto packageDTO, err error) 
 			ID: p.GetID(),
 			Name: p.GetName(),
 			Type: string(p.GetType()),
-			Image: p.GetImage(lang),
+			Image: p.GetImage(),
 		})
 	}
 	err = mapper.Map(pkg.PackagePrices, &dto.Commercial)
@@ -148,8 +153,8 @@ func mapPackageDto(pkg *model.Package, lang string) (dto packageDTO, err error) 
 	return dto, nil
 }
 
-func mapPackageModel(dto *packageDTO) (pgk model.Package) {
-	pgk = model.Package{
+func mapPackageModel(dto *packageDTO) *model.Package {
+	return &model.Package{
 		Model: model.Model{ID: dto.ID},
 		Sku: dto.Sku,
 		Name: dto.Name,
@@ -159,13 +164,31 @@ func mapPackageModel(dto *packageDTO) (pgk model.Package) {
 		ImageCover: dto.Media.Cover,
 		ImageThumb: dto.Media.Thumb,
 		Discount: dto.DiscountPolicy.Discount,
-		DiscountBuyOpt: dto.DiscountPolicy.BuyOption,
+		DiscountBuyOpt: model.NewBuyOption(dto.DiscountPolicy.BuyOption),
 		AllowedCountries: dto.RegionalRestrinctions.AllowedCountries,
 	}
-	return
 }
 
-func (router *PackageRouter) Create(ctx echo.Context) error {
+func (router *packageRouter) checkRBAC(userId string, qilinCtx *rbac_echo.AppContext, productIds []uuid.UUID) error {
+	// Check permissions for Games and DLCs
+	games, _, err := router.productsService.SpecializationIds(productIds)
+	if err != nil {
+		return err
+	}
+	for _, gameId := range games {
+		owner, err := qilinCtx.GetOwnerForGame(gameId)
+		if err != nil {
+			return err
+		}
+		if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.GameType, gameId.String(), owner, "read") != nil {
+			return orm.NewServiceError(http.StatusForbidden, fmt.Sprintf("Access restricted for game `%s`", gameId.String()))
+		}
+	}
+	// TODO: do same for DLC
+	return nil
+}
+
+func (router *packageRouter) Create(ctx echo.Context) error {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
@@ -176,8 +199,6 @@ func (router *PackageRouter) Create(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong parameters in body")
 	}
 
-	lang := context.GetLang(ctx)
-
 	if errs := ctx.Validate(params); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
@@ -186,41 +207,58 @@ func (router *PackageRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+	qilinCtx := ctx.(rbac_echo.AppContext)
+
+	err = router.checkRBAC(userId, &qilinCtx, params.Products)
+	if err != nil {
+		return err
+	}
 
 	pkg, err := router.service.Create(vendorId, userId, params.Name, params.Products)
 	if err != nil {
 		return err
 	}
-	dto, err := mapPackageDto(pkg, lang)
+	dto, err := mapPackageDto(pkg)
 	if err != nil {
 		return err
 	}
 	return ctx.JSON(http.StatusCreated, dto)
 }
 
-func (router *PackageRouter) AddProducts(ctx echo.Context) (err error) {
+func (router *packageRouter) AddProducts(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
 	}
-	prods := []uuid.UUID{}
-	err = ctx.Bind(&prods)
+	products := []uuid.UUID{}
+	err = ctx.Bind(&products)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong products array in body")
 	}
-	pkg, err := router.service.AddProducts(packageId, prods)
+
+	userId, err := context.GetAuthUserId(ctx)
 	if err != nil {
 		return err
 	}
-	lang := context.GetLang(ctx)
-	dto, err := mapPackageDto(pkg, lang)
+	qilinCtx := ctx.(rbac_echo.AppContext)
+
+	err = router.checkRBAC(userId, &qilinCtx, products)
+	if err != nil {
+		return err
+	}
+
+	pkg, err := router.service.AddProducts(packageId, products)
+	if err != nil {
+		return err
+	}
+	dto, err := mapPackageDto(pkg)
 	if err != nil {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, dto)
 }
 
-func (router *PackageRouter) RemoveProducts(ctx echo.Context) (err error) {
+func (router *packageRouter) RemoveProducts(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
@@ -234,15 +272,14 @@ func (router *PackageRouter) RemoveProducts(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	lang := context.GetLang(ctx)
-	dto, err := mapPackageDto(pkg, lang)
+	dto, err := mapPackageDto(pkg)
 	if err != nil {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, dto)
 }
 
-func (router *PackageRouter) Get(ctx echo.Context) (err error) {
+func (router *packageRouter) Get(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
@@ -251,15 +288,14 @@ func (router *PackageRouter) Get(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	lang := context.GetLang(ctx)
-	dto, err := mapPackageDto(pkg, lang)
+	dto, err := mapPackageDto(pkg)
 	if err != nil {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, dto)
 }
 
-func (router *PackageRouter) GetList(ctx echo.Context) (err error) {
+func (router *packageRouter) GetList(ctx echo.Context) (err error) {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
@@ -278,42 +314,41 @@ func (router *PackageRouter) GetList(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	dto := []packageItemDTO{}
+	dto := []*packageItemDTO{}
 	for _, pkg := range packages {
 		dto = append(dto, mapPackageItemDto(&pkg))
 	}
 	return ctx.JSON(http.StatusOK, dto)
 }
 
-func (router *PackageRouter) Update(ctx echo.Context) (err error) {
+func (router *packageRouter) Update(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
 	}
-	pkgDto := packageDTO{}
-	err = ctx.Bind(&pkgDto)
+	pkgDto := &packageDTO{}
+	err = ctx.Bind(pkgDto)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong package in body")
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, errors.Wrap(err, "Wrong package in body").Error())
 	}
 	if errs := ctx.Validate(pkgDto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	pkg := mapPackageModel(&pkgDto)
+	pkg := mapPackageModel(pkgDto)
 	pkg.ID = packageId
-	pkgRes, err := router.service.Update(&pkg)
+	pkgRes, err := router.service.Update(pkg)
 	if err != nil {
 		return err
 	}
-	lang := context.GetLang(ctx)
-	dto, err := mapPackageDto(pkgRes, lang)
+	dto, err := mapPackageDto(pkgRes)
 	if err != nil {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, dto)
 }
 
-func (router *PackageRouter) Remove(ctx echo.Context) (err error) {
+func (router *packageRouter) Remove(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
