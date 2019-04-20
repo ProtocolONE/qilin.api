@@ -159,6 +159,9 @@ func (suite *packageServiceTestSuite) TestPackages() {
 	err = suite.service.Remove(pkg.ID)
 	should.Nil(err)
 
+	err = suite.service.Remove(gameB.DefPackageID)
+	should.NotNil(err, "Try to remove default package")
+
 	err = suite.service.Remove(pkg.ID)
 	should.NotNil(err, "Package already removed")
 

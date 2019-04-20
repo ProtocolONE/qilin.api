@@ -16,14 +16,12 @@ import (
 // gameService is service to interact with database and Game object.
 type gameService struct {
 	db *gorm.DB
-	packageFactory packageFactory
 }
 
 // NewGameService initialize this service.
 func NewGameService(db *Database) (model.GameService, error) {
 	return &gameService{
 		db: db.database,
-		packageFactory: packageFactory{db.database},
 	}, nil
 }
 
@@ -146,6 +144,13 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 		return nil, NewServiceError(400, "Name already in use")
 	}
 
+	transation := p.db.Begin()
+	defer func() {
+		if err := recover(); err != nil {
+			transation.Rollback()
+		}
+	}()
+
 	item.ID = uuid.NewV4()
 	item.InternalName = internalName
 	item.FeaturesCtrl = ""
@@ -161,23 +166,30 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 	item.CreatorID = userId
 	item.Product.EntryID = item.ID
 	item.DefPackageID = uuid.NewV4()
-
-	err = p.db.Create(item).Error
+	err = transation.Create(item).Error
 	if err != nil {
+		transation.Rollback()
 		return nil, errors.Wrap(err, "While create new game")
 	}
 
-	err = p.db.Create(&model.GameDescr{
+	err = transation.Create(&model.GameDescr{
 		Game:    item,
 		Reviews: []bto.GameReview{},
 	}).Error
 	if err != nil {
+		transation.Rollback()
 		return nil, errors.Wrap(err, "Create descriptions for game")
 	}
 
-	err = p.packageFactory.Create(item.DefPackageID, vendorId, userId, item.InternalName, []uuid.UUID{item.ID})
+	err = createPackage(transation, item.DefPackageID, vendorId, userId, item.InternalName, []uuid.UUID{item.ID})
 	if err != nil {
+		transation.Rollback()
 		return nil, err
+	}
+
+	err = transation.Commit().Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Commit for making game")
 	}
 
 	return

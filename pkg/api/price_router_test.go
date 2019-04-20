@@ -96,7 +96,7 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 	require.Nil(suite.T(), err, "Unable to make package product")
 
 	echoObj := echo.New()
-	service, err := orm.NewPriceService(db)
+	service := orm.NewPriceService(db)
 	router, err := InitPriceRouter(echoObj.Group("/api/v1"), service)
 
 	echoObj.Validator = &QilinValidator{validator: validator.New()}

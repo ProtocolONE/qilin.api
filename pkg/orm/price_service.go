@@ -10,18 +10,18 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// PriceService is service to interact with database and Media object.
-type PriceService struct {
+// priceService is service to interact with database and Media object.
+type priceService struct {
 	db *gorm.DB
 }
 
-// NewPriceService initialize this service.
-func NewPriceService(db *Database) (*PriceService, error) {
-	return &PriceService{db.database}, nil
+// NewpriceService initialize this service.
+func NewPriceService(db *Database) model.PriceService {
+	return &priceService{db.database}
 }
 
 //GetBase is method for retriving base information about package pricing
-func (p *PriceService) GetBase(id uuid.UUID) (*model.BasePrice, error) {
+func (p *priceService) GetBase(id uuid.UUID) (*model.BasePrice, error) {
 	result := &model.BasePrice{ID: id}
 	err := p.db.
 		Select(model.SelectFields(result)).
@@ -39,7 +39,7 @@ func (p *PriceService) GetBase(id uuid.UUID) (*model.BasePrice, error) {
 }
 
 //UpdateBase is method for updating base information about package pricing
-func (p *PriceService) UpdateBase(id uuid.UUID, price *model.BasePrice) error {
+func (p *priceService) UpdateBase(id uuid.UUID, price *model.BasePrice) error {
 
 	domain := &model.BasePrice{ID: id}
 	err := p.db.Select(model.SelectFields(domain)).First(domain).Error
@@ -66,7 +66,7 @@ func (p *PriceService) UpdateBase(id uuid.UUID, price *model.BasePrice) error {
 }
 
 //Delete is method for removing price with currency for package
-func (p *PriceService) Delete(id uuid.UUID, price *model.Price) error {
+func (p *priceService) Delete(id uuid.UUID, price *model.Price) error {
 	domain := &model.BasePrice{ID: id}
 
 	count := 0
@@ -103,8 +103,8 @@ func (p *PriceService) Delete(id uuid.UUID, price *model.Price) error {
 	return nil
 }
 
-//Update is method for updating price with currency for package
-func (p *PriceService) Update(id uuid.UUID, price *model.Price) error {
+// Update is method for updating price with currency for package
+func (p *priceService) Update(id uuid.UUID, price *model.Price) error {
 	domain := &model.BasePrice{ID: id}
 	var prices []model.Price
 
@@ -138,4 +138,14 @@ func (p *PriceService) Update(id uuid.UUID, price *model.Price) error {
 	p.db.Save(price)
 
 	return nil
+}
+
+
+func (p *priceService) GetDefaultPackage(gameId uuid.UUID) (packageId uuid.UUID, err error) {
+	game := model.Game{}
+	err = p.db.Where("id = ?", gameId).Find(&game).Error
+	if err != nil {
+		return uuid.Nil, errors.Wrap(err, "Retrieve game")
+	}
+	return game.DefPackageID, nil
 }

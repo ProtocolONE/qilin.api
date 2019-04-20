@@ -77,10 +77,8 @@ func (suite *PriceServiceTestSuite) TearDownTest() {
 	}
 }
 func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
-	service, err := NewPriceService(suite.db)
+	service := NewPriceService(suite.db)
 	updatedAt, _ := time.Parse(time.RFC3339, "2019-01-22T07:53:16Z")
-
-	assert.Nil(suite.T(), err, "Unable to media service")
 
 	id, _ := uuid.FromString(packageID)
 	pkg := model.BasePrice{
@@ -102,7 +100,7 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 		UpdatedAt: &updatedAt,
 	}
 
-	err = service.UpdateBase(id, &pkg)
+	err := service.UpdateBase(id, &pkg)
 	assert.Nil(suite.T(), err, "Unable to update media for package")
 
 	pkgFromDb, err := service.GetBase(id)
@@ -115,8 +113,7 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 }
 
 func (suite *PriceServiceTestSuite) TestPriceServiceShouldReturnError() {
-	service, err := NewPriceService(suite.db)
-	assert.Nil(suite.T(), err, "Unable to media service")
+	service := NewPriceService(suite.db)
 	price1 := model.Price{
 		Currency: "USD",
 		Price:    123.32,
@@ -147,9 +144,7 @@ func (suite *PriceServiceTestSuite) TestPriceServiceShouldReturnError() {
 }
 
 func (suite *PriceServiceTestSuite) TestChangePrices() {
-	service, err := NewPriceService(suite.db)
-
-	assert.Nil(suite.T(), err, "Unable to media service")
+	service := NewPriceService(suite.db)
 
 	id, _ := uuid.FromString(packageID)
 
@@ -165,7 +160,7 @@ func (suite *PriceServiceTestSuite) TestChangePrices() {
 		Vat:      99,
 	}
 
-	err = service.Update(id, &price1)
+	err := service.Update(id, &price1)
 	assert.Nil(suite.T(), err, "Unable to update price for package")
 
 	err = service.Update(id, &price2)

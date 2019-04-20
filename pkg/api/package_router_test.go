@@ -7,7 +7,6 @@ import (
 	"github.com/ProtocolONE/rbac"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/api/context"
@@ -334,8 +333,6 @@ func (suite *PackageRouterTestSuite) TestShouldManageGames() {
 		rec := httptest.NewRecorder()
 
 		suite.echo.ServeHTTP(rec, req)
-
-		log.Println(rec.Body.String())
 
 		should.Equal(http.StatusOK, rec.Code)
 		dto := packageDTO{}

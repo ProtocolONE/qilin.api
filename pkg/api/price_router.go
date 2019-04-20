@@ -2,13 +2,13 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"qilin-api/pkg/api/rbac_echo"
+	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/utils"
-
-	"net/http"
-	"qilin-api/pkg/mapper"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
@@ -16,7 +16,7 @@ import (
 
 type (
 	PriceRouter struct {
-		service *orm.PriceService
+		service model.PriceService
 	}
 
 	pricesDTO struct {
@@ -43,7 +43,7 @@ type (
 )
 
 //InitPriceRouter is initialization method for group
-func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *PriceRouter, err error) {
+func InitPriceRouter(group *echo.Group, service model.PriceService) (router *PriceRouter, err error) {
 	priceRouter := PriceRouter{
 		service: service,
 	}
@@ -54,22 +54,53 @@ func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *Pric
 	packageGroup.PUT("/:packageId/prices/:currency", priceRouter.updatePrice, nil)
 	packageGroup.DELETE("/:packageId/prices/:currency", priceRouter.deletePrice, nil)
 
+	gameGroup := rbac_echo.Group(group, "/games", &priceRouter, []string{"gameId", model.GameType, model.VendorDomain})
+	gameGroup.GET("/:gameId/prices", priceRouter.getBase, nil)
+	gameGroup.PUT("/:gameId/prices", priceRouter.putBase, nil)
+	gameGroup.PUT("/:gameId/prices/:currency", priceRouter.updatePrice, nil)
+	gameGroup.DELETE("/:gameId/prices/:currency", priceRouter.deletePrice, nil)
+
 	return &priceRouter, nil
 }
 
 func (router *PriceRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
+	path := ctx.Path()
+	if strings.Contains(path, "/games/:gameId") {
+		return GetOwnerForGame(ctx)
+	}
 	return GetOwnerForPackage(ctx)
 }
 
-func (router *PriceRouter) getBase(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("packageId"))
+// Func made for backward compatibility with games
+func (router *PriceRouter) GetPackageID(ctx *echo.Context) (packageId uuid.UUID, err error) {
+	gameId_str := (*ctx).Param("gameId")
+	if gameId_str != "" {
+		gameId, err := uuid.FromString(gameId_str)
+		if err != nil {
+			return uuid.Nil, orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		}
+		packageId, err = router.service.GetDefaultPackage(gameId)
+		if err != nil {
+			return uuid.Nil, err
+		}
+	} else {
+		packageId, err = uuid.FromString((*ctx).Param("packageId"))
+		if err != nil {
+			return uuid.Nil, orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		}
+	}
+	return
+}
 
+
+func (router *PriceRouter) getBase(ctx echo.Context) (err error) {
+
+	id, err := router.GetPackageID(&ctx)
 	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		return err
 	}
 
 	price, err := router.service.GetBase(id)
-
 	if err != nil {
 		return err
 	}
@@ -85,10 +116,9 @@ func (router *PriceRouter) getBase(ctx echo.Context) error {
 }
 
 func (router *PriceRouter) putBase(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("packageId"))
-
+	id, err := router.GetPackageID(&ctx)
 	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		return err
 	}
 
 	dto := new(pricesDTO)
@@ -120,10 +150,9 @@ func (router *PriceRouter) putBase(ctx echo.Context) error {
 }
 
 func (router *PriceRouter) deletePrice(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("packageId"))
-
+	id, err := router.GetPackageID(&ctx)
 	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		return err
 	}
 
 	cur := ctx.Param("currency")
@@ -142,10 +171,9 @@ func (router *PriceRouter) deletePrice(ctx echo.Context) error {
 }
 
 func (router *PriceRouter) updatePrice(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("packageId"))
-
+	id, err := router.GetPackageID(&ctx)
 	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		return err
 	}
 
 	dto := new(pricesInternal)

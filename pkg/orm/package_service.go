@@ -11,43 +11,33 @@ import (
 	"time"
 )
 
-type packageFactory struct {
-	db *gorm.DB
-}
-
 type packageService struct {
 	db *gorm.DB
 	gameService model.GameService
-	factory packageFactory
 }
 
 func NewPackageService(db *Database, gameService model.GameService) (*packageService, error) {
 	return &packageService{
 		db: db.database,
 		gameService: gameService,
-		factory: packageFactory{db.database},
 	}, nil
 }
 
-func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (err error) {
+// Transaction must be manage outside this function for commit and rollback (in case of error)
+func createPackage(
+	transaction *gorm.DB,
+	packageId,
+	vendorId uuid.UUID,
+	userId,
+	name string,
+	prods []uuid.UUID) (err error) {
 
 	if len(strings.Trim(name, " \r\n\t")) == 0 {
 		return NewServiceError(http.StatusUnprocessableEntity, "Name is empty")
 	}
 
-	entries := []model.ProductEntry{}
-	if len(prods) > 0 {
-		err = p.db.Where("entry_id in (?)", prods).Find(&entries).Error
-		if err != nil {
-			return errors.Wrap(err, "Search products")
-		}
-	}
-	if len(entries) == 0 {
-		return NewServiceError(http.StatusUnprocessableEntity, "No any products")
-	}
-
 	newPack := model.Package{
-		Model: model.Model{ID: pkgId},
+		Model: model.Model{ID: packageId},
 		Sku: random.String(8, "123456789"),
 		Name: name,
 		VendorID: vendorId,
@@ -64,50 +54,96 @@ func (p *packageFactory) Create(pkgId, vendorId uuid.UUID, userId, name string, 
 			Prices: []model.Price{},
 		},
 	}
-	err = p.db.Create(&newPack).Error
+	err = transaction.Create(&newPack).Error
 	if err != nil {
 		return errors.Wrap(err, "While create new package")
 	}
-
-	db := p.db.Begin()
-	for index, entry := range entries {
-		err = db.Create(model.PackageProduct{
-			PackageID: newPack.ID,
-			ProductID: entry.EntryID,
+	for index, productId := range prods {
+		err = transaction.Create(model.PackageProduct{
+			PackageID: packageId,
+			ProductID: productId,
 			Position: index + 1,
 		}).Error
 		if err != nil {
-			db.Rollback()
 			return errors.Wrap(err, "While append products into package")
 		}
-	}
-	err = db.Commit().Error
-	if err != nil {
-		return errors.Wrap(err, "While commit products")
 	}
 
 	return
 }
 
+func (p *packageService) filterProducts(prods []uuid.UUID) (result []uuid.UUID, err error) {
+	result = []uuid.UUID{}
+	if len(prods) > 0 {
+		entries := []model.ProductEntry{}
+		err = p.db.Where("entry_id in (?)", prods).Find(&entries).Error
+		if err != nil {
+			return nil, errors.Wrap(err, "Retrieve product entries")
+		}
+		for _, prodId := range prods {
+			for _, entry := range entries {
+				if prodId == entry.EntryID {
+					result = append(result, prodId)
+					break
+				}
+			}
+		}
+	}
+	if len(result) == 0 {
+		return result, NewServiceError(http.StatusUnprocessableEntity, "No any products")
+	}
+	return
+}
+
+func (p *packageService) findPackageOrError(packageId uuid.UUID) (result *model.Package, err error) {
+	result = &model.Package{}
+	err = p.db.Where("id = ?", packageId).First(result).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, NewServiceError(http.StatusNotFound, "Package not found")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "Retrieve package")
+	}
+	return
+}
+
 func (p *packageService) Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (result *model.Package, err error) {
 	pkgId := uuid.NewV4()
-	err = p.factory.Create(pkgId, vendorId, userId, name, prods)
+
+	// 1. Filter products for exists
+	prods, err = p.filterProducts(prods)
 	if err != nil {
 		return nil, err
+	}
+
+	// 2. Insert package into DB
+	transaction := p.db.Begin()
+	defer func() {
+		if err := recover(); err != nil {
+			transaction.Rollback()
+		}
+	}()
+	err = createPackage(transaction, pkgId, vendorId, userId, name, prods)
+	if err != nil {
+		transaction.Rollback()
+		return nil, err
+	}
+	err = transaction.Commit().Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Commit while create package")
 	}
 	return p.Get(pkgId)
 }
 
 func (p *packageService) AddProducts(packageId uuid.UUID, prods []uuid.UUID) (result *model.Package, err error) {
-	entries := []model.ProductEntry{}
-	if len(prods) > 0 {
-		err = p.db.Where("entry_id in (?)", prods).Find(&entries).Error
-		if err != nil {
-			return nil, errors.Wrap(err, "Search products")
-		}
+
+	_, err = p.findPackageOrError(packageId)
+	if err != nil {
+		return nil, err
 	}
-	if len(entries) == 0 {
-		return nil, NewServiceError(http.StatusUnprocessableEntity, "No any products")
+
+	prods, err = p.filterProducts(prods)
+	if err != nil {
+		return nil, err
 	}
 
 	exists := []model.PackageProduct{}
@@ -117,34 +153,47 @@ func (p *packageService) AddProducts(packageId uuid.UUID, prods []uuid.UUID) (re
 	}
 
 	position := len(exists) + 1
-	batchDb := p.db.Begin()
-	for _, p := range entries {
+	transaction := p.db.Begin()
+	defer func() {
+		if err := recover(); err != nil {
+			transaction.Rollback()
+		}
+	}()
+	for _, prodId := range prods {
 		found := false
 		for _, pu := range exists {
-			if p.EntryID == pu.ProductID {
+			if prodId == pu.ProductID {
 				found = true
 				break
 			}
 		}
 		if !found {
-			err = batchDb.Create(&model.PackageProduct{
+			err = transaction.Create(&model.PackageProduct{
 				PackageID: packageId,
-				ProductID: p.EntryID,
+				ProductID: prodId,
 				Position: position,
 			}).Error
 			position += 1
 			if err != nil {
-				batchDb.Rollback()
+				transaction.Rollback()
 				return nil, errors.Wrap(err, "Make package product link")
 			}
 		}
 	}
-	batchDb.Commit()
+	err = transaction.Commit().Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Commit append products")
+	}
 
 	return p.Get(packageId)
 }
 
 func (p *packageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) (result *model.Package, err error) {
+
+	_, err = p.findPackageOrError(packageId)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(prods) > 0 {
 		err = p.db.Delete(model.PackageProduct{}, "package_id = ? and product_id in (?)", packageId, prods).Error
@@ -157,12 +206,10 @@ func (p *packageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) 
 }
 
 func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err error)  {
-	result = &model.Package{}
-	err = p.db.Where("id = ?", packageId.String()).First(result).Error
-	if err == gorm.ErrRecordNotFound {
-		return nil, NewServiceError(http.StatusNotFound, "Package not found")
-	} else if err != nil {
-		return nil, errors.Wrap(err, "Retrieve package")
+
+	result, err = p.findPackageOrError(packageId)
+	if err != nil {
+		return nil, err
 	}
 
 	type PackageProductJoin struct {
@@ -254,18 +301,18 @@ func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset,
 }
 
 func (p *packageService) Update(pkg *model.Package) (*model.Package, error) {
-	exist := &model.Package{Model: model.Model{ID: pkg.ID}}
-	err := p.db.First(exist).Error
-	if err == gorm.ErrRecordNotFound {
-		return nil, NewServiceError(http.StatusNotFound, "Package not found")
-	} else if err != nil {
-		return nil, errors.Wrap(err, "Retrieve package")
+
+	exist, err := p.findPackageOrError(pkg.ID)
+	if err != nil {
+		return nil, err
 	}
+
 	pkg.CreatedAt = exist.CreatedAt
 	pkg.UpdatedAt = time.Now()
 	pkg.VendorID = exist.VendorID
 	pkg.PackagePrices = exist.PackagePrices
 	// Products also ignored
+
 	err = p.db.Save(pkg).Error
 	if err != nil {
 		return nil, errors.Wrap(err, "Save package")
@@ -274,13 +321,21 @@ func (p *packageService) Update(pkg *model.Package) (*model.Package, error) {
 }
 
 func (p *packageService) Remove(packageId uuid.UUID) (err error) {
-	exist := &model.Package{Model: model.Model{ID: packageId}}
-	err = p.db.First(exist).Error
-	if err == gorm.ErrRecordNotFound {
-		return NewServiceError(http.StatusNotFound, "Package not found")
-	} else if err != nil {
-		return errors.Wrap(err, "Retrieve package")
+
+	exist, err := p.findPackageOrError(packageId)
+	if err != nil {
+		return err
 	}
+
+	found := 0
+	err = p.db.Model(model.Game{}).Where("def_package_id = ?", packageId).Count(&found).Error
+	if err != nil {
+		return errors.Wrap(err, "Search for default package")
+	}
+	if found > 0 {
+		return NewServiceError(http.StatusForbidden, "Package is default for Game")
+	}
+
 	err = p.db.Delete(exist).Error
 	if err != nil {
 		return errors.Wrap(err, "Delete package")

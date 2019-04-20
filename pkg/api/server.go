@@ -137,10 +137,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	priceService, err := orm.NewPriceService(s.db)
-	if err != nil {
-		return err
-	}
+	priceService := orm.NewPriceService(s.db)
 	if _, err := InitPriceRouter(s.Router, priceService); err != nil {
 		return err
 	}
