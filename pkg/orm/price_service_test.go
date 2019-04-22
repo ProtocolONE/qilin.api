@@ -94,7 +94,7 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 			},
 			Prices: []model.Price{
 				{BasePriceID: id, Price: 100.0, Vat: 32, Currency: "EUR"},
-				{BasePriceID: id, Price: 93.23, Vat: 10, Currency: "RUR"},
+				{BasePriceID: id, Price: 93.23, Vat: 10, Currency: "RUB"},
 			},
 		},
 		UpdatedAt: &updatedAt,

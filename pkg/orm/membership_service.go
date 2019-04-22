@@ -26,9 +26,18 @@ func NewMembershipService(db *Database, ownerProvider model.OwnerProvider, enfor
 }
 
 func (service *membershipService) Init() error {
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: model.DocumentsType, Action: "any", ResourceType: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: model.VendorType, Action: "any", ResourceType: "any", Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: model.MessagesType, Action: "any", ResourceType: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.VendorOwner, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.DocumentsType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.VendorOwner, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.VendorType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.VendorOwner, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.MessagesType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.VendorOwner, Domain: "vendor", ResourceId: "skip", Action: "*", ResourceType: model.GameType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.VendorOwner, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.VendorGameType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.VendorOwner, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RolesType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.VendorOwner, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RoleUserType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.VendorOwner, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.AdminDocumentsType, Effect: "deny"})
+
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.DocumentsType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.VendorType, Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.MessagesType, Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.GameType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.GameListType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.PackageType, Effect: "deny"})
@@ -38,7 +47,7 @@ func (service *membershipService) Init() error {
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.VendorGameType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RolesType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "read", ResourceType: model.RoleUserType, Effect: "allow"})
-	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceType: model.AdminDocumentsType, ResourceId: "skip", Action: "any", Effect: "deny"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.AdminDocumentsType, Effect: "deny"})
 
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "read", Effect: "allow"})
@@ -291,7 +300,7 @@ func (service *membershipService) SendInvite(vendorId uuid.UUID, invite model.In
 		return nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Saving invite"))
 	}
 
-	url := fmt.Sprintf("%s?token=%s", service.host, invite.ID)
+	url := fmt.Sprintf("%s/vendors/%s/invites/%s", service.host, vendorId, invite.ID)
 
 	//TODO: add localization
 	err := service.mailer.Send(invite.Email, "Invitation to Qilin service", fmt.Sprintf("Body. Url: %s", url))

@@ -1710,7 +1710,7 @@ components:
               enum:
                 - USD
                 - EUR
-                - RUR
+                - RUB
             name:
               description: "Name of bank"
               type: string
@@ -1736,7 +1736,7 @@ components:
               enum:
                 - USD
                 - EUR
-                - RUR
+                - RUB
             notifyRateJumps:
               type: boolean
         preOrder:
