@@ -6,9 +6,9 @@ type (
 		Processor        string `json:"processor"`
 		Graphics         string `json:"graphics"`
 		Sound            string `json:"sound"`
-		Ram              int    `json:"ram"`
+		Ram              int32    `json:"ram"`
 		RamDimension     string `json:"ramdimension"`
-		Storage          int    `json:"storage"`
+		Storage          int32    `json:"storage"`
 		StorageDimension string `json:"storagedimension"`
 		Other            string `json:"other"`
 	}
@@ -39,6 +39,11 @@ type (
 	GameLangs struct {
 		EN Langs `json:"en"`
 		RU Langs `json:"ru"`
+		FR Langs `json:"fr"`
+		ES Langs `json:"es"`
+		DE Langs `json:"de"`
+		IT Langs `json:"it"`
+		PT Langs `json:"pt"`
 	}
 
 	GameReviews []GameReview

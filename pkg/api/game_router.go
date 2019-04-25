@@ -5,6 +5,7 @@ import (
 	"github.com/lunny/html2md"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/satori/go.uuid"
+	"go.uber.org/zap"
 	"gopkg.in/russross/blackfriday.v2"
 	"net/http"
 	"qilin-api/pkg/api/context"
@@ -22,6 +23,7 @@ import (
 type GameRouter struct {
 	gameService model.GameService
 	userService model.UserService
+	eventBus    model.EventBus
 }
 
 type (
@@ -260,10 +262,11 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 	}
 }
 
-func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService) (*GameRouter, error) {
+func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService, bus model.EventBus) (*GameRouter, error) {
 	Router := GameRouter{
 		gameService: service,
 		userService: userService,
+		eventBus: bus,
 	}
 
 	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.VendorGameType, model.VendorDomain})
@@ -389,10 +392,17 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	dto, err := mapGameInfo(game, api.gameService)
 	if err != nil {
 		return err
 	}
+
+	err = api.eventBus.PublishGameChanges(game.ID)
+	if err != nil {
+		zap.L().Error("Error during publishing game changes.", zap.Error(err))
+	}
+
 	return ctx.JSON(http.StatusCreated, dto)
 }
 
@@ -426,6 +436,12 @@ func (api *GameRouter) Delete(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	err = api.eventBus.PublishGameDelete(gameId)
+	if err != nil {
+		zap.L().Error("Error during publishing game changes.", zap.Error(err))
+	}
+
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
@@ -448,7 +464,13 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, "OK")
+
+	err = api.eventBus.PublishGameChanges(game.ID)
+	if err != nil {
+		zap.L().Error("Error during publishing game changes.", zap.Error(err))
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (api *GameRouter) GetDescr(ctx echo.Context) error {

@@ -36,7 +36,6 @@ func (p *PriceService) GetBase(id uuid.UUID) (*model.BasePrice, error) {
 
 //UpdateBase is method for updating base information about game pricing
 func (p *PriceService) UpdateBase(id uuid.UUID, price *model.BasePrice) error {
-
 	domain := &model.BasePrice{ID: id}
 	err := p.db.Preload("Prices").Select(model.SelectFields(domain)).Where("id = ?", id).First(domain).Error
 

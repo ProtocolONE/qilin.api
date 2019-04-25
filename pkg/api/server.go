@@ -106,6 +106,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		zap.L().Fatal("Fail to setup routes", zap.Error(err))
 	}
 
+
 	return server, nil
 }
 
@@ -116,6 +117,8 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer, verifier *jwtverifier.JwtVerifier) error {
+	eventBus, err := orm.NewEventBus(s.db.DB(), "amqp://127.0.0.1:5672")
+
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {
 		return err
@@ -196,7 +199,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
+	if _, err := InitRoutes(s.Router, gameService, userService, eventBus); err != nil {
 		return err
 	}
 
