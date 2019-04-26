@@ -21,3 +21,11 @@ func (j *JSONB) Scan(value interface{}) error {
 	}
 	return nil
 }
+
+func (j JSONB) GetString(key string) string {
+	return j[key].(string)
+}
+
+func (j JSONB) GetStringArray(key string) []string {
+	return j[key].([]string)
+}

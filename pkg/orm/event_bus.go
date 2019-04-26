@@ -60,7 +60,7 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 		}
 	}
 
-	gameObject := MapGameObject(&game, tags, genres)
+	gameObject := MapGameObject(&game, &media, tags, genres)
 	return bus.broker.Publish("game_changed", gameObject, nil)
 }
 
@@ -69,7 +69,7 @@ func (bus *eventBus) PublishGameDelete(gameId uuid.UUID) error {
 	return bus.broker.Publish("game_deleted", gameObject, nil)
 }
 
-func MapGameObject(game *model.Game, tags []model.GameTag, genre []model.GameGenre) *proto.GameObject {
+func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, genre []model.GameGenre) *proto.GameObject {
 	return &proto.GameObject{
 		ID:                   game.ID.String(),
 		Description:          "",
@@ -86,6 +86,44 @@ func MapGameObject(game *model.Game, tags []model.GameTag, genre []model.GameGen
 		Requirements:         MapRequirements(game.Requirements),
 		FeaturesControl:      game.FeaturesCtrl,
 		Features:             game.FeaturesCommon,
+		Media:                MapMedia(media),
+	}
+}
+
+func MapMedia(media *model.Media) *proto.Media {
+	if media == nil {
+		return nil
+	}
+
+	return &proto.Media{
+		CoverImage:  MapJsonbToLocalizedString(media.CoverImage),
+		CoverVideo:  MapJsonbToLocalizedString(media.CoverVideo),
+		Trailers:    MapJsonbToLocalizedStringArray(media.Trailers),
+		Screenshots: MapJsonbToLocalizedStringArray(media.Screenshots),
+	}
+}
+
+func MapJsonbToLocalizedStringArray(jsonb model.JSONB) *proto.LocalizedStringArray {
+	return &proto.LocalizedStringArray{
+		EN: jsonb.GetStringArray("en"),
+		RU: jsonb.GetStringArray("ru"),
+		FR: jsonb.GetStringArray("fr"),
+		DE: jsonb.GetStringArray("de"),
+		ES: jsonb.GetStringArray("es"),
+		IT: jsonb.GetStringArray("it"),
+		PT: jsonb.GetStringArray("pt"),
+	}
+}
+
+func MapJsonbToLocalizedString(jsonb model.JSONB) *proto.LocalizedString {
+	return &proto.LocalizedString{
+		EN: jsonb.GetString("en"),
+		RU: jsonb.GetString("ru"),
+		FR: jsonb.GetString("fr"),
+		DE: jsonb.GetString("de"),
+		ES: jsonb.GetString("es"),
+		IT: jsonb.GetString("it"),
+		PT: jsonb.GetString("pt"),
 	}
 }
 
