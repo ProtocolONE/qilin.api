@@ -32,9 +32,9 @@ type (
 		Processor        string `json:"processor"`
 		Graphics         string `json:"graphics"`
 		Sound            string `json:"sound"`
-		Ram              int    `json:"ram"`
+		Ram              int32  `json:"ram"`
 		RamDimension     string `json:"ramdimension"`
-		Storage          int    `json:"storage"`
+		Storage          int32  `json:"storage"`
 		StorageDimension string `json:"storagedimension"`
 		Other            string `json:"other"`
 	}
@@ -73,7 +73,7 @@ type (
 	}
 
 	GameTagDTO struct {
-		Id    int                   `json:"id" validate:"required"`
+		Id    int64                   `json:"id" validate:"required"`
 		Title utils.LocalizedString `json:"title" validate:"dive"`
 	}
 
@@ -266,7 +266,7 @@ func InitRoutes(router *echo.Group, service model.GameService, userService model
 	Router := GameRouter{
 		gameService: service,
 		userService: userService,
-		eventBus: bus,
+		eventBus:    bus,
 	}
 
 	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.VendorGameType, model.VendorDomain})
@@ -329,7 +329,7 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 	localOffset := offset
 
 	//CURSOR solution
-	for len(dto) <= limit && shouldBreak == false{
+	for len(dto) <= limit && shouldBreak == false {
 		localLimit := limit - len(dto)
 
 		games, err := api.gameService.GetList(userId, vendorId, localOffset, localLimit, internalName, genre, releaseDate, sort, price)

@@ -89,7 +89,7 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 
 	groupApi := echoObj.Group("/api/v1")
 	userService, err := orm.NewUserService(db, nil)
-	router, err := InitRoutes(groupApi, service, userService)
+	router, err := InitRoutes(groupApi, service, userService, mock.NewEventBus())
 	if err != nil {
 		suite.FailNow("Init routes fail", "%v", err)
 	}

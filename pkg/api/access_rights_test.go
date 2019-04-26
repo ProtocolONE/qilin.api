@@ -107,7 +107,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 	if err != nil {
 		return err
 	}
-	if _, err := InitMediaRouter(s.Router, mediaService); err != nil {
+	if _, err := InitMediaRouter(s.Router, mediaService, mock.NewEventBus()); err != nil {
 		return err
 	}
 
@@ -167,7 +167,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
+	if _, err := InitRoutes(s.Router, gameService, userService, mock.NewEventBus()); err != nil {
 		return err
 	}
 

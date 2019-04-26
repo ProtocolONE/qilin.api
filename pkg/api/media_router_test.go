@@ -10,6 +10,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"net/http/httptest"
+	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
@@ -66,7 +67,7 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 
 	e := echo.New()
 	service, err := orm.NewMediaService(db)
-	router, err := InitMediaRouter(e.Group("/api/v1"), service)
+	router, err := InitMediaRouter(e.Group("/api/v1"), service, mock.NewEventBus())
 
 	e.Validator = &QilinValidator{validator: validator.New()}
 

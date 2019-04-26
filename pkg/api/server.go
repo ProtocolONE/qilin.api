@@ -136,7 +136,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 	if err != nil {
 		return err
 	}
-	if _, err := InitMediaRouter(s.Router, mediaService); err != nil {
+	if _, err := InitMediaRouter(s.Router, mediaService, eventBus); err != nil {
 		return err
 	}
 
