@@ -67,7 +67,7 @@ func (suite *MediaRouterTestSuite) SetupTest() {
 
 	e := echo.New()
 	service, err := orm.NewMediaService(db)
-	router, err := InitMediaRouter(e.Group("/api/v1"), service, mock.NewEventBus())
+	router, err := InitMediaRouter(e.Group("/api/v1"), service)
 
 	e.Validator = &QilinValidator{validator: validator.New()}
 

@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/lunny/html2md"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"gopkg.in/russross/blackfriday.v2"
@@ -279,6 +280,7 @@ func InitRoutes(router *echo.Group, service model.GameService, userService model
 	gameGroup.PUT("/:gameId", Router.UpdateInfo, nil)
 	gameGroup.GET("/:gameId/descriptions", Router.GetDescr, nil)
 	gameGroup.PUT("/:gameId/descriptions", Router.UpdateDescr, nil)
+	gameGroup.POST("/:gameId/publications", Router.PublishGame, []string{"gameId", model.PublishGame, model.VendorDomain})
 
 	router.GET("/genre", Router.GetGenres) // TODO: Remove after some time
 	router.GET("/genres", Router.GetGenres)
@@ -298,6 +300,19 @@ func (api *GameRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 		return GetOwnerForVendor(ctx)
 	}
 	return GetOwnerForGame(ctx)
+}
+
+func (api *GameRouter) PublishGame(ctx echo.Context) error {
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+	}
+
+	if err := api.eventBus.PublishGameChanges(gameId); err != nil {
+		return orm.NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Can't publish game changes"))
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (api *GameRouter) GetList(ctx echo.Context) error {
@@ -398,11 +413,6 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 		return err
 	}
 
-	err = api.eventBus.PublishGameChanges(game.ID)
-	if err != nil {
-		zap.L().Error("Error during publishing game changes.", zap.Error(err))
-	}
-
 	return ctx.JSON(http.StatusCreated, dto)
 }
 
@@ -463,11 +473,6 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 	err = api.gameService.UpdateInfo(&game)
 	if err != nil {
 		return err
-	}
-
-	err = api.eventBus.PublishGameChanges(game.ID)
-	if err != nil {
-		zap.L().Error("Error during publishing game changes.", zap.Error(err))
 	}
 
 	return ctx.NoContent(http.StatusOK)

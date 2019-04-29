@@ -3,7 +3,6 @@ package api
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/satori/go.uuid"
-	"go.uber.org/zap"
 	"net/http"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
@@ -17,7 +16,6 @@ type (
 	//MediaRouter is group struct
 	MediaRouter struct {
 	mediaService model.MediaService
-	eventBus     model.EventBus
 }
 
 	//Media is DTO object with full information about media for game
@@ -58,10 +56,9 @@ type (
 
 
 //InitMediaRouter is initializing group method
-func InitMediaRouter(group *echo.Group, service model.MediaService, bus model.EventBus) (*MediaRouter, error) {
+func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRouter, error) {
 	mediaRouter := MediaRouter{
 		mediaService: service,
-		eventBus: bus,
 	}
 
 	router := rbac_echo.Group(group, "/games/:gameId", &mediaRouter, []string{"gameId", model.GameType, model.VendorDomain})
@@ -112,10 +109,6 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 
 	if err := api.mediaService.Update(id, &media); err != nil {
 		return err
-	}
-
-	if err := api.eventBus.PublishGameChanges(id); err != nil {
-		zap.L().Error("Can't publish game changes", zap.Error(err))
 	}
 
 	return ctx.String(http.StatusOK, "")
