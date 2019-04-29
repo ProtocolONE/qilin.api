@@ -16,6 +16,7 @@ import (
 	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"strings"
@@ -348,19 +349,18 @@ func (suite *AccessRightsTestSuite) generateTestCases() map[struct {
 		{http.MethodGet, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin, model.Support},
 		{http.MethodPut, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin},
 
-
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/packages", ""}:  {model.Admin, model.Support},
-		{http.MethodPost, "/api/v1/vendors/%vendor_id/packages", ""}: {model.Admin},
-		{http.MethodGet, "/api/v1/packages/%package_id", ""}:              {model.Admin, model.Support},
-		{http.MethodPut, "/api/v1/packages/%package_id", ""}:              {model.Admin},
-		{http.MethodDelete, "/api/v1/packages/%package_id", ""}:              {model.Admin},
-		{http.MethodPost, "/api/v1/packages/%package_id/products/add", ""}:              {model.Admin},
-		{http.MethodPost, "/api/v1/packages/%package_id/products/remove", ""}:              {model.Admin},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/packages", ""}:           {model.Admin, model.Support},
+		{http.MethodPost, "/api/v1/vendors/%vendor_id/packages", ""}:          {model.Admin},
+		{http.MethodGet, "/api/v1/packages/%package_id", ""}:                  {model.Admin, model.Support},
+		{http.MethodPut, "/api/v1/packages/%package_id", ""}:                  {model.Admin},
+		{http.MethodDelete, "/api/v1/packages/%package_id", ""}:               {model.Admin},
+		{http.MethodPost, "/api/v1/packages/%package_id/products/add", ""}:    {model.Admin},
+		{http.MethodPost, "/api/v1/packages/%package_id/products/remove", ""}: {model.Admin},
 
 		{http.MethodPost, "/api/v1/vendors/%vendor_id/bundles/store", ""}: {model.Admin},
 		{http.MethodGet, "/api/v1/vendors/%vendor_id/bundles/store", ""}:  {model.Admin, model.Support},
-		{http.MethodGet, "/api/v1/bundles/%bundle_id/store", ""}:              {model.Admin, model.Support},
-		{http.MethodDelete, "/api/v1/bundles/%bundle_id", ""}:              {model.Admin},
+		{http.MethodGet, "/api/v1/bundles/%bundle_id/store", ""}:          {model.Admin, model.Support},
+		{http.MethodDelete, "/api/v1/bundles/%bundle_id", ""}:             {model.Admin},
 	}
 }
 
@@ -422,16 +422,16 @@ func (suite *AccessRightsTestSuite) createPackage(vendorUuid, gameUuid uuid.UUID
 	pkgId := uuid.NewV4()
 
 	require.Nil(suite.T(), suite.db.DB().Create(&model.Package{
-		Model:        model.Model{ID: pkgId},
-		VendorID:     vendorUuid,
-		Name:         model.RandStringRunes(10),
-		CreatorID:    uId,
+		Model:     model.Model{ID: pkgId},
+		VendorID:  vendorUuid,
+		Name:      utils.LocalizedString{EN: model.RandStringRunes(10)},
+		CreatorID: uId,
 	}).Error)
 
 	require.Nil(suite.T(), suite.db.DB().Create(&model.PackageProduct{
 		PackageID: pkgId,
 		ProductID: gameUuid,
-		Position: 1,
+		Position:  1,
 	}).Error)
 
 	return pkgId
@@ -441,16 +441,16 @@ func (suite *AccessRightsTestSuite) createBundle(vendorUuid, pkgId uuid.UUID, uI
 	bundleId := uuid.NewV4()
 
 	require.Nil(suite.T(), suite.db.DB().Create(&model.StoreBundle{
-		Model:        model.Model{ID: bundleId},
-		VendorID:     vendorUuid,
-		Name:         model.RandStringRunes(10),
-		CreatorID:    uId,
+		Model:     model.Model{ID: bundleId},
+		VendorID:  vendorUuid,
+		Name:      utils.LocalizedString{EN: model.RandStringRunes(10)},
+		CreatorID: uId,
 	}).Error)
 
 	require.Nil(suite.T(), suite.db.DB().Create(&model.BundlePackage{
 		PackageID: pkgId,
-		BundleID: bundleId,
-		Position: 1,
+		BundleID:  bundleId,
+		Position:  1,
 	}).Error)
 
 	return bundleId

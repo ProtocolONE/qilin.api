@@ -8,10 +8,10 @@ import (
 type (
 	Dlc struct {
 		Model
-		Image 			JSONB 			`gorm:"type:jsonb"`
-		GameID          uuid.UUID
-		Game            Game
-		Product         ProductEntry 	`gorm:"polymorphic:Entry;"`
+		Image   JSONB `gorm:"type:jsonb"`
+		GameID  uuid.UUID
+		Game    Game
+		Product ProductEntry `gorm:"polymorphic:Entry;"`
 	}
 )
 

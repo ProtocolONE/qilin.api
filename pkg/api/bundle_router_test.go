@@ -14,6 +14,7 @@ import (
 	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"strings"
@@ -28,17 +29,17 @@ import (
 )
 
 var (
-	bundleVendorId      = "11112222-888a-481a-a831-cde7ff4e50b8"
-	bundleID 			= "44444444-888a-481a-a831-cde7ff4e50b8"
-	bundleGameId_1 		= "029ce039-888a-481a-a831-cde7ff4e50b8"
-	bundleGameId_2		= "6666e039-888a-481a-a831-cde7ff4e50b8"
-	bundlePackageId_1   = "33333333-888a-481a-a831-cde7ff4e50b8"
-	bundlePackageId_2   = "00022233-888a-481a-a831-cde7ff4e50b8"
+	bundleVendorId       = "11112222-888a-481a-a831-cde7ff4e50b8"
+	bundleID             = "44444444-888a-481a-a831-cde7ff4e50b8"
+	bundleGameId_1       = "029ce039-888a-481a-a831-cde7ff4e50b8"
+	bundleGameId_2       = "6666e039-888a-481a-a831-cde7ff4e50b8"
+	bundlePackageId_1    = "33333333-888a-481a-a831-cde7ff4e50b8"
+	bundlePackageId_2    = "00022233-888a-481a-a831-cde7ff4e50b8"
 	emptyStoreBundleJson = `{
   "id": "44444444-888a-481a-a831-cde7ff4e50b8",
   "createdAt": "1970-01-01T00:00:00Z",
   "sku": "",
-  "name": "Mega bundle",
+  "name": {"en": "Mega bundle"},
   "isUpgradeAllowed": false,
   "isEnabled": false,
   "discountPolicy": {
@@ -53,9 +54,10 @@ var (
       "id": "33333333-888a-481a-a831-cde7ff4e50b8",
       "createdAt": "1970-01-01T00:00:00Z",
       "sku": "",
-      "name": "Test_package",
+      "name": {"en": "Test_package"},
       "isUpgradeAllowed": false,
       "isEnabled": false,
+      "isDefault": false,
       "products": [
         {
           "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
@@ -65,9 +67,9 @@ var (
         }
       ],
       "media": {
-        "image": "",
-        "cover": "",
-        "thumb": ""
+        "image": {"en": ""},
+        "cover": {"en": ""},
+        "thumb": {"en": ""}
       },
       "discountPolicy": {
         "discount": 0,
@@ -94,7 +96,7 @@ var (
   "id": "44444444-888a-481a-a831-cde7ff4e50b8",
   "createdAt": "1970-01-01T00:00:00Z",
   "sku": "555666222",
-  "name": "Mega bundle 2",
+  "name": {"en": "Mega bundle 2"},
   "isUpgradeAllowed": true,
   "isEnabled": true,
   "discountPolicy": {
@@ -109,9 +111,10 @@ var (
       "id": "33333333-888a-481a-a831-cde7ff4e50b8",
       "createdAt": "1970-01-01T00:00:00Z",
       "sku": "",
-      "name": "Test_package",
+      "name": {"en": "Test_package"},
       "isUpgradeAllowed": false,
       "isEnabled": false,
+      "isDefault": false,
       "products": [
         {
           "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
@@ -121,9 +124,9 @@ var (
         }
       ],
       "media": {
-        "image": "",
-        "cover": "",
-        "thumb": ""
+        "image": {"en": ""},
+        "cover": {"en": ""},
+        "thumb": {"en": ""}
       },
       "discountPolicy": {
         "discount": 0,
@@ -150,8 +153,8 @@ var (
 
 type BundleRouterTestSuite struct {
 	suite.Suite
-	db     *orm.Database
-	echo   *echo.Echo
+	db   *orm.Database
+	echo *echo.Echo
 }
 
 func Test_BundleRouter(t *testing.T) {
@@ -185,16 +188,16 @@ func (suite *BundleRouterTestSuite) makePackage(db *gorm.DB, packageId, name str
 
 	id, _ := uuid.FromString(packageId)
 	err = db.Save(&model.Package{
-		Model:  model.Model{
-			ID: id,
+		Model: model.Model{
+			ID:        id,
 			CreatedAt: time.Unix(0, 0),
 		},
-		Name: name,
+		Name:             utils.LocalizedString{EN: name},
 		AllowedCountries: pq.StringArray{},
 		PackagePrices: model.PackagePrices{
-			Common: model.JSONB{"currency":"","NotifyRateJumps":false},
-			PreOrder: model.JSONB{"date":"","enabled":false},
-			Prices: []model.Price{},
+			Common:   model.JSONB{"currency": "", "NotifyRateJumps": false},
+			PreOrder: model.JSONB{"date": "", "enabled": false},
+			Prices:   []model.Price{},
 		},
 		VendorID: vendorId,
 	}).Error
@@ -214,14 +217,14 @@ func (suite *BundleRouterTestSuite) makeBundle(db *gorm.DB, bundleId, name strin
 
 	id, _ := uuid.FromString(bundleId)
 	err = db.Create(&model.StoreBundle{
-		Model:  model.Model{
-			ID: id,
+		Model: model.Model{
+			ID:        id,
 			CreatedAt: time.Unix(0, 0),
 		},
-		Name: name,
+		Name:             utils.LocalizedString{EN: name},
 		AllowedCountries: pq.StringArray{},
-		VendorID: vendorId,
-		Bundle: model.BundleEntry{EntryID: id},
+		VendorID:         vendorId,
+		Bundle:           model.BundleEntry{EntryID: id},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make bundle")
 	err = db.Create(&model.BundlePackage{
@@ -254,10 +257,10 @@ func (suite *BundleRouterTestSuite) SetupTest() {
 	require.Nil(suite.T(), err, "Decode vendor uuid")
 
 	err = db.DB().Save(&model.Vendor{
-		ID:             vendorId,
-		Name:			"Vendor",
-		Domain3:		"domain",
-		ManagerID:		userId,
+		ID:        vendorId,
+		Name:      "Vendor",
+		Domain3:   "domain",
+		ManagerID: userId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 
@@ -340,7 +343,7 @@ func (suite *BundleRouterTestSuite) TestShouldCreateBundle() {
 	dto := storeBundleDTO{}
 	err := json.Unmarshal(rec.Body.Bytes(), &dto)
 	should.Nil(err)
-	should.Equal("Mega bundle 2", dto.Name)
+	should.Equal("Mega bundle 2", dto.Name.EN)
 	should.Equal(1, len(dto.Packages))
 	should.Equal("33333333-888a-481a-a831-cde7ff4e50b8", dto.Packages[0].ID.String())
 	should.Equal(1, len(dto.Packages[0].Products))
@@ -355,7 +358,7 @@ func (suite *BundleRouterTestSuite) TestShouldReturnStoreList() {
 	suite.echo.ServeHTTP(rec, req)
 
 	assert.Equal(suite.T(), http.StatusOK, rec.Code)
-	assert.JSONEq(suite.T(), `[{"id":"44444444-888a-481a-a831-cde7ff4e50b8","createdAt":"1970-01-01T00:00:00Z","sku":"","name":"Mega bundle","isUpgradeAllowed":false,"isEnabled":false}]`, rec.Body.String())
+	assert.JSONEq(suite.T(), `[{"id":"44444444-888a-481a-a831-cde7ff4e50b8","createdAt":"1970-01-01T00:00:00Z","sku":"","name":{"en":"Mega bundle"},"isUpgradeAllowed":false,"isEnabled":false}]`, rec.Body.String())
 }
 
 func (suite *BundleRouterTestSuite) TestShouldAppendPackages() {

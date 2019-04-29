@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"testing"
@@ -97,29 +98,30 @@ func (suite *packageServiceTestSuite) TestPackages() {
 
 	gameA, err := suite.gameService.Create(suite.userId, suite.vendorId, "GameA")
 	should.Nil(err)
-	should.Len(gameA.DefPackageID, 16)
+	should.Len(gameA.DefaultPackageID, 16)
 	gameB, err := suite.gameService.Create(suite.userId, suite.vendorId, "GameB")
 	should.Nil(err)
-	should.Len(gameB.DefPackageID, 16)
+	should.Len(gameB.DefaultPackageID, 16)
 
-	pkg, err := suite.service.Create(suite.vendorId, suite.userId,"Mega package", []uuid.UUID{gameA.ID, gameB.ID})
+	pkg, err := suite.service.Create(suite.vendorId, suite.userId, "Mega package", []uuid.UUID{gameA.ID, gameB.ID})
 	should.Nil(err)
 	should.Equal(2, len(pkg.Products))
 	should.Equal(gameA.ID, pkg.Products[0].GetID())
 
-	pkgEmpty, err := suite.service.Create(suite.vendorId, suite.userId,"Empty package", []uuid.UUID{})
+	pkgEmpty, err := suite.service.Create(suite.vendorId, suite.userId, "Empty package", []uuid.UUID{})
 	should.NotNil(err)
 	should.Nil(pkgEmpty)
 
-	list, err := suite.service.GetList(suite.vendorId, "", "-date", 0, 20)
+	total, list, err := suite.service.GetList(suite.vendorId, "", "-date", 0, 20)
 	should.Nil(err)
+	should.Equal(3, total)
 	should.Equal(3, len(list)) // includes 2 default game packages
-	should.Equal("Mega package", list[0].Name)
+	should.Equal("Mega package", list[0].Name.EN)
 
-	list2, err := suite.service.GetList(suite.vendorId, "", "+name", 1, 1)
+	total, list2, err := suite.service.GetList(suite.vendorId, "", "+name", 1, 1)
 	should.Nil(err)
 	should.Equal(1, len(list2))
-	should.Equal("GameB", list2[0].Name)
+	should.Equal("GameB", list2[0].Name.EN)
 
 	gameC, err := suite.gameService.Create(suite.userId, suite.vendorId, "GameC")
 	should.Nil(err)
@@ -131,17 +133,17 @@ func (suite *packageServiceTestSuite) TestPackages() {
 	should.Equal(gameB.ID, pkg.Products[1].GetID())
 	should.Equal(gameC.ID, pkg.Products[2].GetID())
 
-	pkg.Name = "Saved package"
+	pkg.Name = utils.LocalizedString{EN: "Saved package"}
 	pkg.Discount = 12
 	pkgC, err := suite.service.Update(pkg)
 	should.Nil(err)
-	should.Equal("Saved package", pkgC.Name)
+	should.Equal("Saved package", pkgC.Name.EN)
 	should.Equal(suite.userId, pkg.CreatorID)
 	should.Equal(12, int(pkg.Discount))
 
 	pkgG, err := suite.service.Get(pkg.ID)
 	should.Nil(err)
-	should.Equal("Saved package", pkgG.Name)
+	should.Equal("Saved package", pkgG.Name.EN)
 	should.Equal(suite.userId, pkgG.CreatorID)
 	should.Equal(12, int(pkgG.Discount))
 	should.Equal(3, len(pkgG.Products))
@@ -159,7 +161,7 @@ func (suite *packageServiceTestSuite) TestPackages() {
 	err = suite.service.Remove(pkg.ID)
 	should.Nil(err)
 
-	err = suite.service.Remove(gameB.DefPackageID)
+	err = suite.service.Remove(gameB.DefaultPackageID)
 	should.NotNil(err, "Try to remove default package")
 
 	err = suite.service.Remove(pkg.ID)

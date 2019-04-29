@@ -13,6 +13,7 @@ import (
 	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"strings"
@@ -31,13 +32,14 @@ var (
 	packageId       = "33333333-888a-481a-a831-cde7ff4e50b8"
 	packageGameId_1 = "029ce039-888a-481a-a831-cde7ff4e50b8"
 	packageGameId_2 = "4444e039-888a-481a-a831-cde7ff4e50b8"
- 	packageJson = `{
+	packageJson     = `{
   "id": "33333333-888a-481a-a831-cde7ff4e50b8",
   "createdAt": "1970-01-01T00:00:00Z",
   "sku": "",
-  "name": "Test_package",
+  "name": {"en": "Test_package"},
   "isUpgradeAllowed": false,
   "isEnabled": false,
+  "isDefault": false,
   "products": [
     {
       "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
@@ -47,9 +49,9 @@ var (
     }
   ],
   "media": {
-    "image": "",
-    "cover": "",
-    "thumb": ""
+    "image": {"en": ""},
+    "cover": {"en": ""},
+    "thumb": {"en": ""}
   },
   "discountPolicy": {
     "discount": 0,
@@ -74,9 +76,10 @@ var (
   "id": "33333333-888a-481a-a831-cde7ff4e50b8",
   "createdAt": "1970-01-01T00:00:00Z",
   "sku": "",
-  "name": "Test_package_UPD",
+  "name": {"en": "Test_package_UPD"},
   "isUpgradeAllowed": true,
   "isEnabled": true,
+  "isDefault": false,
   "products": [
     {
       "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
@@ -86,9 +89,9 @@ var (
     }
   ],
   "media": {
-    "image": "",
-    "cover": "",
-    "thumb": ""
+    "image": {"en": ""},
+    "cover": {"en": ""},
+    "thumb": {"en": ""}
   },
   "discountPolicy": {
     "discount": 0,
@@ -111,11 +114,10 @@ var (
 }`
 )
 
-
 type PackageRouterTestSuite struct {
 	suite.Suite
-	db     	*orm.Database
-	echo   	*echo.Echo
+	db   *orm.Database
+	echo *echo.Echo
 }
 
 func Test_PackageRouter(t *testing.T) {
@@ -142,10 +144,10 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 	vendorId, err := uuid.FromString(packageVendorId)
 	require.Nil(suite.T(), err, "Decode vendor uuid")
 	err = db.DB().Save(&model.Vendor{
-		ID:             vendorId,
-		Name:			"Vendor",
-		Domain3:		"domain",
-		ManagerID:		userId,
+		ID:        vendorId,
+		Name:      "Vendor",
+		Domain3:   "domain",
+		ManagerID: userId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
 
@@ -163,7 +165,7 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 		CreatorID:      userId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
-	
+
 	gameId_2, _ := uuid.FromString(packageGameId_2)
 	err = db.DB().Save(&model.Game{
 		ID:             gameId_2,
@@ -178,20 +180,20 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 		CreatorID:      userId,
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make game")
-	
+
 	pkgId, _ := uuid.FromString(packageId)
 	err = db.DB().Save(&model.Package{
 		Model: model.Model{
-			ID: pkgId,
+			ID:        pkgId,
 			CreatedAt: time.Unix(0, 0),
 		},
-		Name: "Test_package",
-		CreatorID: userId,
+		Name:             utils.LocalizedString{EN: "Test_package"},
+		CreatorID:        userId,
 		AllowedCountries: pq.StringArray{},
 		PackagePrices: model.PackagePrices{
-			Common: model.JSONB{"currency":"","NotifyRateJumps":false},
-			PreOrder: model.JSONB{"date":"","enabled":false},
-			Prices: []model.Price{},
+			Common:   model.JSONB{"currency": "", "NotifyRateJumps": false},
+			PreOrder: model.JSONB{"date": "", "enabled": false},
+			Prices:   []model.Price{},
 		},
 		VendorID: vendorId,
 	}).Error
@@ -279,13 +281,13 @@ func (suite *PackageRouterTestSuite) TestShouldCreatePackage() {
 	dto := packageDTO{}
 	err := json.Unmarshal(rec.Body.Bytes(), &dto)
 	should.Nil(err)
-	should.Equal("New_package_2", dto.Name)
+	should.Equal("New_package_2", dto.Name.EN)
 	should.Equal(1, len(dto.Products))
 	should.Equal(packageGameId_1, dto.Products[0].ID.String())
 	should.Equal("Test_game_1", dto.Products[0].Name)
 	should.Equal(model.ProductGame, model.ProductType(dto.Products[0].Type))
-	should.True(time.Now().Unix() - dto.CreatedAt.Unix() >= 0)
-	should.True(time.Now().Unix() - dto.CreatedAt.Unix() <= 5)
+	should.True(time.Now().Unix()-dto.CreatedAt.Unix() >= 0)
+	should.True(time.Now().Unix()-dto.CreatedAt.Unix() <= 5)
 }
 
 func (suite *PackageRouterTestSuite) TestShouldReturnPackageList() {
@@ -303,7 +305,7 @@ func (suite *PackageRouterTestSuite) TestShouldReturnPackageList() {
 	err := json.Unmarshal(rec.Body.Bytes(), &dto)
 	should.Nil(err)
 	should.Equal(len(dto), 1)
-	should.Equal("Test_package", dto[0].Name)
+	should.Equal("Test_package", dto[0].Name.EN)
 	should.Equal(packageId, dto[0].ID.String())
 }
 

@@ -7,14 +7,15 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
+	mutils "qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm/utils"
 	"strings"
 	"time"
 )
 
 type bundleService struct {
-	db *gorm.DB
-	gameService model.GameService
+	db             *gorm.DB
+	gameService    model.GameService
 	packageService model.PackageService
 }
 
@@ -50,10 +51,10 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, pac
 	}
 
 	newBundle := model.StoreBundle{
-		Model: model.Model{ID: uuid.NewV4()},
-		Sku: random.String(8, "123456789"),
-		Name: name,
-		VendorID: vendorId,
+		Model:     model.Model{ID: uuid.NewV4()},
+		Sku:       random.String(8, "123456789"),
+		Name:      mutils.LocalizedString{EN: name},
+		VendorID:  vendorId,
 		IsEnabled: false,
 		CreatorID: userId,
 	}
@@ -91,7 +92,7 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, pac
 	return bundleIfce.(*model.StoreBundle), nil
 }
 
-func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (result []model.StoreBundle, err error) {
+func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.StoreBundle, err error) {
 	orderBy := ""
 	orderBy = "created_at ASC"
 	if sort != "" {
@@ -125,7 +126,16 @@ func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, off
 		Offset(offset).
 		Find(&result).Error
 	if err != nil {
-		return nil, errors.Wrap(err, "Fetch store bundle list")
+		return 0, nil, errors.Wrap(err, "Fetch store bundle list")
+	}
+
+	err = p.db.
+		Model(model.StoreBundle{}).
+		Where(`vendor_id = ?`, vendorId).
+		Where(strings.Join(conds, " or "), vals...).
+		Count(&total).Error
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "Fetch store bundle total")
 	}
 
 	return

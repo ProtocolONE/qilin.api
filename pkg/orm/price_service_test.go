@@ -3,6 +3,7 @@ package orm
 import (
 	"net/http"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/test"
 	"testing"
 	"time"
@@ -21,7 +22,7 @@ type PriceServiceTestSuite struct {
 }
 
 var (
-	gameID = "029ce039-3333-481a-a831-cde7ff4e50b9"
+	gameID    = "029ce039-3333-481a-a831-cde7ff4e50b9"
 	packageID = "029ce039-888a-481a-a831-cde7ff4e50b9"
 )
 
@@ -59,8 +60,8 @@ func (suite *PriceServiceTestSuite) SetupTest() {
 
 	pkgId, _ := uuid.FromString(packageID)
 	err = db.DB().Save(&model.Package{
-		Model:          model.Model{ID: pkgId},
-		Name:           "Test_package_2",
+		Model: model.Model{ID: pkgId},
+		Name:  utils.LocalizedString{EN: "Test_package_2"},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make package")
 
@@ -85,8 +86,8 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 		ID: uuid.NewV4(),
 		PackagePrices: model.PackagePrices{
 			Common: model.JSONB{
-				"currency": "USD",
-				"price":    100.0,
+				"currency":        "USD",
+				"notifyRateJumps": false,
 			},
 			PreOrder: model.JSONB{
 				"date":    "2019-01-22T07:53:16Z",
@@ -108,7 +109,7 @@ func (suite *PriceServiceTestSuite) TestCreatePriceShouldChangeGameInDB() {
 	assert.NotNil(suite.T(), pkgFromDb, "Unable to get package: %v", id)
 	assert.Equal(suite.T(), pkg.ID, pkgFromDb.ID, "Incorrect Game ID from DB")
 	assert.Equal(suite.T(), pkg.Common["currency"], pkgFromDb.Common["currency"], "Incorrect Common from DB")
-	assert.Equal(suite.T(), pkg.Common["price"], pkgFromDb.Common["price"], "Incorrect Common from DB")
+	assert.Equal(suite.T(), pkg.Common["notifyRateJumps"], pkgFromDb.Common["notifyRateJumps"], "Incorrect Common from DB")
 	assert.Equal(suite.T(), pkg.PreOrder, pkgFromDb.PreOrder, "Incorrect PreOrder from DB")
 }
 

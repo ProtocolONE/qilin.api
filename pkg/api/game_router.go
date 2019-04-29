@@ -108,9 +108,9 @@ type (
 	GameDTO struct {
 		ID uuid.UUID `json:"id"`
 		BaseGameDTO
-		Genres GameGenreDTO     `json:"genres" validate:"required,dive"`
-		Tags   []int64          `json:"tags" validate:"required"`
-		DefPackageID uuid.UUID  `json:"defPackageId"`
+		Genres           GameGenreDTO `json:"genres" validate:"required,dive"`
+		Tags             []int64      `json:"tags" validate:"required"`
+		DefaultPackageID uuid.UUID    `json:"defaultPackageId"`
 	}
 
 	UpdateGameDTO struct {
@@ -225,8 +225,8 @@ func mapGameInfo(game *model.Game, service model.GameService) *GameDTO {
 			Main:     game.GenreMain,
 			Addition: game.GenreAddition,
 		},
-		Tags: game.Tags,
-		DefPackageID: game.DefPackageID,
+		Tags:             game.Tags,
+		DefaultPackageID: game.DefaultPackageID,
 	}
 }
 
@@ -268,7 +268,7 @@ func mapGameInfoBTO(game *UpdateGameDTO) *model.Game {
 }
 
 func InitGameRoutes(router *echo.Group, service model.GameService, userService model.UserService) (*GameRouter, error) {
-	Router := GameRouter{service,userService}
+	Router := GameRouter{service, userService}
 
 	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.VendorGameType, model.VendorDomain})
 	r.GET("/games", Router.GetList, nil)
@@ -330,7 +330,7 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 	localOffset := offset
 
 	//CURSOR solution
-	for len(dto) <= limit && shouldBreak == false{
+	for len(dto) <= limit && shouldBreak == false {
 		localLimit := limit - len(dto)
 
 		games, err := api.gameService.GetList(userId, vendorId, localOffset, localLimit, internalName, genre, releaseDate, sort, price)

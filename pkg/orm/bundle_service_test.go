@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"testing"
@@ -17,13 +18,13 @@ import (
 
 type bundleServiceTestSuite struct {
 	suite.Suite
-	db          *orm.Database
-	service     model.BundleService
-	packages    []uuid.UUID
-	games       []uuid.UUID
-	vendorId    uuid.UUID
-	extraGames  []*model.Game
-	userId		string
+	db         *orm.Database
+	service    model.BundleService
+	packages   []uuid.UUID
+	games      []uuid.UUID
+	vendorId   uuid.UUID
+	extraGames []*model.Game
+	userId     string
 }
 
 func Test_BundleService(t *testing.T) {
@@ -96,6 +97,7 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 	if err != nil {
 		suite.Fail("Unable to create game", "%v", err)
 	}
+
 	gameB, err := gameService.Create(user.ID, vendor.ID, "GameB")
 	if err != nil {
 		suite.Fail("Unable to create game", "%v", err)
@@ -118,9 +120,41 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 	if err != nil {
 		suite.Fail("Unable to create package", "%v", err)
 	}
-	pkgB, err := packageService.Create(vendor.ID, user.ID,"Mega package B", []uuid.UUID{gameB.ID})
+	pkgB, err := packageService.Create(vendor.ID, user.ID, "Mega package B", []uuid.UUID{gameB.ID})
 	if err != nil {
 		suite.Fail("Unable to create package", "%v", err)
+	}
+
+	priceService := orm.NewPriceService(db)
+	err = priceService.UpdateBase(pkgA.ID, &model.BasePrice{
+		PackagePrices: model.PackagePrices{
+			Common: model.JSONB{
+				"currency":        "USD",
+				"NotifyRateJumps": true,
+			},
+			PreOrder: model.JSONB{
+				"date":    "2019-01-22T07:53:16Z",
+				"enabled": false,
+			},
+		},
+	})
+	if err != nil {
+		suite.Fail("Error while update base game price", "%v", err)
+	}
+	err = priceService.Update(pkgA.ID, &model.Price{
+		Currency: "USD",
+		Price:    10.25,
+	})
+	if err != nil {
+		suite.Fail("Error while update game price", "%v", err)
+	}
+
+	err = priceService.Update(pkgB.ID, &model.Price{
+		Currency: "USD",
+		Price:    5,
+	})
+	if err != nil {
+		suite.Fail("Error while update game price", "%v", err)
 	}
 
 	suite.packages = []uuid.UUID{pkgA.ID, pkgB.ID}
@@ -140,47 +174,59 @@ func (suite *bundleServiceTestSuite) TearDownTest() {
 func (suite *bundleServiceTestSuite) TestBundles() {
 	should := require.New(suite.T())
 
-	bundle, err := suite.service.CreateStore(suite.vendorId, suite.userId,"Mega bundle", suite.packages)
+	bundle, err := suite.service.CreateStore(suite.vendorId, suite.userId, "Mega bundle", suite.packages)
 	should.Nil(err)
-	should.Equal("Mega bundle", bundle.Name)
+	should.Equal("Mega bundle", bundle.Name.EN)
 	should.Equal(suite.vendorId, bundle.VendorID)
 	should.Equal(2, len(bundle.Packages))
 	should.Equal(bundle.Packages[0].ID, suite.packages[0])
 
-	bundle2, err := suite.service.CreateStore(suite.vendorId, suite.userId,"Bundle Humble", suite.packages[0:1])
+	bundleGames, err := bundle.GetGames()
 	should.Nil(err)
-	should.Equal("Bundle Humble", bundle2.Name)
+	should.Len(bundleGames, 2)
+
+	should.Equal("Mega bundle", bundle.GetName().EN)
+	currency, price, err := bundle.GetPrice()
+	should.Nil(err)
+	should.Equal("USD", currency)
+	should.True(price-15.25 < 0.01)
+	should.True(price-15.25 > -0.01)
+
+	bundle2, err := suite.service.CreateStore(suite.vendorId, suite.userId, "Bundle Humble", suite.packages[0:1])
+	should.Nil(err)
+	should.Equal("Bundle Humble", bundle2.Name.EN)
 	should.Equal(suite.vendorId, bundle2.VendorID)
 	should.Equal(1, len(bundle2.Packages))
 	should.Equal(bundle2.Packages[0].ID, suite.packages[0])
 
-	bundleErr, err := suite.service.CreateStore(suite.vendorId, suite.userId,"Empty bundle", suite.packages[:0])
+	bundleErr, err := suite.service.CreateStore(suite.vendorId, suite.userId, "Empty bundle", suite.packages[:0])
 	should.NotNil(err)
 	should.Nil(bundleErr)
 
-	bundleErr, err = suite.service.CreateStore(suite.vendorId, suite.userId,"", suite.packages)
+	bundleErr, err = suite.service.CreateStore(suite.vendorId, suite.userId, "", suite.packages)
 	should.NotNil(err, "Empty name")
 	should.Nil(bundleErr)
 
-	bundleErr, err = suite.service.CreateStore(uuid.NamespaceDNS, suite.userId,"Error bundle", suite.packages)
+	bundleErr, err = suite.service.CreateStore(uuid.NamespaceDNS, suite.userId, "Error bundle", suite.packages)
 	should.NotNil(err, "Vendor not found")
 	should.Nil(bundleErr)
 
-	list, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 20)
+	total, list, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 20)
 	should.Nil(err)
+	should.Equal(2, total)
 	should.Equal(2, len(list))
-	should.Equal("Bundle Humble", list[0].Name)
-	should.Equal("Mega bundle", list[1].Name)
+	should.Equal("Bundle Humble", list[0].Name.EN)
+	should.Equal("Mega bundle", list[1].Name.EN)
 
-	list2, err := suite.service.GetStoreList(suite.vendorId, "", "+date", 1, 20)
+	total, list2, err := suite.service.GetStoreList(suite.vendorId, "", "+date", 1, 20)
 	should.Nil(err)
 	should.Equal(1, len(list2))
-	should.Equal("Bundle Humble", list2[0].Name)
+	should.Equal("Bundle Humble", list2[0].Name.EN)
 
-	list3, err := suite.service.GetStoreList(suite.vendorId, "", "-name", 0, 1)
+	total, list3, err := suite.service.GetStoreList(suite.vendorId, "", "-name", 0, 1)
 	should.Nil(err)
 	should.Equal(1, len(list3))
-	should.Equal("Mega bundle", list3[0].Name)
+	should.Equal("Mega bundle", list3[0].Name.EN)
 
 	bundle3, err := suite.service.Get(bundle.ID)
 	should.Nil(err)
@@ -189,7 +235,7 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.Len(b3_pkgs, 2)
 	should.Equal(b3_pkgs[0].ID, suite.packages[0])
 	should.Equal(b3_pkgs[1].ID, suite.packages[1])
-	should.Equal(bundle.Name, bundle3.GetName())
+	should.Equal(bundle.Name, *bundle3.GetName())
 	isIn_1, err := bundle3.IsContains(suite.games[0])
 	should.Nil(err)
 	should.Equal(true, isIn_1, "GameA inside bundle")
@@ -200,21 +246,21 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.Nil(err)
 	should.Equal(false, isNotIn, "Is not inside bundle")
 
-	bundle.Name = "Updated bundle"
+	bundle.Name = utils.LocalizedString{EN: "Updated bundle"}
 	bundle.IsEnabled = true
 	bundleUpd, err := suite.service.UpdateStore(bundle)
 	should.Nil(err)
 	should.NotNil(bundleUpd)
 	should.Equal(true, bundleUpd.IsEnabled)
-	should.Equal("Updated bundle", bundleUpd.Name)
+	should.Equal("Updated bundle", bundleUpd.Name.EN)
 
 	bundleErr, err = suite.service.UpdateStore(&model.StoreBundle{})
 	should.NotNil(err)
 	should.Nil(bundleErr)
 
 	err = suite.service.AddPackages(bundle.ID, []uuid.UUID{
-		suite.extraGames[0].DefPackageID,
-		suite.extraGames[1].DefPackageID,
+		suite.extraGames[0].DefaultPackageID,
+		suite.extraGames[1].DefaultPackageID,
 	})
 	should.Nil(err, "Add packages")
 
@@ -227,8 +273,8 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.Len(bundle.Packages, 4, "Bundle must have 4 packages")
 	should.Equal(bundle.Packages[0].ID, suite.packages[0])
 	should.Equal(bundle.Packages[1].ID, suite.packages[1])
-	should.Equal(bundle.Packages[2].ID, suite.extraGames[0].DefPackageID)
-	should.Equal(bundle.Packages[3].ID, suite.extraGames[1].DefPackageID)
+	should.Equal(bundle.Packages[2].ID, suite.extraGames[0].DefaultPackageID)
+	should.Equal(bundle.Packages[3].ID, suite.extraGames[1].DefaultPackageID)
 
 	err = suite.service.RemovePackages(bundle.ID, []uuid.UUID{suite.packages[1]})
 	should.Nil(err, "Remove package")
@@ -241,17 +287,18 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.Equal(true, ok, "Bundle must be for store")
 	should.Len(bundle.Packages, 3, "Bundle must have 3 packages")
 	should.Equal(bundle.Packages[0].ID, suite.packages[0])
-	should.Equal(bundle.Packages[1].ID, suite.extraGames[0].DefPackageID)
-	should.Equal(bundle.Packages[2].ID, suite.extraGames[1].DefPackageID)
+	should.Equal(bundle.Packages[1].ID, suite.extraGames[0].DefaultPackageID)
+	should.Equal(bundle.Packages[2].ID, suite.extraGames[1].DefaultPackageID)
 
 	// Removing bundle and tries do some actions with it
 	err = suite.service.Delete(bundle.ID)
 	should.Nil(err, "Remove bundle")
 
-	list, err = suite.service.GetStoreList(suite.vendorId, "", "+date", 0, 20)
+	total, list, err = suite.service.GetStoreList(suite.vendorId, "", "+date", 0, 20)
 	should.Nil(err)
+	should.Equal(1, total)
 	should.Equal(1, len(list))
-	should.Equal("Bundle Humble", list[0].Name)
+	should.Equal("Bundle Humble", list[0].Name.EN)
 
 	bundleErrIface, err = suite.service.Get(bundle.ID)
 	should.NotNil(err)

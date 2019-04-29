@@ -7,7 +7,6 @@ import (
 )
 
 type gameService struct {
-
 }
 
 func (gameService) GetOwnerForGame(gameId uuid.UUID) (string, error) {

@@ -8,8 +8,8 @@ import (
 type ProductType string
 
 const (
-	ProductGame     ProductType = "games"
-	ProductDLC      ProductType = "dlcs"
+	ProductGame ProductType = "games"
+	ProductDLC  ProductType = "dlcs"
 )
 
 type (
@@ -22,8 +22,8 @@ type (
 
 	// Model for Game and DLC generalization into Product
 	ProductEntry struct {
-		EntryID     uuid.UUID       `gorm:"type:uuid; primary_key"`
-		EntryType   ProductType
+		EntryID   uuid.UUID `gorm:"type:uuid; primary_key"`
+		EntryType ProductType
 	}
 )
 

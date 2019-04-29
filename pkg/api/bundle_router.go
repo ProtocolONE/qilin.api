@@ -9,6 +9,7 @@ import (
 	"qilin-api/pkg/api/context"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"strconv"
 	"strings"
@@ -21,51 +22,51 @@ type (
 	}
 
 	createBundleDTO struct {
-		Name        string              `json:"name" validate:"required"`
-		Packages    []uuid.UUID         `json:"packages" validate:"required"`
+		Name     string      `json:"name" validate:"required"`
+		Packages []uuid.UUID `json:"packages" validate:"required"`
 	}
 
 	bundleDiscountPolicyDTO struct {
-		Discount    uint                `json:"discount"`
-		BuyOption   string     			`json:"buyOption"`
+		Discount  uint   `json:"discount"`
+		BuyOption string `json:"buyOption"`
 	}
 
 	bundleRegionalRestrinctionsDTO struct {
-		AllowedCountries    []string    `json:"allowedCountries"`
+		AllowedCountries []string `json:"allowedCountries"`
 	}
 
 	storeBundleDTO struct {
-		ID                      uuid.UUID                       `json:"id"`
-		CreatedAt               time.Time                       `json:"createdAt"`
-		Sku                     string                          `json:"sku" validate:"required"`
-		Name                    string                          `json:"name" validate:"required"`
-		IsUpgradeAllowed        bool                            `json:"isUpgradeAllowed"`
-		IsEnabled               bool                            `json:"isEnabled"`
-		DiscountPolicy          bundleDiscountPolicyDTO         `json:"discountPolicy" validate:"required,dive"`
-		RegionalRestrinctions   bundleRegionalRestrinctionsDTO  `json:"regionalRestrinctions" validate:"required,dive"`
-		Packages                []*packageDTO                   `json:"packages" validate:"-"`
+		ID                    uuid.UUID                      `json:"id"`
+		CreatedAt             time.Time                      `json:"createdAt"`
+		Sku                   string                         `json:"sku" validate:"required"`
+		Name                  utils.LocalizedString          `json:"name" validate:"dive,required"`
+		IsUpgradeAllowed      bool                           `json:"isUpgradeAllowed"`
+		IsEnabled             bool                           `json:"isEnabled"`
+		DiscountPolicy        bundleDiscountPolicyDTO        `json:"discountPolicy" validate:"required,dive"`
+		RegionalRestrinctions bundleRegionalRestrinctionsDTO `json:"regionalRestrinctions" validate:"required,dive"`
+		Packages              []*packageDTO                  `json:"packages" validate:"-"`
 	}
 
 	storeBundleItemDTO struct {
-		ID                      uuid.UUID                       `json:"id"`
-		CreatedAt               time.Time                       `json:"createdAt"`
-		Sku                     string                          `json:"sku" validate:"required"`
-		Name                    string                          `json:"name" validate:"required"`
-		IsUpgradeAllowed        bool                            `json:"isUpgradeAllowed"`
-		IsEnabled               bool                            `json:"isEnabled"`
+		ID               uuid.UUID             `json:"id"`
+		CreatedAt        time.Time             `json:"createdAt"`
+		Sku              string                `json:"sku" validate:"required"`
+		Name             utils.LocalizedString `json:"name" validate:"required"`
+		IsUpgradeAllowed bool                  `json:"isUpgradeAllowed"`
+		IsEnabled        bool                  `json:"isEnabled"`
 	}
 )
 
 func mapStoreBundleDto(bundle *model.StoreBundle) (dto *storeBundleDTO, err error) {
 	dto = &storeBundleDTO{
-		ID: bundle.ID,
-		CreatedAt: bundle.CreatedAt,
-		Sku: bundle.Sku,
-		Name: bundle.Name,
+		ID:               bundle.ID,
+		CreatedAt:        bundle.CreatedAt,
+		Sku:              bundle.Sku,
+		Name:             bundle.Name,
 		IsUpgradeAllowed: bundle.IsUpgradeAllowed,
-		IsEnabled: bundle.IsEnabled,
+		IsEnabled:        bundle.IsEnabled,
 		DiscountPolicy: bundleDiscountPolicyDTO{
-			Discount: bundle.Discount,
+			Discount:  bundle.Discount,
 			BuyOption: bundle.DiscountBuyOpt.String(),
 		},
 		RegionalRestrinctions: bundleRegionalRestrinctionsDTO{
@@ -84,24 +85,24 @@ func mapStoreBundleDto(bundle *model.StoreBundle) (dto *storeBundleDTO, err erro
 
 func mapStoreBundleItemDto(bundle *model.StoreBundle) *storeBundleItemDTO {
 	return &storeBundleItemDTO{
-		ID: bundle.ID,
-		CreatedAt: bundle.CreatedAt,
-		Sku: bundle.Sku,
-		Name: bundle.Name,
+		ID:               bundle.ID,
+		CreatedAt:        bundle.CreatedAt,
+		Sku:              bundle.Sku,
+		Name:             bundle.Name,
 		IsUpgradeAllowed: bundle.IsUpgradeAllowed,
-		IsEnabled: bundle.IsEnabled,
+		IsEnabled:        bundle.IsEnabled,
 	}
 }
 
 func mapStoreBundleModel(bundle *storeBundleDTO) *model.StoreBundle {
 	return &model.StoreBundle{
-		Model: model.Model{ID: bundle.ID},
-		Sku: bundle.Sku,
-		Name: bundle.Name,
+		Model:            model.Model{ID: bundle.ID},
+		Sku:              bundle.Sku,
+		Name:             bundle.Name,
 		IsUpgradeAllowed: bundle.IsUpgradeAllowed,
-		IsEnabled: bundle.IsEnabled,
-		Discount: bundle.DiscountPolicy.Discount,
-		DiscountBuyOpt: model.NewBuyOption(bundle.DiscountPolicy.BuyOption),
+		IsEnabled:        bundle.IsEnabled,
+		Discount:         bundle.DiscountPolicy.Discount,
+		DiscountBuyOpt:   model.NewBuyOption(bundle.DiscountPolicy.BuyOption),
 		AllowedCountries: bundle.RegionalRestrinctions.AllowedCountries,
 	}
 }
@@ -183,7 +184,7 @@ func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 	}
 	query := ctx.QueryParam("query")
 	sort := ctx.QueryParam("sort")
-	bundles, err := router.service.GetStoreList(vendorId, query, sort, offset, limit)
+	total, bundles, err := router.service.GetStoreList(vendorId, query, sort, offset, limit)
 	if err != nil {
 		return err
 	}
@@ -191,6 +192,7 @@ func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 	for _, bundle := range bundles {
 		dto = append(dto, mapStoreBundleItemDto(&bundle))
 	}
+	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", total))
 	return ctx.JSON(http.StatusOK, dto)
 }
 

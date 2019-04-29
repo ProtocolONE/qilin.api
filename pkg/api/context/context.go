@@ -31,4 +31,3 @@ func GetLang(ctx echo.Context) (lang string) {
 	}
 	return
 }
-

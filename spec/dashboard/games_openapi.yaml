@@ -2271,6 +2271,9 @@ components:
         displayRemainingTime:
           type: "boolean"
           default: false
+        defaultPackageId:
+          type: "string"
+          format: "uuid"
         features:
           $ref: "#/components/schemas/Features"
         platforms:

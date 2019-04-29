@@ -7,18 +7,19 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"strings"
 	"time"
 )
 
 type packageService struct {
-	db *gorm.DB
+	db          *gorm.DB
 	gameService model.GameService
 }
 
 func NewPackageService(db *Database, gameService model.GameService) (*packageService, error) {
 	return &packageService{
-		db: db.database,
+		db:          db.database,
 		gameService: gameService,
 	}, nil
 }
@@ -28,6 +29,7 @@ func createPackage(
 	transaction *gorm.DB,
 	packageId,
 	vendorId uuid.UUID,
+	isDefault bool,
 	userId,
 	name string,
 	prods []uuid.UUID) (err error) {
@@ -37,15 +39,16 @@ func createPackage(
 	}
 
 	newPack := model.Package{
-		Model: model.Model{ID: packageId},
-		Sku: random.String(8, "123456789"),
-		Name: name,
-		VendorID: vendorId,
+		Model:     model.Model{ID: packageId},
+		Sku:       random.String(8, "123456789"),
+		Name:      utils.LocalizedString{EN: name},
+		VendorID:  vendorId,
 		CreatorID: userId,
+		IsDefault: isDefault,
 		PackagePrices: model.PackagePrices{
 			Common: model.JSONB{
-				"currency":         "USD",
-				"notifyRateJumps":  false,
+				"currency":        "USD",
+				"notifyRateJumps": false,
 			},
 			PreOrder: model.JSONB{
 				"date":    time.Now().String(),
@@ -62,7 +65,7 @@ func createPackage(
 		err = transaction.Create(model.PackageProduct{
 			PackageID: packageId,
 			ProductID: productId,
-			Position: index + 1,
+			Position:  index + 1,
 		}).Error
 		if err != nil {
 			return errors.Wrap(err, "While append products into package")
@@ -122,7 +125,7 @@ func (p *packageService) Create(vendorId uuid.UUID, userId, name string, prods [
 			transaction.Rollback()
 		}
 	}()
-	err = createPackage(transaction, pkgId, vendorId, userId, name, prods)
+	err = createPackage(transaction, pkgId, vendorId, false, userId, name, prods)
 	if err != nil {
 		transaction.Rollback()
 		return nil, err
@@ -171,7 +174,7 @@ func (p *packageService) AddProducts(packageId uuid.UUID, prods []uuid.UUID) (re
 			err = transaction.Create(&model.PackageProduct{
 				PackageID: packageId,
 				ProductID: prodId,
-				Position: position,
+				Position:  position,
 			}).Error
 			position += 1
 			if err != nil {
@@ -205,7 +208,7 @@ func (p *packageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) 
 	return p.Get(packageId)
 }
 
-func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err error)  {
+func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err error) {
 
 	result, err = p.findPackageOrError(packageId)
 	if err != nil {
@@ -237,8 +240,7 @@ func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err er
 					return nil, errors.Wrap(err, "Fetch game for package")
 				}
 				prods = append(prods, game)
-			} else
-			if prod.EntryType == model.ProductDLC {
+			} else if prod.EntryType == model.ProductDLC {
 				//...
 			}
 		}
@@ -255,7 +257,7 @@ func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err er
 	return
 }
 
-func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int) (result []model.Package, err error) {
+func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.Package, err error) {
 
 	orderBy := ""
 	orderBy = "created_at ASC"
@@ -294,7 +296,16 @@ func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset,
 		Offset(offset).
 		Find(&result).Error
 	if err != nil {
-		return nil, errors.Wrap(err, "Fetch package list")
+		return 0, nil, errors.Wrap(err, "Fetch package list")
+	}
+
+	err = p.db.
+		Model(model.Package{}).
+		Where(`vendor_id = ?`, vendorId).
+		Where(strings.Join(conds, " or "), vals...).
+		Count(&total).Error
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "Fetch package total")
 	}
 
 	return
@@ -328,7 +339,7 @@ func (p *packageService) Remove(packageId uuid.UUID) (err error) {
 	}
 
 	found := 0
-	err = p.db.Model(model.Game{}).Where("def_package_id = ?", packageId).Count(&found).Error
+	err = p.db.Model(model.Game{}).Where("default_package_id = ?", packageId).Count(&found).Error
 	if err != nil {
 		return errors.Wrap(err, "Search for default package")
 	}

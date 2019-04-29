@@ -5,8 +5,8 @@ import (
 	"qilin-api/pkg/model"
 )
 
-type packageFactory struct {}
-type packageService struct {}
+type packageFactory struct{}
+type packageService struct{}
 
 func NewPackageService() (model.PackageService, error) {
 	return &packageService{}, nil
@@ -28,12 +28,12 @@ func (*packageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) (r
 	return &model.Package{}, nil
 }
 
-func (*packageService) Get(packageId uuid.UUID) (result *model.Package, err error)  {
+func (*packageService) Get(packageId uuid.UUID) (result *model.Package, err error) {
 	return &model.Package{}, nil
 }
 
-func (*packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int) (result []model.Package, err error) {
-	return []model.Package{}, nil
+func (*packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.Package, err error) {
+	return 0, []model.Package{}, nil
 }
 
 func (*packageService) Update(pkg *model.Package) (result *model.Package, err error) {

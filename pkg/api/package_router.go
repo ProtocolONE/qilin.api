@@ -19,64 +19,66 @@ import (
 
 type (
 	packageRouter struct {
-		service model.PackageService
+		service         model.PackageService
 		productsService model.ProductService
 	}
 
 	createPackageDTO struct {
-		Name        string              `json:"name" validate:"required"`
-		Products    []uuid.UUID         `json:"products" validate:"required"`
+		Name     string      `json:"name" validate:"required"`
+		Products []uuid.UUID `json:"products" validate:"required"`
 	}
 
 	packageMediaDTO struct {
-		Image       string              `json:"image"`
-		Cover       string              `json:"cover"`
-		Thumb       string              `json:"thumb"`
+		Image utils.LocalizedString `json:"image" validate:"dive"`
+		Cover utils.LocalizedString `json:"cover" validate:"dive"`
+		Thumb utils.LocalizedString `json:"thumb" validate:"dive"`
 	}
 
 	packageDiscountPolicyDTO struct {
-		Discount    uint                `json:"discount"`
-		BuyOption   string     			`json:"buyOption"`
+		Discount  uint   `json:"discount"`
+		BuyOption string `json:"buyOption"`
 	}
 
 	packageRegionalRestrinctionsDTO struct {
-		AllowedCountries    []string    `json:"allowedCountries"`
+		AllowedCountries []string `json:"allowedCountries"`
 	}
 
 	productDTO struct {
-		ID          uuid.UUID           	`json:"id" validate:"required"`
-		Name        string              	`json:"name"`
-		Type        string              	`json:"type" validate:"required"`
-		Image       *utils.LocalizedString  `json:"image" validate:"dive"`
+		ID    uuid.UUID              `json:"id" validate:"required"`
+		Name  string                 `json:"name"`
+		Type  string                 `json:"type" validate:"required"`
+		Image *utils.LocalizedString `json:"image" validate:"dive"`
 	}
 
 	packageDTO struct {
-		ID                      uuid.UUID                            `json:"id"`
-		CreatedAt               time.Time                            `json:"createdAt"`
-		Sku                     string                               `json:"sku"`
-		Name                    string                               `json:"name"`
-		IsUpgradeAllowed        bool                                 `json:"isUpgradeAllowed"`
-		IsEnabled               bool                                 `json:"isEnabled"`
-		Products                []productDTO                         `json:"products" validate:"dive"`
-		Media                   packageMediaDTO                      `json:"media" validate:"required,dive"`
-		DiscountPolicy          packageDiscountPolicyDTO             `json:"discountPolicy" validate:"required,dive"`
-		RegionalRestrinctions   packageRegionalRestrinctionsDTO      `json:"regionalRestrinctions" validate:"required,dive"`
-		Commercial              pricesDTO                            `json:"commercial" validate:"-"`
+		ID                    uuid.UUID                       `json:"id"`
+		CreatedAt             time.Time                       `json:"createdAt"`
+		Sku                   string                          `json:"sku"`
+		Name                  utils.LocalizedString           `json:"name" validate:"dive"`
+		IsUpgradeAllowed      bool                            `json:"isUpgradeAllowed"`
+		IsEnabled             bool                            `json:"isEnabled"`
+		IsDefault             bool                            `json:"isDefault"`
+		Products              []productDTO                    `json:"products" validate:"dive"`
+		Media                 packageMediaDTO                 `json:"media" validate:"required,dive"`
+		DiscountPolicy        packageDiscountPolicyDTO        `json:"discountPolicy" validate:"required,dive"`
+		RegionalRestrinctions packageRegionalRestrinctionsDTO `json:"regionalRestrinctions" validate:"required,dive"`
+		Commercial            pricesDTO                       `json:"commercial" validate:"-"`
 	}
 
 	packageItemDTO struct {
-		ID                      uuid.UUID                            `json:"id"`
-		CreatedAt               time.Time                            `json:"createdAt"`
-		Sku                     string                               `json:"sku"`
-		Name                    string                               `json:"name"`
-		IsEnabled               bool                                 `json:"isEnabled"`
-		Media                   packageMediaDTO                      `json:"media" validate:"required,dive"`
+		ID        uuid.UUID             `json:"id"`
+		CreatedAt time.Time             `json:"createdAt"`
+		Sku       string                `json:"sku"`
+		Name      utils.LocalizedString `json:"name"`
+		IsEnabled bool                  `json:"isEnabled"`
+		IsDefault bool                  `json:"isDefault"`
+		Media     packageMediaDTO       `json:"media" validate:"required,dive"`
 	}
 )
 
 func InitPackageRouter(group *echo.Group, service model.PackageService, productService model.ProductService) (router *packageRouter, err error) {
 	router = &packageRouter{
-		service: service,
+		service:         service,
 		productsService: productService,
 	}
 
@@ -104,10 +106,10 @@ func (router *packageRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) 
 
 func mapPackageItemDto(pkg *model.Package) *packageItemDTO {
 	return &packageItemDTO{
-		ID: pkg.ID,
+		ID:        pkg.ID,
 		CreatedAt: pkg.CreatedAt,
-		Sku: pkg.Sku,
-		Name: pkg.Name,
+		Sku:       pkg.Sku,
+		Name:      pkg.Name,
 		IsEnabled: pkg.IsEnabled,
 		Media: packageMediaDTO{
 			Image: pkg.Image,
@@ -119,19 +121,20 @@ func mapPackageItemDto(pkg *model.Package) *packageItemDTO {
 
 func mapPackageDto(pkg *model.Package) (dto *packageDTO, err error) {
 	dto = &packageDTO{
-		ID: pkg.ID,
-		CreatedAt: pkg.CreatedAt,
-		Sku: pkg.Sku,
-		Name: pkg.Name,
+		ID:               pkg.ID,
+		CreatedAt:        pkg.CreatedAt,
+		Sku:              pkg.Sku,
+		Name:             pkg.Name,
 		IsUpgradeAllowed: pkg.IsUpgradeAllowed,
-		IsEnabled: pkg.IsEnabled,
+		IsEnabled:        pkg.IsEnabled,
+		IsDefault:        pkg.IsDefault,
 		Media: packageMediaDTO{
 			Image: pkg.Image,
 			Cover: pkg.ImageCover,
 			Thumb: pkg.ImageThumb,
 		},
 		DiscountPolicy: packageDiscountPolicyDTO{
-			Discount: pkg.Discount,
+			Discount:  pkg.Discount,
 			BuyOption: pkg.DiscountBuyOpt.String(),
 		},
 		RegionalRestrinctions: packageRegionalRestrinctionsDTO{
@@ -140,9 +143,9 @@ func mapPackageDto(pkg *model.Package) (dto *packageDTO, err error) {
 	}
 	for _, p := range pkg.Products {
 		dto.Products = append(dto.Products, productDTO{
-			ID: p.GetID(),
-			Name: p.GetName(),
-			Type: string(p.GetType()),
+			ID:    p.GetID(),
+			Name:  p.GetName(),
+			Type:  string(p.GetType()),
 			Image: p.GetImage(),
 		})
 	}
@@ -155,16 +158,17 @@ func mapPackageDto(pkg *model.Package) (dto *packageDTO, err error) {
 
 func mapPackageModel(dto *packageDTO) *model.Package {
 	return &model.Package{
-		Model: model.Model{ID: dto.ID},
-		Sku: dto.Sku,
-		Name: dto.Name,
+		Model:            model.Model{ID: dto.ID},
+		Sku:              dto.Sku,
+		Name:             dto.Name,
 		IsUpgradeAllowed: dto.IsUpgradeAllowed,
-		IsEnabled: dto.IsEnabled,
-		Image: dto.Media.Image,
-		ImageCover: dto.Media.Cover,
-		ImageThumb: dto.Media.Thumb,
-		Discount: dto.DiscountPolicy.Discount,
-		DiscountBuyOpt: model.NewBuyOption(dto.DiscountPolicy.BuyOption),
+		IsEnabled:        dto.IsEnabled,
+		// IsDefault:        dto.IsDefault, -- read only
+		Image:            dto.Media.Image,
+		ImageCover:       dto.Media.Cover,
+		ImageThumb:       dto.Media.Thumb,
+		Discount:         dto.DiscountPolicy.Discount,
+		DiscountBuyOpt:   model.NewBuyOption(dto.DiscountPolicy.BuyOption),
 		AllowedCountries: dto.RegionalRestrinctions.AllowedCountries,
 	}
 }
@@ -310,7 +314,7 @@ func (router *packageRouter) GetList(ctx echo.Context) (err error) {
 	}
 	query := ctx.QueryParam("query")
 	sort := ctx.QueryParam("sort")
-	packages, err := router.service.GetList(vendorId, query, sort, offset, limit)
+	total, packages, err := router.service.GetList(vendorId, query, sort, offset, limit)
 	if err != nil {
 		return err
 	}
@@ -318,6 +322,7 @@ func (router *packageRouter) GetList(ctx echo.Context) (err error) {
 	for _, pkg := range packages {
 		dto = append(dto, mapPackageItemDto(&pkg))
 	}
+	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", total))
 	return ctx.JSON(http.StatusOK, dto)
 }
 

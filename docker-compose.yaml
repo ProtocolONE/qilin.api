@@ -1,89 +1,1 @@
-version: "3.6"
-
-services:
-  centrifugo:
-    image: centrifugo/centrifugo:latest
-    environment:
-      - CENTRIFUGO_SECRET=secret
-      - CENTRIFUGO_ADMIN_PASSWORD=admin
-      - CENTRIFUGO_ADMIN_SECRET=secret
-    tty: true
-    command: centrifugo --admin
-    ports:
-      - "8000:8000"
-    networks:
-      - p1devnet
-
-  qilin-redis:
-    image: redis:5.0.3
-    container_name: qilin-redis
-    restart: unless-stopped
-    networks:
-      - p1devnet
-    ports: 
-      - "6379:6379"
-      - "6380:6380"
-
-  qilinapi-postgres:
-    image: postgres:10.5
-    container_name: qilinapi-postgres
-    restart: unless-stopped
-    networks: 
-    - p1devnet
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./etc/init.sql:/docker-entrypoint-initdb.d/10-init.sql
-    environment:
-      POSTGRES_PASSWORD: postgres
-
-  qilinapi-pgadmin4:
-    image: dpage/pgadmin4
-    container_name: qilinapi-pgadmin4
-    restart: unless-stopped
-    networks: 
-    - p1devnet
-    ports:
-      - "4050:80"
-    depends_on:
-      - qilinapi-postgres
-    environment:
-      PGADMIN_DEFAULT_EMAIL: pgadmin@test.local
-      PGADMIN_DEFAULT_PASSWORD: 123
-    logging:
-      driver: none
-
-  qilinapi:
-    container_name: qilinapi
-    image: golang:1.11.5-stretch
-    depends_on:
-      - qilinapi-postgres
-      - qilin-redis
-    ports:
-      - "3001:3001"
-    networks: 
-    - p1devnet
-    volumes:
-      - .:/go/src/qilin-api
-      - $GOPATH/pkg/mod:/go/pkg/mod
-    working_dir: /go/src/qilin-api
-    command: go run main.go
-    environment:
-      - GO111MODULE=on
-      - QILINAPI_ENFORCER_HOST=qilin-redis
-      - QILINAPI_SERVER_PORT=3001
-      - QILINAPI_SERVER_ALLOW_ORIGINS=http://localhost:8080
-      - QILINAPI_SERVER_DEBUG=true
-      - QILINAPI_SERVER_ALLOW_CREDENTIALS=true
-      - QILINAPI_DATABASE_DSN=postgres://postgres:postgres@qilinapi-postgres:5432/qilin?sslmode=disable
-      - QILINAPI_DATABASE_DEBUG=true
-      - QILINAPI_LOG_LEVEL=debug
-      - QILINAPI_NOTIFIER_API_KEY=secret
-      - QILINAPI_NOTIFIER_SECRET=secret
-      - QILINAPI_AUTH1_ISSUER=auth1_issuer
-      - QILINAPI_AUTH1_CLIENTID=auth1_client_id
-      - QILINAPI_AUTH1_CLIENTSECRET=auth1_client_secret
-
-networks:
-  p1devnet:
-    external: true      
+version: "3.6"services:  centrifugo:    image: centrifugo/centrifugo:latest    environment:      - CENTRIFUGO_SECRET=secret      - CENTRIFUGO_ADMIN_PASSWORD=admin      - CENTRIFUGO_ADMIN_SECRET=secret    tty: true    command: centrifugo --admin    ports:      - "8000:8000"    networks:      - p1devnet  qilin-redis:    image: redis:5.0.3    container_name: qilin-redis    restart: unless-stopped    networks:      - p1devnet    ports:       - "6379:6379"      - "6380:6380"  qilinapi-postgres:    image: postgres:10.5    container_name: qilinapi-postgres    restart: unless-stopped    networks:     - p1devnet    ports:      - "5432:5432"    volumes:      - ./etc/init.sql:/docker-entrypoint-initdb.d/10-init.sql    environment:      POSTGRES_PASSWORD: postgres  qilinapi-pgadmin4:    image: dpage/pgadmin4    container_name: qilinapi-pgadmin4    restart: unless-stopped    networks:     - p1devnet    ports:      - "4050:80"    depends_on:      - qilinapi-postgres    environment:      PGADMIN_DEFAULT_EMAIL: pgadmin@test.local      PGADMIN_DEFAULT_PASSWORD: 123    logging:      driver: none  qilinapi:    container_name: qilinapi    image: golang:1.11.5-stretch    depends_on:      - qilinapi-postgres      - qilin-redis    ports:      - "3001:3001"    networks:     - p1devnet    volumes:      - .:/go/src/qilin-api      - $GOPATH/pkg/mod:/go/pkg/mod    working_dir: /go/src/qilin-api    command: go run main.go    environment:      - GO111MODULE=on      - QILINAPI_ENFORCER_HOST=qilin-redis      - QILINAPI_SERVER_PORT=3001      - QILINAPI_SERVER_ALLOW_ORIGINS=http://127.0.0.1      - QILINAPI_SERVER_DEBUG=true      - QILINAPI_SERVER_ALLOW_CREDENTIALS=true      - QILINAPI_DATABASE_DSN=postgres://postgres:postgres@qilinapi-postgres:5432/qilin?sslmode=disable      - QILINAPI_DATABASE_DEBUG=true      - QILINAPI_LOG_LEVEL=debug      - QILINAPI_NOTIFIER_API_KEY=secret      - QILINAPI_NOTIFIER_SECRET=secret      - QILINAPI_AUTH1_ISSUER=${QILINAPI_AUTH1_ISSUER}      - QILINAPI_AUTH1_CLIENTID=${QILINAPI_AUTH1_CLIENTID}      - QILINAPI_AUTH1_CLIENTSECRET=${QILINAPI_AUTH1_CLIENTSECRET}networks:  p1devnet:    external: true      

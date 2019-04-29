@@ -6,7 +6,6 @@ import (
 )
 
 type bundleService struct {
-
 }
 
 func NewBundleService() (*bundleService, error) {
@@ -17,8 +16,8 @@ func (*bundleService) CreateStore(vendorId uuid.UUID, userId, name string, packa
 	return &model.StoreBundle{}, nil
 }
 
-func (*bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (result []model.StoreBundle, err error) {
-	return []model.StoreBundle{}, nil
+func (*bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.StoreBundle, err error) {
+	return 0, []model.StoreBundle{}, nil
 }
 
 func (*bundleService) Get(bundleId uuid.UUID) (bundle model.Bundle, err error) {
@@ -37,6 +36,6 @@ func (p *bundleService) AddPackages(bundleId uuid.UUID, packageIds []uuid.UUID) 
 	return nil
 }
 
-func (p *bundleService) RemovePackages(bundleId uuid.UUID, packages []uuid.UUID) (err error)  {
+func (p *bundleService) RemovePackages(bundleId uuid.UUID, packages []uuid.UUID) (err error) {
 	return nil
 }

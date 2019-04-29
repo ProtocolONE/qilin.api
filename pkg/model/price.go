@@ -1,11 +1,9 @@
 package model
 
 import (
-	"time"
-
 	"github.com/jinzhu/gorm"
-
 	uuid "github.com/satori/go.uuid"
+	"time"
 )
 
 type PackagePrices struct {
@@ -16,9 +14,9 @@ type PackagePrices struct {
 }
 
 type BasePrice struct {
-	ID              uuid.UUID   `gorm:"type:uuid; primary_key"`
-	UpdatedAt       *time.Time
-	PackagePrices               `field:"extend"`
+	ID            uuid.UUID `gorm:"type:uuid; primary_key"`
+	UpdatedAt     *time.Time
+	PackagePrices `field:"extend"`
 }
 
 type Price struct {
@@ -28,7 +26,7 @@ type Price struct {
 
 	Currency string
 	Vat      int32
-	Price    float32
+	Price    float32 `gorm:"type:decimal(10,2)"`
 }
 
 //TableName is HACK method for merging this model with "games" table

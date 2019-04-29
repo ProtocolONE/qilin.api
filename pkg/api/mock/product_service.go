@@ -5,7 +5,7 @@ import (
 	"qilin-api/pkg/model"
 )
 
-type productService struct {}
+type productService struct{}
 
 func NewProductService() (model.ProductService, error) {
 	return &productService{}, nil

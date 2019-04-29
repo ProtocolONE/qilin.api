@@ -11,7 +11,7 @@ import (
 
 // VendorService is service to interact with database and Vendor object.
 type VendorService struct {
-	db *gorm.DB
+	db                *gorm.DB
 	membershipService model.MembershipService
 }
 
@@ -137,4 +137,3 @@ func (p *VendorService) GetAll(limit, offset int) (vendors []*model.Vendor, err 
 
 	return vendors, err
 }
-

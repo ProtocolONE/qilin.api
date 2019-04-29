@@ -597,22 +597,18 @@ components:
           type: string
           description: "Store number"
         name:
-          type: string
-          example: "Buy Poly Bridge Deluxe Edition"
+          $ref: '#/components/schemas/LocalizedString'
         isEnabled:
           type: boolean
         media:
           type: object
           properties:
             image:
-              type: string
-              format: uri
+              $ref: '#/components/schemas/LocalizedString'
             cover:
-              type: string
-              format: uri
+              $ref: '#/components/schemas/LocalizedString'
             thumb:
-              type: string
-              format: uri
+              $ref: '#/components/schemas/LocalizedString'
 
     Product:
       type: object
@@ -645,8 +641,7 @@ components:
           type: string
           description: "Store number"
         name:
-          type: string
-          example: "Buy Poly Bridge Deluxe Edition"
+          $ref: '#/components/schemas/LocalizedString'
         isUpgradeAllowed:
           type: boolean
           description: "Allowed to upgrade already bought package"
@@ -662,14 +657,11 @@ components:
           type: object
           properties:
             image:
-              type: string
-              format: uri
+              $ref: '#/components/schemas/LocalizedString'
             cover:
-              type: string
-              format: uri
+              $ref: '#/components/schemas/LocalizedString'
             thumb:
-              type: string
-              format: uri
+              $ref: '#/components/schemas/LocalizedString'
         discountPolicy:
           type: object
           properties:
@@ -707,8 +699,7 @@ components:
           type: string
           description: "Store number"
         name:
-          type: string
-          example: " Just Cause Collection"
+          $ref: '#/components/schemas/LocalizedString'
         isUpgradeAllowed:
           type: boolean
           description: "Allowed to upgrade already bought package in bundle"

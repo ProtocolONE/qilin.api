@@ -154,7 +154,6 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 	item.ID = uuid.NewV4()
 	item.InternalName = internalName
 	item.FeaturesCtrl = ""
-	item.FeaturesCommon = []string{}
 	item.Platforms = bto.Platforms{}
 	item.Requirements = bto.GameRequirements{}
 	item.Languages = bto.GameLangs{}
@@ -165,7 +164,7 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 	item.VendorID = vendorId
 	item.CreatorID = userId
 	item.Product.EntryID = item.ID
-	item.DefPackageID = uuid.NewV4()
+	item.DefaultPackageID = uuid.NewV4()
 	err = transation.Create(item).Error
 	if err != nil {
 		transation.Rollback()
@@ -181,7 +180,7 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 		return nil, errors.Wrap(err, "Create descriptions for game")
 	}
 
-	err = createPackage(transation, item.DefPackageID, vendorId, userId, item.InternalName, []uuid.UUID{item.ID})
+	err = createPackage(transation, item.DefaultPackageID, vendorId, true, userId, item.InternalName, []uuid.UUID{item.ID})
 	if err != nil {
 		transation.Rollback()
 		return nil, err
@@ -328,7 +327,7 @@ func (p *gameService) UpdateInfo(game *model.Game) (err error) {
 	game.CreatedAt = gameSrc.CreatedAt
 	game.UpdatedAt = time.Now()
 	game.InternalName = gameSrc.InternalName
-	game.DefPackageID = gameSrc.DefPackageID
+	game.DefaultPackageID = gameSrc.DefaultPackageID
 
 	if game.GenreAddition == nil {
 		game.GenreAddition = []int64{}

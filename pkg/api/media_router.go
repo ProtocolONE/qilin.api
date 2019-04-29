@@ -54,7 +54,6 @@ type (
 	}
 )
 
-
 //InitMediaRouter is initializing group method
 func InitMediaRouter(group *echo.Group, service model.MediaService) (*MediaRouter, error) {
 	mediaRouter := MediaRouter{

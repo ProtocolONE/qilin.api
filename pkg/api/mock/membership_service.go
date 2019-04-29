@@ -7,7 +7,6 @@ import (
 )
 
 type memebershipService struct {
-
 }
 
 func (memebershipService) Init() error {

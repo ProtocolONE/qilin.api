@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"strings"
@@ -32,7 +33,7 @@ func Test_PriceRouter(t *testing.T) {
 }
 
 var (
-	packagePriceId                    = "33333333-888a-481a-a831-cde7ff4e50b8"
+	packagePriceId = "33333333-888a-481a-a831-cde7ff4e50b8"
 
 	testObject                        = `{"common":{"currency":"USD","NotifyRateJumps":true},"preOrder":{"date":"2019-01-22T07:53:16Z","enabled":false}}`
 	testBadObject                     = `{"common":{"NotifyRateJumps":true},"preOrder":{"enabled":false}}`
@@ -79,13 +80,13 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 
 	pkgId, _ := uuid.FromString(packagePriceId)
 	err = db.DB().Save(&model.Package{
-		Model:  model.Model{ID: pkgId},
-		Name:   "Test_package",
+		Model:            model.Model{ID: pkgId},
+		Name:             utils.LocalizedString{EN: "Test_package"},
 		AllowedCountries: pq.StringArray{},
 		PackagePrices: model.PackagePrices{
-			Common: model.JSONB{"currency":"","NotifyRateJumps":false},
-			PreOrder: model.JSONB{"date":"","enabled":false},
-			Prices: []model.Price{},
+			Common:   model.JSONB{"currency": "", "NotifyRateJumps": false},
+			PreOrder: model.JSONB{"date": "", "enabled": false},
+			Prices:   []model.Price{},
 		},
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make package")

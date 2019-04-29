@@ -7,8 +7,8 @@ import (
 	"qilin-api/pkg/test"
 	"testing"
 
-	"github.com/satori/go.uuid"
 	"github.com/ProtocolONE/rbac"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

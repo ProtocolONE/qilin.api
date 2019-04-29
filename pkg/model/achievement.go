@@ -7,8 +7,8 @@ import (
 type (
 	Achievement struct {
 		Model
-		Name            string
-		ProductID       uuid.UUID
+		Name      string
+		ProductID uuid.UUID
 	}
 
 	AchievementService interface {

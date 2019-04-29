@@ -2,7 +2,10 @@ package orm_test
 
 import (
 	"github.com/ProtocolONE/rbac"
+	"github.com/satori/go.uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"net/http"
 	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
@@ -11,9 +14,6 @@ import (
 	"qilin-api/pkg/test"
 	"testing"
 	"time"
-	"github.com/stretchr/testify/assert"
-	"github.com/satori/go.uuid"
-	"github.com/stretchr/testify/suite"
 )
 
 type DiscountServiceTestSuite struct {
@@ -69,7 +69,6 @@ func (suite *DiscountServiceTestSuite) SetupTest() {
 	suite.Nil(err, "Unable to create user")
 
 	userId := user.ID
-
 
 	ownProvider := orm.NewOwnerProvider(suite.db)
 	enf := rbac.NewEnforcer()

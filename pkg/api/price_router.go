@@ -92,7 +92,6 @@ func (router *PriceRouter) GetPackageID(ctx *echo.Context) (packageId uuid.UUID,
 	return
 }
 
-
 func (router *PriceRouter) getBase(ctx echo.Context) (err error) {
 
 	id, err := router.GetPackageID(&ctx)

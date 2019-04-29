@@ -40,7 +40,7 @@ func InitDiscountsRouter(group *echo.Group, service *orm.DiscountService) (*Disc
 		service: service,
 	}
 
-	r := rbac_echo.Group(group,"/games/:gameId", &router, []string{"gameId", model.GameType, model.VendorDomain})
+	r := rbac_echo.Group(group, "/games/:gameId", &router, []string{"gameId", model.GameType, model.VendorDomain})
 	r.GET("/discounts", router.get, nil)
 	r.POST("/discounts", router.post, nil)
 	r.PUT("/discounts/:discountId", router.put, nil)

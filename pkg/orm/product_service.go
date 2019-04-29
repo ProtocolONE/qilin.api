@@ -7,7 +7,6 @@ import (
 	"qilin-api/pkg/model"
 )
 
-
 type ProductService struct {
 	db *gorm.DB
 }
@@ -28,8 +27,12 @@ func (p *ProductService) SpecializationIds(productIds []uuid.UUID) (games []uuid
 	}
 	for _, entry := range entries {
 		switch entry.EntryType {
-			case model.ProductGame: games = append(games, entry.EntryID); break
-			case model.ProductDLC: dlcs = append(dlcs, entry.EntryID); break
+		case model.ProductGame:
+			games = append(games, entry.EntryID)
+			break
+		case model.ProductDLC:
+			dlcs = append(dlcs, entry.EntryID)
+			break
 		}
 	}
 	return
