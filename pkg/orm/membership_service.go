@@ -144,16 +144,11 @@ func (service *membershipService) getUser(userId string, ownerId string) (*model
 				}
 				meta = model.ResourceMeta{
 					InternalName: game.InternalName,
-					//TODO: add new field to game object
-					//Preview: game.Icon
 				}
 				gamesCache[rest.UUID] = meta
 			}
 
-			resType := model.GlobalType
-			if rest.UUID != "*" {
-				resType = model.GameType
-			}
+			resType := role.Resource
 
 			roles = append(roles, model.RoleRestriction{
 				Role:   rest.Role,
