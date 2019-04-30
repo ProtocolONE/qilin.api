@@ -175,14 +175,6 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	bundleService, err := orm.NewBundleService(s.db)
-	if err != nil {
-		return err
-	}
-	if _, err := InitBundleRouter(s.Router, bundleService); err != nil {
-		return err
-	}
-
 	adminClientOnboarding, err := orm.NewAdminOnboardingService(s.db, membershipService, ownerProvider)
 	if err != nil {
 		return err
@@ -203,7 +195,14 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 	if err != nil {
 		return err
 	}
+	bundleService, err := orm.NewBundleService(s.db, packageService, gameService)
+	if err != nil {
+		return err
+	}
 	if _, err := InitPackageRouter(s.Router, packageService, productService); err != nil {
+		return err
+	}
+	if _, err := InitBundleRouter(s.Router, bundleService); err != nil {
 		return err
 	}
 

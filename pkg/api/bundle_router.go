@@ -10,6 +10,7 @@ import (
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
+	pkg_utils "qilin-api/pkg/utils"
 	"qilin-api/pkg/orm"
 	"strconv"
 	"strings"
@@ -94,17 +95,22 @@ func mapStoreBundleItemDto(bundle *model.StoreBundle) *storeBundleItemDTO {
 	}
 }
 
-func mapStoreBundleModel(bundle *storeBundleDTO) *model.StoreBundle {
-	return &model.StoreBundle{
-		Model:            model.Model{ID: bundle.ID},
-		Sku:              bundle.Sku,
-		Name:             bundle.Name,
-		IsUpgradeAllowed: bundle.IsUpgradeAllowed,
-		IsEnabled:        bundle.IsEnabled,
-		Discount:         bundle.DiscountPolicy.Discount,
-		DiscountBuyOpt:   model.NewBuyOption(bundle.DiscountPolicy.BuyOption),
-		AllowedCountries: bundle.RegionalRestrinctions.AllowedCountries,
+func mapStoreBundleModel(dto *storeBundleDTO) (bundle *model.StoreBundle, err error) {
+
+	if !pkg_utils.ValidateCountryList(dto.RegionalRestrinctions.AllowedCountries) {
+		return nil, orm.NewServiceError(http.StatusUnprocessableEntity, "Invalid countries")
 	}
+
+	return &model.StoreBundle{
+		Model:            model.Model{ID: dto.ID},
+		Sku:              dto.Sku,
+		Name:             dto.Name,
+		IsUpgradeAllowed: dto.IsUpgradeAllowed,
+		IsEnabled:        dto.IsEnabled,
+		Discount:         dto.DiscountPolicy.Discount,
+		DiscountBuyOpt:   model.NewBuyOption(dto.DiscountPolicy.BuyOption),
+		AllowedCountries: dto.RegionalRestrinctions.AllowedCountries,
+	}, nil
 }
 
 func InitBundleRouter(group *echo.Group, service model.BundleService) (router *BundleRouter, err error) {
@@ -232,7 +238,10 @@ func (router *BundleRouter) UpdateStore(ctx echo.Context) (err error) {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	store := mapStoreBundleModel(storeDto)
+	store, err := mapStoreBundleModel(storeDto)
+	if err != nil {
+		return err
+	}
 	store.ID = bundleId
 	storeRes, err := router.service.UpdateStore(store)
 	if err != nil {

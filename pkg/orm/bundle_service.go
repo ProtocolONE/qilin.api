@@ -19,9 +19,7 @@ type bundleService struct {
 	packageService model.PackageService
 }
 
-func NewBundleService(db *Database) (model.BundleService, error) {
-	gameService, _ := NewGameService(db)
-	packageService, _ := NewPackageService(db, gameService)
+func NewBundleService(db *Database, packageService model.PackageService, gameService model.GameService) (model.BundleService, error) {
 	return &bundleService{db.database, gameService, packageService}, nil
 }
 

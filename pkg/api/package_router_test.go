@@ -112,6 +112,47 @@ var (
     "prices": null
   }
 }`
+
+	updateErrorPackageJson = `{
+  "id": "33333333-888a-481a-a831-cde7ff4e50b8",
+  "createdAt": "1970-01-01T00:00:00Z",
+  "sku": "",
+  "name": {"en": "Test_package_UPD"},
+  "isUpgradeAllowed": true,
+  "isEnabled": true,
+  "isDefault": false,
+  "products": [
+    {
+      "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
+      "name": "Test_game_1",
+      "type": "games",
+      "image": {"en": ""}
+    }
+  ],
+  "media": {
+    "image": {"en": "THIS STRING IS NOT URL - 1"},
+    "cover": {"en": "THIS STRING IS NOT URL - 2"},
+    "thumb": {"en": "THIS STRING IS NOT URL - 3"}
+  },
+  "discountPolicy": {
+    "discount": 0,
+    "buyOption": "whole"
+  },
+  "regionalRestrinctions": {
+    "allowedCountries": []
+  },
+  "commercial": {
+    "common": {
+      "currency": "",
+      "notifyRateJumps": false
+    },
+    "preOrder": {
+      "date": "",
+      "enabled": false
+    },
+    "prices": null
+  }
+}`
 )
 
 type PackageRouterTestSuite struct {
@@ -321,6 +362,19 @@ func (suite *PackageRouterTestSuite) TestShouldUpdatePackage() {
 
 	should.Equal(http.StatusOK, rec.Code)
 	should.JSONEq(updatePackageJson, rec.Body.String())
+}
+
+func (suite *PackageRouterTestSuite) TestShouldRiseErrorWhenUpdateWrongPackage() {
+	should := assert.New(suite.T())
+
+	url := fmt.Sprintf("/api/v1/packages/%s", packageId)
+	req := httptest.NewRequest(http.MethodPut, url, strings.NewReader(updateErrorPackageJson))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+
+	suite.echo.ServeHTTP(rec, req)
+
+	should.NotEqual(http.StatusOK, rec.Code)
 }
 
 func (suite *PackageRouterTestSuite) TestShouldManageGames() {

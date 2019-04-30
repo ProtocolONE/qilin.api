@@ -289,7 +289,11 @@ func (suite *BundleRouterTestSuite) SetupTest() {
 	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
 	echoObj.Use(suite.localAuth())
 
-	service, err := orm.NewBundleService(db)
+	gameService, err := orm.NewGameService(db)
+	require.Nil(suite.T(), err)
+	packageService, err := orm.NewPackageService(db, gameService)
+	require.Nil(suite.T(), err)
+	service, err := orm.NewBundleService(db, packageService, gameService)
 	require.Nil(suite.T(), err)
 
 	_, err = InitBundleRouter(echoObj.Group("/api/v1"), service)

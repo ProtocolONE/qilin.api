@@ -51,13 +51,6 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 
 	suite.db = db
 
-	service, err := orm.NewBundleService(suite.db)
-	if err != nil {
-		suite.Fail("Unable to create service", "%v", err)
-	}
-
-	suite.service = service
-
 	// Create user
 	user := model.User{
 		ID:       uuid.NewV4().String(),
@@ -159,6 +152,13 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 
 	suite.packages = []uuid.UUID{pkgA.ID, pkgB.ID}
 	suite.games = []uuid.UUID{gameA.ID, gameB.ID}
+
+	service, err := orm.NewBundleService(suite.db, packageService, gameService)
+	if err != nil {
+		suite.Fail("Unable to create service", "%v", err)
+	}
+
+	suite.service = service
 }
 
 func (suite *bundleServiceTestSuite) TearDownTest() {

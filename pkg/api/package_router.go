@@ -12,10 +12,13 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
+	pkg_utils "qilin-api/pkg/utils"
 	"strconv"
 	"strings"
 	"time"
 )
+
+
 
 type (
 	packageRouter struct {
@@ -156,7 +159,25 @@ func mapPackageDto(pkg *model.Package) (dto *packageDTO, err error) {
 	return dto, nil
 }
 
-func mapPackageModel(dto *packageDTO) *model.Package {
+func mapPackageModel(dto *packageDTO) (pkg *model.Package, err error) {
+
+	err = utils.ValidateUrls(&dto.Media.Image)
+	if err != nil {
+		return
+	}
+	err = utils.ValidateUrls(&dto.Media.Cover)
+	if err != nil {
+		return
+	}
+	err = utils.ValidateUrls(&dto.Media.Thumb)
+	if err != nil {
+		return
+	}
+
+	if !pkg_utils.ValidateCountryList(dto.RegionalRestrinctions.AllowedCountries) {
+		return nil, orm.NewServiceError(http.StatusUnprocessableEntity, "Invalid countries")
+	}
+
 	return &model.Package{
 		Model:            model.Model{ID: dto.ID},
 		Sku:              dto.Sku,
@@ -170,7 +191,7 @@ func mapPackageModel(dto *packageDTO) *model.Package {
 		Discount:         dto.DiscountPolicy.Discount,
 		DiscountBuyOpt:   model.NewBuyOption(dto.DiscountPolicy.BuyOption),
 		AllowedCountries: dto.RegionalRestrinctions.AllowedCountries,
-	}
+	}, nil
 }
 
 func (router *packageRouter) checkRBAC(userId string, qilinCtx *rbac_echo.AppContext, productIds []uuid.UUID) error {
@@ -340,7 +361,10 @@ func (router *packageRouter) Update(ctx echo.Context) (err error) {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
-	pkg := mapPackageModel(pkgDto)
+	pkg, err := mapPackageModel(pkgDto)
+	if err != nil {
+		return err
+	}
 	pkg.ID = packageId
 	pkgRes, err := router.service.Update(pkg)
 	if err != nil {

@@ -6,6 +6,8 @@
 *.dll
 *.so
 *.dylib
+qilin-api
+qilin_api
 
 # Test binary, build with `go test -c`
 *.test
