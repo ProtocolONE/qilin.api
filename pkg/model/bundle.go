@@ -22,7 +22,7 @@ type (
 		IsContains(productId uuid.UUID) (bool, error)
 		GetPrice() (string, float32, error)
 		GetPackages() ([]Package, error)
-		GetGames() ([]ProductGameImpl, error)
+		GetGames() ([]*ProductGameImpl, error)
 		GetDlc() ([]Dlc, error)
 		Buy(customerId uuid.UUID) error
 	}
@@ -121,8 +121,8 @@ func (b *StoreBundle) GetPackages() (packages []Package, err error) {
 	return b.Packages, nil
 }
 
-func (b *StoreBundle) GetGames() (games []ProductGameImpl, err error) {
-	games = []ProductGameImpl{}
+func (b *StoreBundle) GetGames() (games []*ProductGameImpl, err error) {
+	games = []*ProductGameImpl{}
 	for _, pkg := range b.Packages {
 		for _, pr := range pkg.Products {
 			if pr.GetType() == ProductGame {
@@ -130,7 +130,7 @@ func (b *StoreBundle) GetGames() (games []ProductGameImpl, err error) {
 				if !ok {
 					return nil, errors.New("Incorrect product type")
 				}
-				games = append(games, *game)
+				games = append(games, game)
 			}
 		}
 	}

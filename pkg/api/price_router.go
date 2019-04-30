@@ -108,7 +108,7 @@ func (router *PriceRouter) getBase(ctx echo.Context) (err error) {
 	err = mapper.Map(price.PackagePrices, &result)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Can't decode price from domain to DTO. Error: "+err.Error())
+		return orm.NewServiceError(http.StatusBadRequest, "Can't decode price from domain to DTO. Error: "+err.Error())
 	}
 
 	return ctx.JSON(http.StatusOK, result)

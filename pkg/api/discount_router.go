@@ -56,12 +56,12 @@ func (router *DiscountsRouter) GetOwner(ctx rbac_echo.AppContext) (string, error
 func (router *DiscountsRouter) post(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	dto := new(Discount)
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	if errs := ctx.Validate(dto); errs != nil {
@@ -71,7 +71,7 @@ func (router *DiscountsRouter) post(ctx echo.Context) error {
 	domain := model.Discount{}
 	err = mapper.Map(dto, &domain)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return orm.NewServiceError(http.StatusInternalServerError, err)
 	}
 
 	domain.DateStart = dto.Date.Start
@@ -90,7 +90,7 @@ func (router *DiscountsRouter) post(ctx echo.Context) error {
 func (router *DiscountsRouter) get(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	discounts, err := router.service.GetDiscountsForGame(id)
@@ -101,7 +101,7 @@ func (router *DiscountsRouter) get(ctx echo.Context) error {
 	dto := make([]Discount, len(discounts))
 	err = mapper.Map(discounts, &dto)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, errors.Wrap(err, "Can't decode domain to dto").Error())
+		return orm.NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Can't decode domain to dto").Error())
 	}
 
 	if dto == nil {
@@ -122,17 +122,17 @@ func (router *DiscountsRouter) get(ctx echo.Context) error {
 func (router *DiscountsRouter) put(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	discountID, err := uuid.FromString(ctx.Param("discountId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid discount Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid discount Id")
 	}
 
 	dto := new(Discount)
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	if errs := ctx.Validate(dto); errs != nil {
@@ -142,7 +142,7 @@ func (router *DiscountsRouter) put(ctx echo.Context) error {
 	domain := model.Discount{}
 	err = mapper.Map(dto, &domain)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	domain.DateStart = dto.Date.Start
@@ -160,12 +160,12 @@ func (router *DiscountsRouter) put(ctx echo.Context) error {
 func (router *DiscountsRouter) delete(ctx echo.Context) error {
 	_, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	discountID, err := uuid.FromString(ctx.Param("discountId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid discount Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid discount Id")
 	}
 
 	if err = router.service.RemoveDiscountForGame(discountID); err != nil {

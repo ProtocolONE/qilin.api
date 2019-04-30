@@ -10,8 +10,8 @@ import (
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
-	pkg_utils "qilin-api/pkg/utils"
 	"qilin-api/pkg/orm"
+	pkg_utils "qilin-api/pkg/utils"
 	"strconv"
 	"strings"
 	"time"
@@ -124,8 +124,8 @@ func InitBundleRouter(group *echo.Group, service model.BundleService) (router *B
 	bundleGroup.GET("/:bundleId/store", router.GetStore, nil)
 	bundleGroup.PUT("/:bundleId/store", router.UpdateStore, nil)
 	bundleGroup.DELETE("/:bundleId", router.Delete, nil)
-	bundleGroup.POST("/:bundleId/add", router.AddPackages, nil)
-	bundleGroup.POST("/:bundleId/remove", router.RemovePackages, nil)
+	bundleGroup.POST("/:bundleId/packages/add", router.AddPackages, nil)
+	bundleGroup.POST("/:bundleId/packages/remove", router.RemovePackages, nil)
 
 	return
 }
@@ -141,13 +141,13 @@ func (router *BundleRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendor Id")
 	}
 
 	params := createBundleDTO{}
 	err = ctx.Bind(&params)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong parameters in body")
+		return orm.NewServiceError(http.StatusUnprocessableEntity, "Wrong parameters in body")
 	}
 
 	if errs := ctx.Validate(params); errs != nil {
@@ -178,7 +178,7 @@ func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
 func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendor Id")
 	}
 	offset, err := strconv.Atoi(ctx.QueryParam("offset"))
 	if err != nil {
@@ -205,7 +205,7 @@ func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 func (router *BundleRouter) GetStore(ctx echo.Context) (err error) {
 	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendor Id")
 	}
 
 	bundle, err := router.service.Get(bundleId)
@@ -215,7 +215,7 @@ func (router *BundleRouter) GetStore(ctx echo.Context) (err error) {
 
 	bundleStore, ok := bundle.(*model.StoreBundle)
 	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bundle not for store")
+		return orm.NewServiceError(http.StatusBadRequest, "Bundle not for store")
 	}
 	dto, err := mapStoreBundleDto(bundleStore)
 	if err != nil {
@@ -227,12 +227,12 @@ func (router *BundleRouter) GetStore(ctx echo.Context) (err error) {
 func (router *BundleRouter) UpdateStore(ctx echo.Context) (err error) {
 	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid bundle Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid bundle Id")
 	}
 	storeDto := &storeBundleDTO{}
 	err = ctx.Bind(storeDto)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, errors.Wrap(err, "Wrong store bundle in body").Error())
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errors.Wrap(err, "Wrong store bundle in body").Error())
 	}
 	if errs := ctx.Validate(storeDto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
@@ -257,7 +257,7 @@ func (router *BundleRouter) UpdateStore(ctx echo.Context) (err error) {
 func (router *BundleRouter) Delete(ctx echo.Context) (err error) {
 	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendor Id")
 	}
 
 	err = router.service.Delete(bundleId)
@@ -284,12 +284,12 @@ func (router *BundleRouter) checkRBAC(userId string, qilinCtx *rbac_echo.AppCont
 func (router *BundleRouter) AddPackages(ctx echo.Context) (err error) {
 	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid bundle Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid bundle Id")
 	}
 	packages := []uuid.UUID{}
 	err = ctx.Bind(&packages)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong package array in body")
+		return orm.NewServiceError(http.StatusUnprocessableEntity, "Wrong package array in body")
 	}
 
 	userId, err := context.GetAuthUserId(ctx)
@@ -313,12 +313,12 @@ func (router *BundleRouter) AddPackages(ctx echo.Context) (err error) {
 func (router *BundleRouter) RemovePackages(ctx echo.Context) (err error) {
 	bundleId, err := uuid.FromString(ctx.Param("bundleId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid bundle Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid bundle Id")
 	}
 	packages := []uuid.UUID{}
 	err = ctx.Bind(&packages)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong package array in body")
+		return orm.NewServiceError(http.StatusUnprocessableEntity, "Wrong package array in body")
 	}
 	err = router.service.RemovePackages(bundleId, packages)
 	if err != nil {

@@ -183,7 +183,7 @@ func mapReqsBTO(r *MachineRequirementsDTO) bto.MachineRequirements {
 	}
 }
 
-func mapGameInfo(game *model.Game, service model.GameService) *GameDTO {
+func mapGameInfo(game *model.Game) *GameDTO {
 	return &GameDTO{
 		ID: game.ID,
 		BaseGameDTO: BaseGameDTO{
@@ -304,7 +304,7 @@ func (api *GameRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 func (api *GameRouter) GetList(ctx echo.Context) error {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendor Id")
 	}
 	offset, err := strconv.Atoi(ctx.QueryParam("offset"))
 	if err != nil {
@@ -379,11 +379,11 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	params := CreateGameDTO{}
 	err := ctx.Bind(&params)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Wrong parameters in body")
+		return orm.NewServiceError(http.StatusBadRequest, "Wrong parameters in body")
 	}
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendorId")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendorId")
 	}
 	userId, err := api.getUserId(ctx)
 	if err != nil {
@@ -393,28 +393,28 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	dto := mapGameInfo(game, api.gameService)
+	dto := mapGameInfo(game)
 	return ctx.JSON(http.StatusCreated, dto)
 }
 
 func (api *GameRouter) GetInfo(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	game, err := api.gameService.GetInfo(gameId)
 	if err != nil {
 		return err
 	}
-	dto := mapGameInfo(game, api.gameService)
+	dto := mapGameInfo(game)
 	return ctx.JSON(http.StatusOK, dto)
 }
 
 func (api *GameRouter) Delete(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 	userId, err := api.getUserId(ctx)
 	if err != nil {
@@ -430,12 +430,12 @@ func (api *GameRouter) Delete(ctx echo.Context) error {
 func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	dto := &UpdateGameDTO{}
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 	if errs := ctx.Validate(dto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
@@ -452,7 +452,7 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 func (api *GameRouter) GetDescr(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid game Id")
 	}
 
 	descr, err := api.gameService.GetDescr(gameId)
@@ -493,12 +493,12 @@ func (api *GameRouter) GetDescr(ctx echo.Context) error {
 func (api *GameRouter) UpdateDescr(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid game Id")
 	}
 
 	dto := &GameDescrDTO{}
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 	if errs := ctx.Validate(dto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)

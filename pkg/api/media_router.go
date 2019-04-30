@@ -84,13 +84,13 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	mediaDto := new(Media)
 
 	if err := ctx.Bind(mediaDto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	if errs := ctx.Validate(mediaDto); errs != nil {
@@ -101,7 +101,7 @@ func (api *MediaRouter) put(ctx echo.Context) error {
 	err = mapper.Map(mediaDto, &media)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	media.UpdatedAt = time.Now()
@@ -125,7 +125,7 @@ func (api *MediaRouter) get(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	media, err := api.mediaService.Get(id)
@@ -138,7 +138,7 @@ func (api *MediaRouter) get(ctx echo.Context) error {
 	err = mapper.Map(media, &result)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	return ctx.JSON(http.StatusOK, result)

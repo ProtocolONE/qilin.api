@@ -18,8 +18,6 @@ import (
 	"time"
 )
 
-
-
 type (
 	packageRouter struct {
 		service         model.PackageService
@@ -195,7 +193,7 @@ func mapPackageModel(dto *packageDTO) (pkg *model.Package, err error) {
 }
 
 func (router *packageRouter) checkRBAC(userId string, qilinCtx *rbac_echo.AppContext, productIds []uuid.UUID) error {
-	// Check permissions for Games and DLCs
+	// Check permissions for Games
 	games, _, err := router.productsService.SpecializationIds(productIds)
 	if err != nil {
 		return err
@@ -216,12 +214,12 @@ func (router *packageRouter) checkRBAC(userId string, qilinCtx *rbac_echo.AppCon
 func (router *packageRouter) Create(ctx echo.Context) error {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendor Id")
 	}
 	params := createPackageDTO{}
 	err = ctx.Bind(&params)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong parameters in body")
+		return orm.NewServiceError(http.StatusUnprocessableEntity, "Wrong parameters in body")
 	}
 
 	if errs := ctx.Validate(params); errs != nil {
@@ -253,12 +251,12 @@ func (router *packageRouter) Create(ctx echo.Context) error {
 func (router *packageRouter) AddProducts(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid package Id")
 	}
 	products := []uuid.UUID{}
 	err = ctx.Bind(&products)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong products array in body")
+		return orm.NewServiceError(http.StatusUnprocessableEntity, "Wrong products array in body")
 	}
 
 	userId, err := context.GetAuthUserId(ctx)
@@ -286,12 +284,12 @@ func (router *packageRouter) AddProducts(ctx echo.Context) (err error) {
 func (router *packageRouter) RemoveProducts(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid package Id")
 	}
 	prods := []uuid.UUID{}
 	err = ctx.Bind(&prods)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Wrong products array in body")
+		return orm.NewServiceError(http.StatusUnprocessableEntity, "Wrong products array in body")
 	}
 	pkg, err := router.service.RemoveProducts(packageId, prods)
 	if err != nil {
@@ -307,7 +305,7 @@ func (router *packageRouter) RemoveProducts(ctx echo.Context) (err error) {
 func (router *packageRouter) Get(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid package Id")
 	}
 	pkg, err := router.service.Get(packageId)
 	if err != nil {
@@ -323,7 +321,7 @@ func (router *packageRouter) Get(ctx echo.Context) (err error) {
 func (router *packageRouter) GetList(ctx echo.Context) (err error) {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendor Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendor Id")
 	}
 	offset, err := strconv.Atoi(ctx.QueryParam("offset"))
 	if err != nil {
@@ -350,12 +348,12 @@ func (router *packageRouter) GetList(ctx echo.Context) (err error) {
 func (router *packageRouter) Update(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid package Id")
 	}
 	pkgDto := &packageDTO{}
 	err = ctx.Bind(pkgDto)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, errors.Wrap(err, "Wrong package in body").Error())
+		return orm.NewServiceError(http.StatusUnprocessableEntity, errors.Wrap(err, "Wrong package in body").Error())
 	}
 	if errs := ctx.Validate(pkgDto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
@@ -380,7 +378,7 @@ func (router *packageRouter) Update(ctx echo.Context) (err error) {
 func (router *packageRouter) Remove(ctx echo.Context) (err error) {
 	packageId, err := uuid.FromString(ctx.Param("packageId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid package Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid package Id")
 	}
 	err = router.service.Remove(packageId)
 	if err != nil {

@@ -56,7 +56,7 @@ func (router *RatingsRouter) get(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	gameRating, err := router.service.GetRatingsForGame(id)
@@ -69,7 +69,7 @@ func (router *RatingsRouter) get(ctx echo.Context) error {
 	err = mapper.Map(gameRating, &result)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Can't decode gameRating from domain to DTO. Error: "+err.Error())
+		return orm.NewServiceError(http.StatusInternalServerError, "Can't decode gameRating from domain to DTO. Error: "+err.Error())
 	}
 
 	return ctx.JSON(http.StatusOK, result)
@@ -79,12 +79,12 @@ func (router *RatingsRouter) put(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("gameId"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 	dto := new(RatingsDTO)
 
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	if errs := ctx.Validate(dto); errs != nil {
@@ -95,7 +95,7 @@ func (router *RatingsRouter) put(ctx echo.Context) error {
 	err = mapper.Map(dto, &result)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return orm.NewServiceError(http.StatusInternalServerError, err)
 	}
 
 	if err := router.service.SaveRatingsForGame(id, &result); err != nil {

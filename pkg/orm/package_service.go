@@ -241,7 +241,7 @@ func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err er
 				}
 				prods = append(prods, game)
 			} else if prod.EntryType == model.ProductDLC {
-				//...
+				return nil, NewServiceError(http.StatusNotImplemented, "Retrieve DLC is not implemented yet")
 			}
 		}
 	}
