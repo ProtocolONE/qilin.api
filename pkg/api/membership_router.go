@@ -33,7 +33,7 @@ type InviteDTO struct {
 }
 
 type RoleInviteDTO struct {
-	Role     string            `json:"role" validate:"required"`
+	Role     string            `json:"role" validate:"required,non_admin_role"`
 	Resource InviteResourceDTO `json:"resource" validate:"required,dive"`
 }
 
