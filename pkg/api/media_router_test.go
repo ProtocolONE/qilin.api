@@ -10,7 +10,6 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"net/http/httptest"
-	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
