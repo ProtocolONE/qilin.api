@@ -96,9 +96,13 @@ func (suite *PriceRouterTestSuite) SetupTest() {
 	}).Error
 	require.Nil(suite.T(), err, "Unable to make package product")
 
+	gameService, err := orm.NewGameService(db)
+	require.Nil(suite.T(), err, "Unable to make game service")
+
 	echoObj := echo.New()
 	service := orm.NewPriceService(db)
-	router, err := InitPriceRouter(echoObj.Group("/api/v1"), service)
+	router, err := InitPriceRouter(echoObj.Group("/api/v1"), service, gameService)
+	require.Nil(suite.T(), err, "Unable to make price service")
 
 	echoObj.Validator = &QilinValidator{validator: validator.New()}
 

@@ -124,8 +124,8 @@ func InitBundleRouter(group *echo.Group, service model.BundleService) (router *B
 	bundleGroup.GET("/:bundleId/store", router.GetStore, nil)
 	bundleGroup.PUT("/:bundleId/store", router.UpdateStore, nil)
 	bundleGroup.DELETE("/:bundleId", router.Delete, nil)
-	bundleGroup.POST("/:bundleId/packages/add", router.AddPackages, nil)
-	bundleGroup.POST("/:bundleId/packages/remove", router.RemovePackages, nil)
+	bundleGroup.POST("/:bundleId/packages", router.AddPackages, nil)
+	bundleGroup.DELETE("/:bundleId/packages", router.RemovePackages, nil)
 
 	return
 }

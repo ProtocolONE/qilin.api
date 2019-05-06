@@ -5,7 +5,6 @@ import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/random"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -113,11 +112,6 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	priceService := orm.NewPriceService(s.db)
-	if _, err := InitPriceRouter(s.Router, priceService); err != nil {
-		return err
-	}
-
 	ratingService, err := orm.NewRatingService(s.db)
 	if err != nil {
 		return err
@@ -149,6 +143,11 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 
 	gameService, err := orm.NewGameService(s.db)
 	if err != nil {
+		return err
+	}
+
+	priceService := orm.NewPriceService(s.db)
+	if _, err := InitPriceRouter(s.Router, priceService, gameService); err != nil {
 		return err
 	}
 
@@ -349,13 +348,13 @@ func (suite *AccessRightsTestSuite) generateTestCases() map[struct {
 		{http.MethodGet, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin, model.Support},
 		{http.MethodPut, "/api/v1/games/%game_id/ratings", ""}:      {model.Admin},
 
-		{http.MethodGet, "/api/v1/vendors/%vendor_id/packages", ""}:           {model.Admin, model.Support},
-		{http.MethodPost, "/api/v1/vendors/%vendor_id/packages", ""}:          {model.Admin},
-		{http.MethodGet, "/api/v1/packages/%package_id", ""}:                  {model.Admin, model.Support},
-		{http.MethodPut, "/api/v1/packages/%package_id", ""}:                  {model.Admin},
-		{http.MethodDelete, "/api/v1/packages/%package_id", ""}:               {model.Admin},
-		{http.MethodPost, "/api/v1/packages/%package_id/products/add", ""}:    {model.Admin},
-		{http.MethodPost, "/api/v1/packages/%package_id/products/remove", ""}: {model.Admin},
+		{http.MethodGet, "/api/v1/vendors/%vendor_id/packages", ""}:      {model.Admin, model.Support},
+		{http.MethodPost, "/api/v1/vendors/%vendor_id/packages", ""}:     {model.Admin},
+		{http.MethodGet, "/api/v1/packages/%package_id", ""}:             {model.Admin, model.Support},
+		{http.MethodPut, "/api/v1/packages/%package_id", ""}:             {model.Admin},
+		{http.MethodDelete, "/api/v1/packages/%package_id", ""}:          {model.Admin},
+		{http.MethodPost, "/api/v1/packages/%package_id/products", ""}:   {model.Admin},
+		{http.MethodDelete, "/api/v1/packages/%package_id/products", ""}: {model.Admin},
 
 		{http.MethodPost, "/api/v1/vendors/%vendor_id/bundles/store", ""}: {model.Admin},
 		{http.MethodGet, "/api/v1/vendors/%vendor_id/bundles/store", ""}:  {model.Admin, model.Support},
@@ -472,7 +471,7 @@ func (suite *AccessRightsTestSuite) createMessage(vendorId uuid.UUID, userId str
 }
 
 func (suite *AccessRightsTestSuite) createUser() string {
-	uId := random.String(8, "123456789")
+	uId := uuid.NewV4().String()
 	require.Nil(suite.T(), suite.db.DB().Save(&model.User{
 		ID:       uId,
 		Nickname: model.RandStringRunes(10),

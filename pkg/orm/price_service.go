@@ -139,12 +139,3 @@ func (p *priceService) Update(id uuid.UUID, price *model.Price) error {
 
 	return nil
 }
-
-func (p *priceService) GetDefaultPackage(gameId uuid.UUID) (packageId uuid.UUID, err error) {
-	game := model.Game{}
-	err = p.db.Where("id = ?", gameId).Find(&game).Error
-	if err != nil {
-		return uuid.Nil, errors.Wrap(err, "Retrieve game")
-	}
-	return game.DefaultPackageID, nil
-}

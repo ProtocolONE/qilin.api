@@ -2,7 +2,6 @@ package orm
 
 import (
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/gommon/random"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
@@ -50,7 +49,7 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, pac
 
 	newBundle := model.StoreBundle{
 		Model:     model.Model{ID: uuid.NewV4()},
-		Sku:       random.String(8, "123456789"),
+		Sku:       uuid.NewV4().String(),
 		Name:      mutils.LocalizedString{EN: name},
 		VendorID:  vendorId,
 		IsEnabled: false,

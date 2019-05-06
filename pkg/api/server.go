@@ -137,11 +137,6 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 		return err
 	}
 
-	priceService := orm.NewPriceService(s.db)
-	if _, err := InitPriceRouter(s.Router, priceService); err != nil {
-		return err
-	}
-
 	ratingService, err := orm.NewRatingService(s.db)
 	if err != nil {
 		return err
@@ -185,6 +180,10 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 
 	gameService, err := orm.NewGameService(s.db)
 	if err != nil {
+		return err
+	}
+	priceService := orm.NewPriceService(s.db)
+	if _, err := InitPriceRouter(s.Router, priceService, gameService); err != nil {
 		return err
 	}
 	packageService, err := orm.NewPackageService(s.db, gameService)

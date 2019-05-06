@@ -190,7 +190,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/packages/:packageId/products/add:
+  /api/v1/packages/:packageId/products:
     post:
       tags:
         - "package"
@@ -234,9 +234,7 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'
-
-  /api/v1/packages/:packageId/products/remove:
-    post:
+    delete:
       tags:
         - "package"
         - "product"
@@ -280,7 +278,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/vendors/:vendorId/bundles/store:
+  /api/v1/vendors/:vendorId/bundles:
     post:
       tags:
         - "package"
@@ -425,7 +423,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/bundles/:bundleId/packages/add:
+  /api/v1/bundles/:bundleId/packages:
     post:
       tags:
         - "bundle"
@@ -470,9 +468,7 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         500:
           $ref: '#/components/responses/InternalError'
-
-  /api/v1/bundles/:bundleId/packages/remove:
-    post:
+    delete:
       tags:
         - "bundle"
         - "package"

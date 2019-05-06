@@ -39,6 +39,4 @@ type PriceService interface {
 	UpdateBase(id uuid.UUID, price *BasePrice) error
 	Delete(id uuid.UUID, price *Price) error
 	Update(id uuid.UUID, price *Price) error
-	// TODO: For temporary purpose
-	GetDefaultPackage(gameId uuid.UUID) (uuid.UUID, error)
 }

@@ -381,7 +381,7 @@ func (suite *PackageRouterTestSuite) TestShouldManageGames() {
 	should := assert.New(suite.T())
 
 	{
-		url := fmt.Sprintf("/api/v1/packages/%s/products/add", packageId)
+		url := fmt.Sprintf("/api/v1/packages/%s/products", packageId)
 		reader := strings.NewReader(fmt.Sprintf(`["%s"]`, packageGameId_2))
 
 		req := httptest.NewRequest(http.MethodPost, url, reader)
@@ -399,8 +399,8 @@ func (suite *PackageRouterTestSuite) TestShouldManageGames() {
 	}
 
 	{
-		url := fmt.Sprintf("/api/v1/packages/%s/products/remove", packageId)
-		req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(fmt.Sprintf(`["%s"]`, packageGameId_1)))
+		url := fmt.Sprintf("/api/v1/packages/%s/products", packageId)
+		req := httptest.NewRequest(http.MethodDelete, url, strings.NewReader(fmt.Sprintf(`["%s"]`, packageGameId_1)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 

@@ -366,7 +366,7 @@ func (suite *BundleRouterTestSuite) TestShouldReturnStoreList() {
 }
 
 func (suite *BundleRouterTestSuite) TestShouldAppendPackages() {
-	url := fmt.Sprintf("/api/v1/bundles/%s/packages/add", bundleID)
+	url := fmt.Sprintf("/api/v1/bundles/%s/packages", bundleID)
 	req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(`["00022233-888a-481a-a831-cde7ff4e50b8"]`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -391,8 +391,8 @@ func (suite *BundleRouterTestSuite) TestShouldUpdateBundle() {
 }
 
 func (suite *BundleRouterTestSuite) TestShouldRemovePackages() {
-	url := fmt.Sprintf("/api/v1/bundles/%s/packages/remove", bundleID)
-	req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(`["33333333-888a-481a-a831-cde7ff4e50b8"]`))
+	url := fmt.Sprintf("/api/v1/bundles/%s/packages", bundleID)
+	req := httptest.NewRequest(http.MethodDelete, url, strings.NewReader(`["33333333-888a-481a-a831-cde7ff4e50b8"]`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 

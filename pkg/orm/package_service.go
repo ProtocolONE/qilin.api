@@ -2,7 +2,6 @@ package orm
 
 import (
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/gommon/random"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
@@ -40,7 +39,7 @@ func createPackage(
 
 	newPack := model.Package{
 		Model:     model.Model{ID: packageId},
-		Sku:       random.String(8, "123456789"),
+		Sku:       uuid.NewV4().String(),
 		Name:      utils.LocalizedString{EN: name},
 		VendorID:  vendorId,
 		CreatorID: userId,

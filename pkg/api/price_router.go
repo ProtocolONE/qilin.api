@@ -16,7 +16,8 @@ import (
 
 type (
 	PriceRouter struct {
-		service model.PriceService
+		service     model.PriceService
+		gameService model.GameService
 	}
 
 	pricesDTO struct {
@@ -43,10 +44,8 @@ type (
 )
 
 //InitPriceRouter is initialization method for group
-func InitPriceRouter(group *echo.Group, service model.PriceService) (router *PriceRouter, err error) {
-	priceRouter := PriceRouter{
-		service: service,
-	}
+func InitPriceRouter(group *echo.Group, service model.PriceService, gameService model.GameService) (router *PriceRouter, err error) {
+	priceRouter := PriceRouter{service, gameService}
 
 	packageGroup := rbac_echo.Group(group, "/packages", &priceRouter, []string{"packageId", model.PackageType, model.VendorDomain})
 	packageGroup.GET("/:packageId/prices", priceRouter.getBase, nil)
@@ -79,10 +78,11 @@ func (router *PriceRouter) GetPackageID(ctx *echo.Context) (packageId uuid.UUID,
 		if err != nil {
 			return uuid.Nil, orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 		}
-		packageId, err = router.service.GetDefaultPackage(gameId)
+		game, err := router.gameService.GetInfo(gameId)
 		if err != nil {
 			return uuid.Nil, err
 		}
+		packageId = game.DefaultPackageID
 	} else {
 		packageId, err = uuid.FromString((*ctx).Param("packageId"))
 		if err != nil {
