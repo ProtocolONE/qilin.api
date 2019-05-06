@@ -23,7 +23,7 @@ func NewBundleService(db *Database, packageService model.PackageService, gameSer
 	return &bundleService{db.database, gameService, packageService}, nil
 }
 
-func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, packageIds []uuid.UUID) (bundle *model.StoreBundle, err error) {
+func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, packageIds []uuid.UUID) (bundle model.Bundle, err error) {
 
 	if len(strings.Trim(name, " \r\n\t")) == 0 {
 		return nil, NewServiceError(http.StatusUnprocessableEntity, "Name is empty")
@@ -90,7 +90,7 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, pac
 	return bundleIfce.(*model.StoreBundle), nil
 }
 
-func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.StoreBundle, err error) {
+func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.Bundle, err error) {
 	orderBy := ""
 	orderBy = "created_at ASC"
 	if sort != "" {
@@ -115,6 +115,7 @@ func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, off
 		// TODO: Add another kinds for searching
 	}
 
+	storeBundles := []model.StoreBundle{}
 	err = p.db.
 		Model(model.StoreBundle{}).
 		Where(`vendor_id = ?`, vendorId).
@@ -122,7 +123,7 @@ func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, off
 		Order(orderBy).
 		Limit(limit).
 		Offset(offset).
-		Find(&result).Error
+		Find(&storeBundles).Error
 	if err != nil {
 		return 0, nil, errors.Wrap(err, "Fetch store bundle list")
 	}
@@ -134,6 +135,12 @@ func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, off
 		Count(&total).Error
 	if err != nil {
 		return 0, nil, errors.Wrap(err, "Fetch store bundle total")
+	}
+
+	result = []model.Bundle{}
+	for _, bundle := range storeBundles {
+		copyBundle := bundle
+		result = append(result, &copyBundle)
 	}
 
 	return
@@ -150,7 +157,7 @@ func (p *bundleService) Get(bundleId uuid.UUID) (bundle model.Bundle, err error)
 	}
 
 	if entry.EntryType == model.BundleStore {
-		bundle := &model.StoreBundle{}
+		bundle := model.StoreBundle{}
 		err = p.db.Where("id = ?", bundleId).Find(&bundle).Error
 		if err != nil {
 			return nil, errors.Wrap(err, "Retrieve store bundle")
@@ -170,7 +177,7 @@ func (p *bundleService) Get(bundleId uuid.UUID) (bundle model.Bundle, err error)
 			}
 			bundle.Packages = append(bundle.Packages, *pkg)
 		}
-		return bundle, nil
+		return &bundle, nil
 	}
 
 	return nil, NewServiceError(http.StatusNotImplemented, "Only store bundle, yet")
@@ -198,7 +205,11 @@ func (p *bundleService) Delete(bundleId uuid.UUID) (err error) {
 	return nil
 }
 
-func (p *bundleService) UpdateStore(bundle *model.StoreBundle) (result *model.StoreBundle, err error) {
+func (p *bundleService) UpdateStore(storeBundle model.Bundle) (result model.Bundle, err error) {
+	bundle, ok := storeBundle.(*model.StoreBundle)
+	if !ok {
+		return nil, NewServiceError(http.StatusUnprocessableEntity, "Bundle isn't store bundle")
+	}
 	exist := &model.StoreBundle{Model: model.Model{ID: bundle.ID}}
 	err = p.db.First(exist).Error
 	if err == gorm.ErrRecordNotFound {
@@ -217,7 +228,7 @@ func (p *bundleService) UpdateStore(bundle *model.StoreBundle) (result *model.St
 
 	bu, err := p.Get(bundle.ID)
 
-	return bu.(*model.StoreBundle), err
+	return bu, err
 }
 
 func (p *bundleService) checkForExists(bundleId uuid.UUID) (err error) {

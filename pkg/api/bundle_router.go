@@ -168,7 +168,7 @@ func (router *BundleRouter) CreateStore(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	dto, err := mapStoreBundleDto(bundle)
+	dto, err := mapStoreBundleDto(bundle.(*model.StoreBundle))
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 	}
 	dto := []*storeBundleItemDTO{}
 	for _, bundle := range bundles {
-		dto = append(dto, mapStoreBundleItemDto(&bundle))
+		dto = append(dto, mapStoreBundleItemDto(bundle.(*model.StoreBundle)))
 	}
 	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", total))
 	return ctx.JSON(http.StatusOK, dto)
@@ -247,7 +247,7 @@ func (router *BundleRouter) UpdateStore(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	dto, err := mapStoreBundleDto(storeRes)
+	dto, err := mapStoreBundleDto(storeRes.(*model.StoreBundle))
 	if err != nil {
 		return err
 	}

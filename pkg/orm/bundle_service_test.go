@@ -4,6 +4,7 @@ import (
 	"github.com/ProtocolONE/rbac"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"math"
 	"qilin-api/pkg/api/mock"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
@@ -111,11 +112,16 @@ func (suite *bundleServiceTestSuite) SetupTest() {
 	}
 	pkgA, err := packageService.Create(vendor.ID, user.ID, "Mega package A", []uuid.UUID{gameA.ID})
 	if err != nil {
-		suite.Fail("Unable to create package", "%v", err)
+		suite.Fail("Unable to create package A", "%v", err)
 	}
 	pkgB, err := packageService.Create(vendor.ID, user.ID, "Mega package B", []uuid.UUID{gameB.ID})
 	if err != nil {
-		suite.Fail("Unable to create package", "%v", err)
+		suite.Fail("Unable to create package B", "%v", err)
+	}
+	pkgB.Discount = 25
+	_, err = packageService.Update(pkgB)
+	if err != nil {
+		suite.Fail("Unable to update package B", "%v", err)
 	}
 
 	priceService := orm.NewPriceService(db)
@@ -174,7 +180,8 @@ func (suite *bundleServiceTestSuite) TearDownTest() {
 func (suite *bundleServiceTestSuite) TestBundles() {
 	should := require.New(suite.T())
 
-	bundle, err := suite.service.CreateStore(suite.vendorId, suite.userId, "Mega bundle", suite.packages)
+	bundleIface, err := suite.service.CreateStore(suite.vendorId, suite.userId, "Mega bundle", suite.packages)
+	bundle, _ := bundleIface.(*model.StoreBundle)
 	should.Nil(err)
 	should.Equal("Mega bundle", bundle.Name.EN)
 	should.Equal(suite.vendorId, bundle.VendorID)
@@ -186,13 +193,15 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.Len(bundleGames, 2)
 
 	should.Equal("Mega bundle", bundle.GetName().EN)
-	currency, price, err := bundle.GetPrice()
+	currency, price, discount, err := bundle.GetPrice()
 	should.Nil(err)
 	should.Equal("USD", currency)
 	should.True(price-15.25 < 0.01)
 	should.True(price-15.25 > -0.01)
+	should.True(math.Abs(float64(price-price*discount*0.01)-14.0) < 0.01)
 
-	bundle2, err := suite.service.CreateStore(suite.vendorId, suite.userId, "Bundle Humble", suite.packages[0:1])
+	bundleIface2, err := suite.service.CreateStore(suite.vendorId, suite.userId, "Bundle Humble", suite.packages[0:1])
+	bundle2, _ := bundleIface2.(*model.StoreBundle)
 	should.Nil(err)
 	should.Equal("Bundle Humble", bundle2.Name.EN)
 	should.Equal(suite.vendorId, bundle2.VendorID)
@@ -215,18 +224,18 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.Nil(err)
 	should.Equal(2, total)
 	should.Equal(2, len(list))
-	should.Equal("Bundle Humble", list[0].Name.EN)
-	should.Equal("Mega bundle", list[1].Name.EN)
+	should.Equal("Bundle Humble", list[0].GetName().EN)
+	should.Equal("Mega bundle", list[1].GetName().EN)
 
 	total, list2, err := suite.service.GetStoreList(suite.vendorId, "", "+date", 1, 20)
 	should.Nil(err)
 	should.Equal(1, len(list2))
-	should.Equal("Bundle Humble", list2[0].Name.EN)
+	should.Equal("Bundle Humble", list2[0].GetName().EN)
 
 	total, list3, err := suite.service.GetStoreList(suite.vendorId, "", "-name", 0, 1)
 	should.Nil(err)
 	should.Equal(1, len(list3))
-	should.Equal("Mega bundle", list3[0].Name.EN)
+	should.Equal("Mega bundle", list3[0].GetName().EN)
 
 	bundle3, err := suite.service.Get(bundle.ID)
 	should.Nil(err)
@@ -248,9 +257,10 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 
 	bundle.Name = utils.LocalizedString{EN: "Updated bundle"}
 	bundle.IsEnabled = true
-	bundleUpd, err := suite.service.UpdateStore(bundle)
+	bundleUpdIface, err := suite.service.UpdateStore(bundle)
 	should.Nil(err)
-	should.NotNil(bundleUpd)
+	should.NotNil(bundleUpdIface)
+	bundleUpd, _ := bundleUpdIface.(*model.StoreBundle)
 	should.Equal(true, bundleUpd.IsEnabled)
 	should.Equal("Updated bundle", bundleUpd.Name.EN)
 
@@ -298,7 +308,7 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.Nil(err)
 	should.Equal(1, total)
 	should.Equal(1, len(list))
-	should.Equal("Bundle Humble", list[0].Name.EN)
+	should.Equal("Bundle Humble", list[0].GetName().EN)
 
 	bundleErrIface, err = suite.service.Get(bundle.ID)
 	should.NotNil(err)

@@ -12,12 +12,12 @@ func NewBundleService() (*bundleService, error) {
 	return &bundleService{}, nil
 }
 
-func (*bundleService) CreateStore(vendorId uuid.UUID, userId, name string, packages []uuid.UUID) (bundle *model.StoreBundle, err error) {
+func (*bundleService) CreateStore(vendorId uuid.UUID, userId, name string, packages []uuid.UUID) (bundle model.Bundle, err error) {
 	return &model.StoreBundle{}, nil
 }
 
-func (*bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.StoreBundle, err error) {
-	return 0, []model.StoreBundle{}, nil
+func (*bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.Bundle, err error) {
+	return 0, []model.Bundle{}, nil
 }
 
 func (*bundleService) Get(bundleId uuid.UUID) (bundle model.Bundle, err error) {
@@ -28,7 +28,7 @@ func (*bundleService) Delete(bundleId uuid.UUID) (err error) {
 	return nil
 }
 
-func (*bundleService) UpdateStore(bundle *model.StoreBundle) (result *model.StoreBundle, err error) {
+func (*bundleService) UpdateStore(bundle model.Bundle) (result model.Bundle, err error) {
 	return bundle, nil
 }
 
