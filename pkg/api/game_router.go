@@ -4,7 +4,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/lunny/html2md"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
+	"go.uber.org/zap"
 	"gopkg.in/russross/blackfriday.v2"
 	"net/http"
 	"qilin-api/pkg/api/context"
@@ -22,6 +24,7 @@ import (
 type GameRouter struct {
 	gameService model.GameService
 	userService model.UserService
+	eventBus    model.EventBus
 }
 
 type (
@@ -30,9 +33,9 @@ type (
 		Processor        string `json:"processor"`
 		Graphics         string `json:"graphics"`
 		Sound            string `json:"sound"`
-		Ram              int    `json:"ram"`
+		Ram              int32  `json:"ram"`
 		RamDimension     string `json:"ramdimension"`
-		Storage          int    `json:"storage"`
+		Storage          int32  `json:"storage"`
 		StorageDimension string `json:"storagedimension"`
 		Other            string `json:"other"`
 	}
@@ -71,7 +74,7 @@ type (
 	}
 
 	GameTagDTO struct {
-		Id    int                   `json:"id" validate:"required"`
+		Id    int64                   `json:"id" validate:"required"`
 		Title utils.LocalizedString `json:"title" validate:"dive"`
 	}
 
@@ -260,10 +263,11 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 	}
 }
 
-func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService) (*GameRouter, error) {
+func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService, bus model.EventBus) (*GameRouter, error) {
 	Router := GameRouter{
 		gameService: service,
 		userService: userService,
+		eventBus:    bus,
 	}
 
 	r := rbac_echo.Group(router, "/vendors/:vendorId", &Router, []string{"*", model.VendorGameType, model.VendorDomain})
@@ -276,6 +280,7 @@ func InitRoutes(router *echo.Group, service model.GameService, userService model
 	gameGroup.PUT("/:gameId", Router.UpdateInfo, nil)
 	gameGroup.GET("/:gameId/descriptions", Router.GetDescr, nil)
 	gameGroup.PUT("/:gameId/descriptions", Router.UpdateDescr, nil)
+	gameGroup.POST("/:gameId/publications", Router.PublishGame, []string{"gameId", model.PublishGame, model.VendorDomain})
 
 	router.GET("/genre", Router.GetGenres) // TODO: Remove after some time
 	router.GET("/genres", Router.GetGenres)
@@ -295,6 +300,19 @@ func (api *GameRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
 		return GetOwnerForVendor(ctx)
 	}
 	return GetOwnerForGame(ctx)
+}
+
+func (api *GameRouter) PublishGame(ctx echo.Context) error {
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+	}
+
+	if err := api.eventBus.PublishGameChanges(gameId); err != nil {
+		return orm.NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Can't publish game changes"))
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (api *GameRouter) GetList(ctx echo.Context) error {
@@ -326,7 +344,7 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 	localOffset := offset
 
 	//CURSOR solution
-	for len(dto) <= limit && shouldBreak == false{
+	for len(dto) <= limit && shouldBreak == false {
 		localLimit := limit - len(dto)
 
 		games, err := api.gameService.GetList(userId, vendorId, localOffset, localLimit, internalName, genre, releaseDate, sort, price)
@@ -389,10 +407,12 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	dto, err := mapGameInfo(game, api.gameService)
 	if err != nil {
 		return err
 	}
+
 	return ctx.JSON(http.StatusCreated, dto)
 }
 
@@ -426,6 +446,12 @@ func (api *GameRouter) Delete(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	err = api.eventBus.PublishGameDelete(gameId)
+	if err != nil {
+		zap.L().Error("Error during publishing game changes.", zap.Error(err))
+	}
+
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
@@ -448,7 +474,8 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, "OK")
+
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (api *GameRouter) GetDescr(ctx echo.Context) error {

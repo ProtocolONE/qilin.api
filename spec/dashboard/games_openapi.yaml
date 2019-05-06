@@ -187,6 +187,33 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/games/{id}/publications:
+    post:
+      tags:
+        - "game"
+      summary: "Publish game to store"
+      parameters:
+        - name: "id"
+          in: "path"
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: "Id of game to publish"
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
   /api/v1/games/{id}:
     get:
       tags:
@@ -217,7 +244,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/InternalError'
-
 
     delete:
       tags:

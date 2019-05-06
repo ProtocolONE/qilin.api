@@ -295,7 +295,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Retrive tags with user", user.ID)
 	tags, err := gameService.FindTags(user.ID, "Стрелялки", 20, 0)
 	require.Equal(len(tags), 1, "Must be one match")
-	require.Equal(tags[0].ID, 1, "Same value")
+	require.EqualValues(tags[0].ID, 1, "Same value")
 }
 
 func (suite *GameServiceTestSuite) TestDescriptors() {
@@ -329,12 +329,12 @@ func (suite *GameServiceTestSuite) TestFindAllGenres() {
 	genres, err := gameService.FindGenres(suite.userId, "", 10, 0)
 	require.NoError(err)
 	require.Equal(3, len(genres))
-	require.Equal(1, genres[0].ID)
+	require.EqualValues(1, genres[0].ID)
 	require.Equal("Action", genres[0].Title.EN)
 
 	genres2, err := gameService.FindGenres(suite.userId, "", 1, 1)
 	require.NoError(err)
 	require.Equal(1, len(genres2))
-	require.Equal(2, genres2[0].ID)
+	require.EqualValues(2, genres2[0].ID)
 	require.Equal("Test", genres2[0].Title.EN)
 }

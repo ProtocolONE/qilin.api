@@ -167,7 +167,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	if _, err := InitRoutes(s.Router, gameService, userService); err != nil {
+	if _, err := InitRoutes(s.Router, gameService, userService, mock.NewEventBus()); err != nil {
 		return err
 	}
 

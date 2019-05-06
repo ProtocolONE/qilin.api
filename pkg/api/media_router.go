@@ -15,8 +15,8 @@ import (
 type (
 	//MediaRouter is group struct
 	MediaRouter struct {
-		mediaService model.MediaService
-	}
+	mediaService model.MediaService
+}
 
 	//Media is DTO object with full information about media for game
 	Media struct {
