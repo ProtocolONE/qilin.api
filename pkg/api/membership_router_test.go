@@ -17,6 +17,7 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
+	"qilin-api/pkg/utils"
 	"strings"
 	"testing"
 )
@@ -81,7 +82,9 @@ func (suite *MembershipRouterTestSuite) SetupTest() {
 	}).Error)
 
 	e := echo.New()
-	e.Validator = &QilinValidator{validator: validator.New()}
+	v := validator.New()
+	e.Validator = &QilinValidator{validator: v}
+	shouldBe.NoError(utils.RegisterCustomValidations(v))
 	enf := rbac.NewEnforcer()
 	ownerProvider := orm.NewOwnerProvider(db)
 
@@ -321,6 +324,7 @@ func (suite *MembershipRouterTestSuite) TestAcceptInvite() {
 func (suite *MembershipRouterTestSuite) TestSendInvite() {
 	shouldBe := require.New(suite.T())
 	normalBody := `{"email":"tester@protocol.one", "roles":[{"role":"manager","resource":{"id":"*","domain":"vendor"}}]}`
+	badRoleBody := `{"email":"tester@protocol.one", "roles":[{"role":"admin","resource":{"id":"*","domain":"vendor"}}]}`
 	normalBodyWithGameId := fmt.Sprintf(`{"email":"tester2@protocol.one", "roles":[{"role":"manager","resource":{"id":"%s","domain":"vendor"}}]}`, TestID)
 	bodyWithUnknownGameId := fmt.Sprintf(`{"email":"tester3@protocol.one", "roles":[{"role":"manager","resource":{"id":"%s","domain":"vendor"}}]}`, uuid.NewV4())
 	noEmailBody := `{"roles":[{"role":"manager","resource":{"id":"*"}}]}`
@@ -340,6 +344,7 @@ func (suite *MembershipRouterTestSuite) TestSendInvite() {
 		{testName: "Without email", vendorId: vendorId, code: 422, body: noEmailBody, success: false},
 		{testName: "Unknown vendor", vendorId: uuid.NewV4().String(), code: 404, body: normalBody, success: false},
 		{testName: "Bad vendor id", vendorId: "SOME_BAD_UUID", code: 400, body: noEmailBody, success: false},
+		{testName: "Bad role ", vendorId: vendorId, code: 422, body: badRoleBody, success: false},
 	}
 
 	for _, testCase := range testCases {
