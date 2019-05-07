@@ -11,6 +11,7 @@ import (
 	"qilin-api/pkg/orm/utils"
 	"qilin-api/pkg/sys"
 	array_utils "qilin-api/pkg/utils"
+	"time"
 )
 
 type membershipService struct {
@@ -164,10 +165,19 @@ func (service *membershipService) getUser(userId string, ownerId string) (*model
 	}
 
 	return &model.UserRole{
+		ID:    user.ID,
 		Email: user.Email,
 		Name:  user.FullName,
 		Roles: roles,
+		LastSeen: getLastSeen(&user),
 	}, nil
+}
+
+func getLastSeen(user *model.User) string {
+	if user.LastSeen == nil {
+		return ""
+	}
+	return user.LastSeen.Format(time.RFC3339)
 }
 
 func (service *membershipService) GetUser(vendorId uuid.UUID, userId string) (*model.UserRole, error) {

@@ -17,15 +17,17 @@ const (
 
 	AnyRole     string = "any"
 	NotApproved string = "not_approved"
-	VendorOwner       string = "owner"
+	VendorOwner string = "owner"
 
 	VendorDomain string = "vendor"
 )
 
 type UserRole struct {
-	Email string            `json:"email"`
-	Name  string            `json:"name"`
-	Roles []RoleRestriction `json:"roles"`
+	ID       string            `json:"id"`
+	Email    string            `json:"email"`
+	Name     string            `json:"name"`
+	Roles    []RoleRestriction `json:"roles"`
+	LastSeen string            `json:"lastSeen"`
 }
 
 type RoleRestriction struct {

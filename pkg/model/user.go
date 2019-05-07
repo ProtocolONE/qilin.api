@@ -46,4 +46,5 @@ type AppState struct {
 type UserService interface {
 	FindByID(id string) (User, error)
 	Create(id string, email string, lang string) (User, error)
+	UpdateLastSeen(user User) error
 }
