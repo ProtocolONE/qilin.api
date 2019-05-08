@@ -23,9 +23,11 @@ const (
 )
 
 type UserRole struct {
-	Email string            `json:"email"`
-	Name  string            `json:"name"`
-	Roles []RoleRestriction `json:"roles"`
+	ID       string            `json:"id"`
+	Email    string            `json:"email"`
+	Name     string            `json:"name"`
+	Roles    []RoleRestriction `json:"roles"`
+	LastSeen string            `json:"lastSeen"`
 }
 
 type RoleRestriction struct {
@@ -35,12 +37,9 @@ type RoleRestriction struct {
 }
 
 const GameType string = "games"
+const PublishGame string = "games.publish"
 const GameListType string = "vendors.games"
-const PackageType string = "packages"
-const RoleBundle string = "bundles"
-const PackageListType string = "vendors.packages.*"
-const RoleBundleList string = "vendors.bundles.*"
-const VendorGameType string = "vendors.games"
+const VendorGameType string = "vendor.games"
 const DocumentsType string = "vendors.documents.*"
 const MessagesType string = "vendors.messages.*"
 const VendorType string = "vendors"
@@ -49,6 +48,10 @@ const RoleUserType string = "vendors.memberships"
 const RolesType string = "vendors.memberships.permissions"
 const InvitesType string = "vendors.memberships.invites"
 const GlobalType string = "global"
+const PackageType string = "packages"
+const RoleBundle string = "bundles"
+const PackageListType string = "vendors.packages.*"
+const RoleBundleList string = "vendors.bundles.*"
 
 type ResourceMeta struct {
 	Preview      string `json:"preview"`

@@ -175,6 +175,7 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 		Game:    item,
 		Reviews: []bto.GameReview{},
 	}).Error
+
 	if err != nil {
 		transation.Rollback()
 		return nil, errors.Wrap(err, "Create descriptions for game")

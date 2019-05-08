@@ -23,8 +23,6 @@ func Test_MembershipService(t *testing.T) {
 	suite.Run(t, new(MemershipServiceTestSuite))
 }
 
-var ownerId uuid.UUID
-
 func (suite *MemershipServiceTestSuite) SetupTest() {
 	shouldBe := require.New(suite.T())
 
@@ -109,7 +107,7 @@ func (suite *MemershipServiceTestSuite) TestAddRoleToUser() {
 			continue
 		}
 
-		shouldBe.Equal(19, len(user.Roles))
+		shouldBe.Equal(21, len(user.Roles))
 		for _, role := range user.Roles {
 			shouldBe.NotEmpty(role.Resource.Meta.InternalName)
 		}

@@ -11,7 +11,7 @@ import (
 
 type (
 	GameTag struct {
-		ID    int                   `gorm:"primary_key"`
+		ID    int64                 `gorm:"primary_key"`
 		Title utils.LocalizedString `gorm:"type:jsonb; not null"`
 	}
 

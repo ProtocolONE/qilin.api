@@ -47,6 +47,10 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 		}
 	}
 
+	if err := api.service.UpdateLastSeen(userObj); err != nil {
+		return err
+	}
+
 	result := model.AppState{User: model.UserInfo{
 		Id: userObj.ID,
 	}}

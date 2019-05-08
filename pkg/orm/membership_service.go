@@ -11,6 +11,7 @@ import (
 	"qilin-api/pkg/orm/utils"
 	"qilin-api/pkg/sys"
 	array_utils "qilin-api/pkg/utils"
+	"time"
 )
 
 type membershipService struct {
@@ -159,16 +160,11 @@ func (service *membershipService) getUser(userId string, ownerId string) (*model
 				}
 				meta = model.ResourceMeta{
 					InternalName: game.InternalName,
-					//TODO: add new field to game object
-					//Preview: game.Icon
 				}
 				gamesCache[rest.UUID] = meta
 			}
 
-			resType := model.GlobalType
-			if rest.UUID != "*" {
-				resType = model.GameType
-			}
+			resType := role.Resource
 
 			roles = append(roles, model.RoleRestriction{
 				Role:   rest.Role,
@@ -184,10 +180,19 @@ func (service *membershipService) getUser(userId string, ownerId string) (*model
 	}
 
 	return &model.UserRole{
-		Email: user.Email,
-		Name:  user.FullName,
-		Roles: roles,
+		ID:       user.ID,
+		Email:    user.Email,
+		Name:     user.FullName,
+		Roles:    roles,
+		LastSeen: getLastSeen(&user),
 	}, nil
+}
+
+func getLastSeen(user *model.User) string {
+	if user.LastSeen == nil {
+		return ""
+	}
+	return user.LastSeen.Format(time.RFC3339)
 }
 
 func (service *membershipService) GetUser(vendorId uuid.UUID, userId string) (*model.UserRole, error) {

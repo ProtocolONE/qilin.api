@@ -180,7 +180,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	if _, err := InitBundleRouter(s.Router, bundleService); err != nil {
+	if _, err := InitGameRoutes(s.Router, gameService, userService, mock.NewEventBus()); err != nil {
 		return err
 	}
 
@@ -188,7 +188,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	if _, err := InitGameRoutes(s.Router, gameService, userService); err != nil {
+	if _, err := InitBundleRouter(s.Router, bundleService); err != nil {
 		return err
 	}
 

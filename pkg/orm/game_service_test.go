@@ -295,7 +295,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	suite.T().Log("Retrive tags with user", user.ID)
 	tags, err := gameService.FindTags(user.ID, "Стрелялки", 20, 0)
 	should.Equal(len(tags), 1, "Must be one match")
-	should.Equal(tags[0].ID, 1, "Same value")
+	should.EqualValues(tags[0].ID, 1, "Same value")
 }
 
 func (suite *GameServiceTestSuite) TestDescriptors() {
@@ -329,12 +329,12 @@ func (suite *GameServiceTestSuite) TestFindAllGenres() {
 	genres, err := gameService.FindGenres(suite.userId, "", 10, 0)
 	should.NoError(err)
 	should.Equal(3, len(genres))
-	should.Equal(1, genres[0].ID)
+	should.EqualValues(1, genres[0].ID)
 	should.Equal("Action", genres[0].Title.EN)
 
 	genres2, err := gameService.FindGenres(suite.userId, "", 1, 1)
 	should.NoError(err)
 	should.Equal(1, len(genres2))
-	should.Equal(2, genres2[0].ID)
+	should.EqualValues(2, genres2[0].ID)
 	should.Equal("Test", genres2[0].Title.EN)
 }

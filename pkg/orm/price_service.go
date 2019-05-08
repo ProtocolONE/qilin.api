@@ -10,12 +10,12 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// priceService is service to interact with database and Media object.
+// PriceService is service to interact with database and Media object.
 type priceService struct {
 	db *gorm.DB
 }
 
-// NewpriceService initialize this service.
+// NewPriceService initialize this service.
 func NewPriceService(db *Database) model.PriceService {
 	return &priceService{db.database}
 }

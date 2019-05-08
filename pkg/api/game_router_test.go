@@ -4,7 +4,6 @@ import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/random"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -34,7 +33,7 @@ func Test_GamesRouter(t *testing.T) {
 }
 
 var (
-	userId             = random.String(16, "0123456789")
+	userId             = uuid.NewV4().String()
 	vendorId           = uuid.NewV4().String()
 	createGamesPayload = `{"InternalName":"new_game"}`
 )
@@ -91,7 +90,7 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 
 	groupApi := echoObj.Group("/api/v1")
 	userService, err := orm.NewUserService(db, nil)
-	router, err := InitGameRoutes(groupApi, service, userService)
+	router, err := InitGameRoutes(groupApi, service, userService, mock.NewEventBus())
 	if err != nil {
 		suite.FailNow("Init routes fail", "%v", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/sys"
 	"runtime"
+	"time"
 )
 
 type UserService struct {
@@ -48,6 +49,15 @@ func (p *UserService) FindByID(id string) (user model.User, err error) {
 		return user, errors.Wrap(err, "search user by id")
 	}
 	return
+}
+
+func (p *UserService) UpdateLastSeen(user model.User) error {
+	now := time.Now().UTC()
+	user.LastSeen = &now
+	if err := p.db.Save(&user).Error; err != nil {
+		return NewServiceError(http.StatusInternalServerError, err)
+	}
+	return nil
 }
 
 func (p *UserService) Create(id string, email string, lang string) (user model.User, err error) {
