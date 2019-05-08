@@ -384,5 +384,5 @@ func (router *packageRouter) Remove(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, "Ok")
+	return ctx.NoContent(http.StatusOK)
 }

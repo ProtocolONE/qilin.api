@@ -265,7 +265,7 @@ func (router *BundleRouter) Delete(ctx echo.Context) (err error) {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, "Ok")
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (router *BundleRouter) checkRBAC(userId string, qilinCtx *rbac_echo.AppContext, packagesIds []uuid.UUID) error {
@@ -307,7 +307,7 @@ func (router *BundleRouter) AddPackages(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, "OK")
+	return ctx.NoContent(http.StatusOK)
 }
 
 func (router *BundleRouter) RemovePackages(ctx echo.Context) (err error) {
@@ -324,5 +324,5 @@ func (router *BundleRouter) RemovePackages(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, "OK")
+	return ctx.NoContent(http.StatusOK)
 }
