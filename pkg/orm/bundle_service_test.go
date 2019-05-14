@@ -220,19 +220,19 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.NotNil(err, "Vendor not found")
 	should.Nil(bundleErr)
 
-	total, list, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 20)
+	total, list, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 20, nil)
 	should.Nil(err)
 	should.Equal(2, total)
 	should.Equal(2, len(list))
 	should.Equal("Bundle Humble", list[0].GetName().EN)
 	should.Equal("Mega bundle", list[1].GetName().EN)
 
-	total, list2, err := suite.service.GetStoreList(suite.vendorId, "", "+date", 1, 20)
+	total, list2, err := suite.service.GetStoreList(suite.vendorId, "", "+date", 1, 20, nil)
 	should.Nil(err)
 	should.Equal(1, len(list2))
 	should.Equal("Bundle Humble", list2[0].GetName().EN)
 
-	total, list3, err := suite.service.GetStoreList(suite.vendorId, "", "-name", 0, 1)
+	total, list3, err := suite.service.GetStoreList(suite.vendorId, "", "-name", 0, 1, nil)
 	should.Nil(err)
 	should.Equal(1, len(list3))
 	should.Equal("Mega bundle", list3[0].GetName().EN)
@@ -304,7 +304,7 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	err = suite.service.Delete(bundle.ID)
 	should.Nil(err, "Remove bundle")
 
-	total, list, err = suite.service.GetStoreList(suite.vendorId, "", "+date", 0, 20)
+	total, list, err = suite.service.GetStoreList(suite.vendorId, "", "+date", 0, 20, nil)
 	should.Nil(err)
 	should.Equal(1, total)
 	should.Equal(1, len(list))

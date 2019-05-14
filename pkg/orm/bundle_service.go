@@ -89,7 +89,7 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, pac
 	return bundleIfce.(*model.StoreBundle), nil
 }
 
-func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.Bundle, err error) {
+func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc model.BundleListingFilter) (total int, result []model.Bundle, err error) {
 	orderBy := ""
 	orderBy = "created_at ASC"
 	if sort != "" {
@@ -115,25 +115,70 @@ func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, off
 	}
 
 	storeBundles := []model.StoreBundle{}
-	err = p.db.
-		Model(model.StoreBundle{}).
-		Where(`vendor_id = ?`, vendorId).
-		Where(strings.Join(conds, " or "), vals...).
-		Order(orderBy).
-		Limit(limit).
-		Offset(offset).
-		Find(&storeBundles).Error
-	if err != nil {
-		return 0, nil, errors.Wrap(err, "Fetch store bundle list")
-	}
-
-	err = p.db.
-		Model(model.StoreBundle{}).
-		Where(`vendor_id = ?`, vendorId).
-		Where(strings.Join(conds, " or "), vals...).
-		Count(&total).Error
-	if err != nil {
-		return 0, nil, errors.Wrap(err, "Fetch store bundle total")
+	if filterFunc != nil {
+		vendorBundles := []model.StoreBundle{}
+		err = p.db.
+			Select("id").
+			Where(`vendor_id = ?`, vendorId).
+			Where(strings.Join(conds, " or "), vals...).
+			Find(&vendorBundles).Error
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "Fetch store bundle ids")
+		}
+		ids := []uuid.UUID{}
+		for _, bundle := range vendorBundles {
+			if grant, err := filterFunc(bundle.ID); grant {
+				ids = append(ids, bundle.ID)
+			} else if err != nil {
+				return 0, nil, err
+			}
+		}
+		total = len(ids)
+		if offset < 0 {
+			offset = 0
+		}
+		if offset > len(ids) {
+			offset = len(ids)
+		}
+		if limit < 0 {
+			limit = 0
+		}
+		if offset+limit > len(ids) {
+			limit = len(ids) - offset
+		}
+		ids = ids[offset : offset+limit]
+		if len(ids) > 0 {
+			err = p.db.
+				Model(model.StoreBundle{}).
+				Where(`id in (?)`, ids).
+				Order(orderBy).
+				Find(&storeBundles).Error
+			if err != nil {
+				return 0, nil, errors.Wrap(err, "Fetch store bundles from ids")
+			}
+		}
+	} else {
+		// Get store bundles
+		err = p.db.
+			Model(model.StoreBundle{}).
+			Where(`vendor_id = ?`, vendorId).
+			Where(strings.Join(conds, " or "), vals...).
+			Order(orderBy).
+			Limit(limit).
+			Offset(offset).
+			Find(&storeBundles).Error
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "Fetch store bundle list")
+		}
+		// Calc total bundles for vendor
+		err = p.db.
+			Model(model.StoreBundle{}).
+			Where(`vendor_id = ?`, vendorId).
+			Where(strings.Join(conds, " or "), vals...).
+			Count(&total).Error
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "Fetch store bundle total")
+		}
 	}
 
 	result = []model.Bundle{}

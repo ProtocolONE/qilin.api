@@ -36,9 +36,11 @@ type (
 		Position  int
 	}
 
+	BundleListingFilter func(uuid.UUID) (bool, error)
+
 	BundleService interface {
 		CreateStore(vendorId uuid.UUID, userId, name string, packages []uuid.UUID) (bundle Bundle, err error)
-		GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, bundles []Bundle, err error)
+		GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc BundleListingFilter) (total int, bundles []Bundle, err error)
 		UpdateStore(bundle Bundle) (result Bundle, err error)
 
 		Get(bundleId uuid.UUID) (bundle Bundle, err error)

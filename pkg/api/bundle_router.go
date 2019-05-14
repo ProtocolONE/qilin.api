@@ -188,9 +188,24 @@ func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 	if err != nil {
 		limit = 20
 	}
+	userId, err := context.GetAuthUserId(ctx)
+	if err != nil {
+		return err
+	}
+	qilinCtx := ctx.(rbac_echo.AppContext)
+	filterFunc := func(bundleId uuid.UUID) (grant bool, err error) {
+		owner, err := qilinCtx.GetOwnerForBundle(bundleId)
+		if err != nil {
+			return
+		}
+		if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.RoleBundle, bundleId.String(), owner, "read") != nil {
+			return false, nil
+		}
+		return true, nil
+	}
 	query := ctx.QueryParam("query")
 	sort := ctx.QueryParam("sort")
-	total, bundles, err := router.service.GetStoreList(vendorId, query, sort, offset, limit)
+	total, bundles, err := router.service.GetStoreList(vendorId, query, sort, offset, limit, filterFunc)
 	if err != nil {
 		return err
 	}

@@ -67,13 +67,14 @@ type (
 	}
 
 	packageItemDTO struct {
-		ID        uuid.UUID             `json:"id"`
-		CreatedAt time.Time             `json:"createdAt"`
-		Sku       string                `json:"sku"`
-		Name      utils.LocalizedString `json:"name"`
-		IsEnabled bool                  `json:"isEnabled"`
-		IsDefault bool                  `json:"isDefault"`
-		Media     packageMediaDTO       `json:"media" validate:"required,dive"`
+		ID             uuid.UUID                `json:"id"`
+		CreatedAt      time.Time                `json:"createdAt"`
+		Sku            string                   `json:"sku"`
+		Name           utils.LocalizedString    `json:"name"`
+		IsEnabled      bool                     `json:"isEnabled"`
+		IsDefault      bool                     `json:"isDefault"`
+		Media          packageMediaDTO          `json:"media" validate:"required,dive"`
+		DiscountPolicy packageDiscountPolicyDTO `json:"discountPolicy" validate:"required,dive"`
 	}
 )
 
@@ -112,10 +113,15 @@ func mapPackageItemDto(pkg *model.Package) *packageItemDTO {
 		Sku:       pkg.Sku,
 		Name:      pkg.Name,
 		IsEnabled: pkg.IsEnabled,
+		IsDefault: pkg.IsDefault,
 		Media: packageMediaDTO{
 			Image: pkg.Image,
 			Cover: pkg.ImageCover,
 			Thumb: pkg.ImageThumb,
+		},
+		DiscountPolicy: packageDiscountPolicyDTO{
+			Discount:  pkg.Discount,
+			BuyOption: pkg.DiscountBuyOpt.String(),
 		},
 	}
 }

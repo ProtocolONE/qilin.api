@@ -263,6 +263,11 @@ func mapGameInfoBTO(game *UpdateGameDTO) *model.Game {
 		Languages: bto.GameLangs{
 			EN: bto.Langs{game.Languages.EN.Voice, game.Languages.EN.Interface, game.Languages.EN.Subtitles},
 			RU: bto.Langs{game.Languages.RU.Voice, game.Languages.RU.Interface, game.Languages.RU.Subtitles},
+			FR: bto.Langs{game.Languages.FR.Voice, game.Languages.FR.Interface, game.Languages.FR.Subtitles},
+			ES: bto.Langs{game.Languages.ES.Voice, game.Languages.ES.Interface, game.Languages.ES.Subtitles},
+			DE: bto.Langs{game.Languages.DE.Voice, game.Languages.DE.Interface, game.Languages.DE.Subtitles},
+			IT: bto.Langs{game.Languages.IT.Voice, game.Languages.IT.Interface, game.Languages.IT.Subtitles},
+			PT: bto.Langs{game.Languages.PT.Voice, game.Languages.PT.Interface, game.Languages.PT.Subtitles},
 		},
 		GenreMain:     game.Genres.Main,
 		GenreAddition: game.Genres.Addition,
