@@ -197,6 +197,11 @@ func (p *packageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) 
 		return nil, err
 	}
 
+	prods, err = p.filterProducts(prods)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(prods) > 0 {
 		err = p.db.Delete(model.PackageProduct{}, "package_id = ? and product_id in (?)", packageId, prods).Error
 		if err != nil {
