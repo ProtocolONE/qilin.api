@@ -91,7 +91,7 @@ func (api *OnboardingAdminRouter) changeStatus(ctx echo.Context) error {
 	request := new(ChangeStatusRequest)
 
 	if err := ctx.Bind(request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 
 	if errs := ctx.Validate(request); errs != nil {

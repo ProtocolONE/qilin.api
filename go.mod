@@ -25,6 +25,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.3.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo/v4 v4.0.0
+	github.com/labstack/gommon v0.2.8
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.0.0
 	github.com/lunny/html2md v0.0.0-20181018071239-7d234de44546
@@ -33,6 +34,7 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/satori/go.uuid v1.2.0
+	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	go.uber.org/atomic v1.3.2 // indirect

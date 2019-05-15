@@ -85,11 +85,12 @@ func (suite *GamesRouterTestSuite) SetupTest() {
 	}
 
 	service, err := orm.NewGameService(db)
+	require.Nil(suite.T(), err, "Unable to make game service")
 	echoObj.Use(rbac_echo.NewAppContextMiddleware(ownerProvider, enforcer))
 
 	groupApi := echoObj.Group("/api/v1")
 	userService, err := orm.NewUserService(db, nil)
-	router, err := InitRoutes(groupApi, service, userService, mock.NewEventBus())
+	router, err := InitGameRoutes(groupApi, service, userService, mock.NewEventBus())
 	if err != nil {
 		suite.FailNow("Init routes fail", "%v", err)
 	}
@@ -109,15 +110,6 @@ func (suite *GamesRouterTestSuite) TearDownTest() {
 }
 
 func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
-	err := suite.db.DB().Save(&model.User{
-		ID:       userId,
-		Nickname: "admin",
-		Login:    "admin@protocol.one",
-		Password: "123456",
-		Lang:     "en",
-		Currency: "usd",
-	}).Error
-
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(createGamesPayload))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
@@ -128,10 +120,6 @@ func (suite *GamesRouterTestSuite) TestShouldCreateGame() {
 	c.SetParamValues(vendorId)
 	c.Set(context.TokenKey, &jwtverifier.UserInfo{UserID: userId})
 
-	err = suite.router.Create(c)
+	err := suite.router.Create(c)
 	require.Nil(suite.T(), err, "Error while create game")
-
-	game := model.Game{}
-	err = suite.db.DB().First(&game).Error
-	require.Equal(suite.T(), game.InternalName, "new_game", "Incorrect game creates")
 }

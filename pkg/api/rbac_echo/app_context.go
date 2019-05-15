@@ -39,6 +39,14 @@ func (c *AppContext) GetOwnerForVendor(uuid uuid.UUID) (string, error) {
 	return c.ownerProvider.GetOwnerForVendor(uuid)
 }
 
+func (c *AppContext) GetOwnerForPackage(uuid uuid.UUID) (string, error) {
+	return c.ownerProvider.GetOwnerForPackage(uuid)
+}
+
+func (c *AppContext) GetOwnerForBundle(uuid uuid.UUID) (string, error) {
+	return c.ownerProvider.GetOwnerForBundle(uuid)
+}
+
 func CheckPermissions(group *RbacGroup, router Router) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

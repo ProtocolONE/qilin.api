@@ -1,33 +1,68 @@
 package model
 
-import "time"
+import (
+	"github.com/lib/pq"
+	"github.com/satori/go.uuid"
+	"qilin-api/pkg/model/utils"
+)
 
-type Asset interface {
-	UniqueID() string
+type BuyOption int
+
+const (
+	BuyOption_Whole BuyOption = iota
+	BuyOption_Part
+)
+
+type (
+	Package struct {
+		Model
+		Sku              string
+		Name             utils.LocalizedString `gorm:"type:jsonb; not null; default:'{}'"`
+		Image            utils.LocalizedString `gorm:"type:jsonb; not null; default:'{}'"`
+		ImageCover       utils.LocalizedString `gorm:"type:jsonb; not null; default:'{}'"`
+		ImageThumb       utils.LocalizedString `gorm:"type:jsonb; not null; default:'{}'"`
+		IsUpgradeAllowed bool
+		IsEnabled        bool
+		IsDefault        bool
+		VendorID         uuid.UUID
+		Vendor           Vendor
+		CreatorID        string
+		// DiscountPolicy
+		Discount       uint
+		DiscountBuyOpt BuyOption
+		// RegionalRestrinctions
+		AllowedCountries pq.StringArray `gorm:"type:text[]"`
+		// Payload
+		Products []Product `gorm:"-"`
+		// Prices in package
+		PackagePrices
+	}
+
+	PackageProduct struct {
+		PackageID uuid.UUID
+		ProductID uuid.UUID
+		Position  int
+	}
+
+	PackageService interface {
+		Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (*Package, error)
+		Get(packageId uuid.UUID) (result *Package, err error)
+		GetList(vendorId uuid.UUID, query, orderBy string, offset, limit int) (total int, result []Package, err error)
+		AddProducts(packageId uuid.UUID, prods []uuid.UUID) (*Package, error)
+		RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) (*Package, error)
+		Update(pkg *Package) (result *Package, err error)
+		Remove(packageId uuid.UUID) (err error)
+	}
+)
+
+func (s BuyOption) String() string {
+	return [...]string{"whole", "part"}[s]
 }
 
-type Package struct {
-	// unique merchant identifier in auth system
-	ID string `json:"id" validate:"required"`
-
-	// game name
-	Name string `bson:"name"`
-
-	Assets []Asset `bson:"assets"`
-
-	// date of create merchant in system
-	CreatedAt time.Time `json:"created_at"`
-
-	// date of last update merchant in system
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// GameService is a helper service class to interact with Game object.
-type PackageService interface {
-	CreatePackage(g *Game) error
-	UpdatePackage(g *Game) error
-	DeletePackage(g *Game) error
-	GetAll() ([]*Game, error)
-	FindByID(id string) (*Game, error)
-	FindByName(name string) ([]*Game, error)
+func NewBuyOption(name string) (r BuyOption) {
+	r = BuyOption_Whole
+	if name == "part" {
+		r = BuyOption_Part
+	}
+	return
 }

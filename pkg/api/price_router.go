@@ -2,97 +2,125 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"qilin-api/pkg/api/rbac_echo"
+	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/utils"
-
-	"net/http"
-	"qilin-api/pkg/mapper"
+	"strings"
 
 	"github.com/labstack/echo/v4"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 type (
 	PriceRouter struct {
-		service *orm.PriceService
+		service     model.PriceService
+		gameService model.GameService
 	}
 
-	PricesDTO struct {
-		Common   BasePrice        `json:"common" validate:"required,dive"`
-		PreOrder PreOrder         `json:"preOrder" validate:"required,dive"`
-		Prices   []PricesInternal `json:"prices" validate:"-"`
+	pricesDTO struct {
+		Common   basePrice        `json:"common" validate:"required,dive"`
+		PreOrder preOrder         `json:"preOrder" validate:"required,dive"`
+		Prices   []pricesInternal `json:"prices" validate:"-"`
 	}
 
-	PricesInternal struct {
+	pricesInternal struct {
 		Currency string  `json:"currency" validate:"required"`
 		Price    float32 `json:"price" validate:"required,gte=0"`
 		Vat      int32   `json:"vat" validate:"required,gte=0"`
 	}
 
-	PreOrder struct {
+	preOrder struct {
 		Date    string `json:"date" validate:"required"`
 		Enabled bool   `json:"enabled"`
 	}
 
-	BasePrice struct {
+	basePrice struct {
 		Currency        string `json:"currency" validate:"required"`
 		NotifyRateJumps bool   `json:"notifyRateJumps"`
 	}
 )
 
 //InitPriceRouter is initialization method for group
-func InitPriceRouter(group *echo.Group, service *orm.PriceService) (router *PriceRouter, err error) {
-	priceRouter := PriceRouter{
-		service: service,
-	}
+func InitPriceRouter(group *echo.Group, service model.PriceService, gameService model.GameService) (router *PriceRouter, err error) {
+	priceRouter := PriceRouter{service, gameService}
 
-	r := rbac_echo.Group(group,"/games/:gameId", &priceRouter, []string{"gameId", model.GameType, model.VendorDomain})
+	packageGroup := rbac_echo.Group(group, "/packages", &priceRouter, []string{"packageId", model.PackageType, model.VendorDomain})
+	packageGroup.GET("/:packageId/prices", priceRouter.getBase, nil)
+	packageGroup.PUT("/:packageId/prices", priceRouter.putBase, nil)
+	packageGroup.PUT("/:packageId/prices/:currency", priceRouter.updatePrice, nil)
+	packageGroup.DELETE("/:packageId/prices/:currency", priceRouter.deletePrice, nil)
 
-	r.GET("/prices", priceRouter.getBase, nil)
-	r.PUT("/prices", priceRouter.putBase, nil)
-	r.PUT("/prices/:currency", priceRouter.updatePrice, nil)
-	r.DELETE("/prices/:currency", priceRouter.deletePrice, nil)
+	gameGroup := rbac_echo.Group(group, "/games", &priceRouter, []string{"gameId", model.GameType, model.VendorDomain})
+	gameGroup.GET("/:gameId/prices", priceRouter.getBase, nil)
+	gameGroup.PUT("/:gameId/prices", priceRouter.putBase, nil)
+	gameGroup.PUT("/:gameId/prices/:currency", priceRouter.updatePrice, nil)
+	gameGroup.DELETE("/:gameId/prices/:currency", priceRouter.deletePrice, nil)
 
 	return &priceRouter, nil
 }
 
 func (router *PriceRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) {
-	return GetOwnerForGame(ctx)
+	path := ctx.Path()
+	if strings.Contains(path, "/games/:gameId") {
+		return GetOwnerForGame(ctx)
+	}
+	return GetOwnerForPackage(ctx)
 }
 
-func (router *PriceRouter) getBase(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("gameId"))
-
-	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+// Func made for backward compatibility with games
+func (router *PriceRouter) GetPackageID(ctx *echo.Context) (packageId uuid.UUID, err error) {
+	gameId_str := (*ctx).Param("gameId")
+	if gameId_str != "" {
+		gameId, err := uuid.FromString(gameId_str)
+		if err != nil {
+			return uuid.Nil, orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		}
+		game, err := router.gameService.GetInfo(gameId)
+		if err != nil {
+			return uuid.Nil, err
+		}
+		packageId = game.DefaultPackageID
+	} else {
+		packageId, err = uuid.FromString((*ctx).Param("packageId"))
+		if err != nil {
+			return uuid.Nil, orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		}
 	}
+	return
+}
 
-	price, err := router.service.GetBase(id)
+func (router *PriceRouter) getBase(ctx echo.Context) (err error) {
 
+	id, err := router.GetPackageID(&ctx)
 	if err != nil {
 		return err
 	}
 
-	result := PricesDTO{}
-	err = mapper.Map(price, &result)
+	price, err := router.service.GetBase(id)
+	if err != nil {
+		return err
+	}
+
+	result := pricesDTO{}
+	err = mapper.Map(price.PackagePrices, &result)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Can't decode price from domain to DTO. Error: "+err.Error())
+		return orm.NewServiceError(http.StatusBadRequest, "Can't decode price from domain to DTO. Error: "+err.Error())
 	}
 
 	return ctx.JSON(http.StatusOK, result)
 }
 
 func (router *PriceRouter) putBase(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("gameId"))
-
+	id, err := router.GetPackageID(&ctx)
 	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		return err
 	}
 
-	dto := new(PricesDTO)
+	dto := new(pricesDTO)
 
 	if err := ctx.Bind(dto); err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
@@ -107,7 +135,7 @@ func (router *PriceRouter) putBase(ctx echo.Context) error {
 	}
 
 	basePrice := model.BasePrice{}
-	err = mapper.Map(dto, &basePrice)
+	err = mapper.Map(dto, &basePrice.PackagePrices)
 
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)
@@ -121,10 +149,9 @@ func (router *PriceRouter) putBase(ctx echo.Context) error {
 }
 
 func (router *PriceRouter) deletePrice(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("gameId"))
-
+	id, err := router.GetPackageID(&ctx)
 	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		return err
 	}
 
 	cur := ctx.Param("currency")
@@ -143,13 +170,12 @@ func (router *PriceRouter) deletePrice(ctx echo.Context) error {
 }
 
 func (router *PriceRouter) updatePrice(ctx echo.Context) error {
-	id, err := uuid.FromString(ctx.Param("gameId"))
-
+	id, err := router.GetPackageID(&ctx)
 	if err != nil {
-		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+		return err
 	}
 
-	dto := new(PricesInternal)
+	dto := new(pricesInternal)
 
 	if err := ctx.Bind(dto); err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, err)

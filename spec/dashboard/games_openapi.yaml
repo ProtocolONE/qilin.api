@@ -137,14 +137,6 @@ paths:
           schema:
             type: "string"
           required: false
-        - name: "price"
-          in: query
-          description: "Filter games by price"
-          schema:
-            type: "number"
-            format: float
-          example: 59.99
-          required: false
         - name: "releaseDate"
           in: query
           description: "Filter games by release date"
@@ -166,8 +158,6 @@ paths:
                 - +genre
                 - -releaseDate
                 - +releaseDate
-                - -price
-                - +price
                 - -internalName
                 - +internalName
           required: false
@@ -564,7 +554,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/games/{id}/prices/{currency}:
+  /api/v1/vendors/{vendorId}/packages/{id}/prices/{currency}:
     put:
       summary: Change price in currency for game
       tags:
@@ -639,7 +629,7 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/games/{id}/prices:
+  /api/v1/vendors/{vendorId}/packages/{id}/prices:
     get:
       tags:
         - price
@@ -1161,7 +1151,9 @@ paths:
         200:
           description: OK
           headers:
-            - name: X-Items-Count
+            X-Items-Count:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -1308,7 +1300,9 @@ paths:
         200:
           description: OK
           headers:
-            - name: X-Items-Count
+            X-Items-Count:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -1490,7 +1484,9 @@ paths:
         200:
           description: OK
           headers:
-            - name: X-Items-Count
+            X-Items-Count:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -2267,14 +2263,13 @@ components:
           type: "string"
           readOnly: true
         genres:
-          $ref: '#/components/schemas/GameGenres'
           readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/GameGenres'
         releaseDate:
           type: "string"
           format: "date-time"
           readOnly: true
-        prices:
-          $ref: "#/components/schemas/Price"
 
     Price:
       type: object
@@ -2309,6 +2304,9 @@ components:
         displayRemainingTime:
           type: "boolean"
           default: false
+        defaultPackageId:
+          type: "string"
+          format: "uuid"
         features:
           $ref: "#/components/schemas/Features"
         platforms:

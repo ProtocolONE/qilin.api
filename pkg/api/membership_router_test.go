@@ -272,7 +272,7 @@ func (suite *MembershipRouterTestSuite) TestAcceptInvite() {
 	invite := &model.Invite{}
 	invite.ID = uuid.NewV4()
 	invite.Email = invitedUser.Email
-	invite.Roles = model.Roles {
+	invite.Roles = model.Roles{
 		model.Role{Role: model.Support, Resource: model.ResourceRole{Id: TestID, Domain: "vendor"}},
 	}
 	invite.VendorId = uuid.FromStringOrNil(vendorId)

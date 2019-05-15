@@ -283,7 +283,7 @@ func (api *OnboardingClientRouter) sendToReview(ctx echo.Context) error {
 	id, err := uuid.FromString(ctx.Param("vendorId"))
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	if err := api.service.SendToReview(id); err != nil {

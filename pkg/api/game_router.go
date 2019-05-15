@@ -74,7 +74,7 @@ type (
 	}
 
 	GameTagDTO struct {
-		Id    int64                   `json:"id" validate:"required"`
+		Id    int64                 `json:"id" validate:"required"`
 		Title utils.LocalizedString `json:"title" validate:"dive"`
 	}
 
@@ -111,8 +111,9 @@ type (
 	GameDTO struct {
 		ID uuid.UUID `json:"id"`
 		BaseGameDTO
-		Genres GameGenreDTO `json:"genres" validate:"required,dive"`
-		Tags   []int64      `json:"tags" validate:"required"`
+		Genres           GameGenreDTO `json:"genres" validate:"required,dive"`
+		Tags             []int64      `json:"tags" validate:"required"`
+		DefaultPackageID uuid.UUID    `json:"defaultPackageId"`
 	}
 
 	UpdateGameDTO struct {
@@ -185,7 +186,7 @@ func mapReqsBTO(r *MachineRequirementsDTO) bto.MachineRequirements {
 	}
 }
 
-func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err error) {
+func mapGameInfo(game *model.Game) *GameDTO {
 	return &GameDTO{
 		ID: game.ID,
 		BaseGameDTO: BaseGameDTO{
@@ -216,18 +217,24 @@ func mapGameInfo(game *model.Game, service model.GameService) (dst *GameDTO, err
 			Languages: GameLangsDTO{
 				EN: LangsDTO{game.Languages.EN.Voice, game.Languages.EN.Interface, game.Languages.EN.Subtitles},
 				RU: LangsDTO{game.Languages.RU.Voice, game.Languages.RU.Interface, game.Languages.RU.Subtitles},
+				FR: LangsDTO{game.Languages.FR.Voice, game.Languages.FR.Interface, game.Languages.FR.Subtitles},
+				ES: LangsDTO{game.Languages.ES.Voice, game.Languages.ES.Interface, game.Languages.ES.Subtitles},
+				DE: LangsDTO{game.Languages.DE.Voice, game.Languages.DE.Interface, game.Languages.DE.Subtitles},
+				IT: LangsDTO{game.Languages.IT.Voice, game.Languages.IT.Interface, game.Languages.IT.Subtitles},
+				PT: LangsDTO{game.Languages.PT.Voice, game.Languages.PT.Interface, game.Languages.PT.Subtitles},
 			},
 		},
 		Genres: GameGenreDTO{
 			Main:     game.GenreMain,
 			Addition: game.GenreAddition,
 		},
-		Tags: game.Tags,
-	}, nil
+		Tags:             game.Tags,
+		DefaultPackageID: game.DefaultPackageID,
+	}
 }
 
-func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
-	return model.Game{
+func mapGameInfoBTO(game *UpdateGameDTO) *model.Game {
+	return &model.Game{
 		InternalName:         game.InternalName,
 		Title:                game.Title,
 		Developers:           game.Developers,
@@ -256,6 +263,11 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 		Languages: bto.GameLangs{
 			EN: bto.Langs{game.Languages.EN.Voice, game.Languages.EN.Interface, game.Languages.EN.Subtitles},
 			RU: bto.Langs{game.Languages.RU.Voice, game.Languages.RU.Interface, game.Languages.RU.Subtitles},
+			FR: bto.Langs{game.Languages.FR.Voice, game.Languages.FR.Interface, game.Languages.FR.Subtitles},
+			ES: bto.Langs{game.Languages.ES.Voice, game.Languages.ES.Interface, game.Languages.ES.Subtitles},
+			DE: bto.Langs{game.Languages.DE.Voice, game.Languages.DE.Interface, game.Languages.DE.Subtitles},
+			IT: bto.Langs{game.Languages.IT.Voice, game.Languages.IT.Interface, game.Languages.IT.Subtitles},
+			PT: bto.Langs{game.Languages.PT.Voice, game.Languages.PT.Interface, game.Languages.PT.Subtitles},
 		},
 		GenreMain:     game.Genres.Main,
 		GenreAddition: game.Genres.Addition,
@@ -263,7 +275,7 @@ func mapGameInfoBTO(game *UpdateGameDTO) (dst model.Game) {
 	}
 }
 
-func InitRoutes(router *echo.Group, service model.GameService, userService model.UserService, bus model.EventBus) (*GameRouter, error) {
+func InitGameRoutes(router *echo.Group, service model.GameService, userService model.UserService, bus model.EventBus) (*GameRouter, error) {
 	Router := GameRouter{
 		gameService: service,
 		userService: userService,
@@ -393,11 +405,11 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	params := CreateGameDTO{}
 	err := ctx.Bind(&params)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Wrong parameters in body")
+		return orm.NewServiceError(http.StatusBadRequest, "Wrong parameters in body")
 	}
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid vendorId")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid vendorId")
 	}
 	userId, err := api.getUserId(ctx)
 	if err != nil {
@@ -407,36 +419,28 @@ func (api *GameRouter) Create(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-
-	dto, err := mapGameInfo(game, api.gameService)
-	if err != nil {
-		return err
-	}
-
+	dto := mapGameInfo(game)
 	return ctx.JSON(http.StatusCreated, dto)
 }
 
 func (api *GameRouter) GetInfo(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	game, err := api.gameService.GetInfo(gameId)
 	if err != nil {
 		return err
 	}
-	dto, err := mapGameInfo(game, api.gameService)
-	if err != nil {
-		return err
-	}
+	dto := mapGameInfo(game)
 	return ctx.JSON(http.StatusOK, dto)
 }
 
 func (api *GameRouter) Delete(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 	userId, err := api.getUserId(ctx)
 	if err != nil {
@@ -458,19 +462,19 @@ func (api *GameRouter) Delete(ctx echo.Context) error {
 func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
 	}
 
 	dto := &UpdateGameDTO{}
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 	if errs := ctx.Validate(dto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 	game := mapGameInfoBTO(dto)
 	game.ID = gameId
-	err = api.gameService.UpdateInfo(&game)
+	err = api.gameService.UpdateInfo(game)
 	if err != nil {
 		return err
 	}
@@ -481,7 +485,7 @@ func (api *GameRouter) UpdateInfo(ctx echo.Context) error {
 func (api *GameRouter) GetDescr(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid game Id")
 	}
 
 	descr, err := api.gameService.GetDescr(gameId)
@@ -522,12 +526,12 @@ func (api *GameRouter) GetDescr(ctx echo.Context) error {
 func (api *GameRouter) UpdateDescr(ctx echo.Context) error {
 	gameId, err := uuid.FromString(ctx.Param("gameId"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid game Id")
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid game Id")
 	}
 
 	dto := &GameDescrDTO{}
 	if err := ctx.Bind(dto); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return orm.NewServiceError(http.StatusBadRequest, err)
 	}
 	if errs := ctx.Validate(dto); errs != nil {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)

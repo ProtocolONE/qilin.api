@@ -33,7 +33,6 @@ func (db *Database) Init() error {
 		&model.User{},
 		&model.Vendor{},
 		&model.Game{},
-		&model.BasePrice{},
 		&model.Price{},
 		&model.Media{},
 		&model.Discount{},
@@ -44,7 +43,16 @@ func (db *Database) Init() error {
 		&model.GameRating{},
 		&model.DocumentsInfo{},
 		&model.Notification{},
+		&model.Package{},
+		&model.BasePrice{},
 		&model.Invite{},
+		&model.PackageProduct{},
+		&model.ProductEntry{},
+		&model.BundlePackage{},
+		&model.BundleEntry{},
+		&model.StoreBundle{},
+		&model.Dlc{},
+		&model.Achievement{},
 	).Error
 }
 
@@ -66,6 +74,14 @@ func (db *Database) DropAllTables() error {
 			model.DocumentsInfo{},
 			model.Notification{},
 			model.Invite{},
+			model.Package{},
+			model.PackageProduct{},
+			model.ProductEntry{},
+			model.BundlePackage{},
+			model.BundleEntry{},
+			model.StoreBundle{},
+			model.Dlc{},
+			model.Achievement{},
 		).Error
 	}
 	return nil

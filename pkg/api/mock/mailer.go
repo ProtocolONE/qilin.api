@@ -3,7 +3,6 @@ package mock
 import "qilin-api/pkg/sys"
 
 type mailer struct {
-
 }
 
 func NewMailer() sys.Mailer {

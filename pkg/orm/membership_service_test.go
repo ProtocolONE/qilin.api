@@ -7,8 +7,8 @@ import (
 	"qilin-api/pkg/test"
 	"testing"
 
-	"github.com/satori/go.uuid"
 	"github.com/ProtocolONE/rbac"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -22,8 +22,6 @@ type MemershipServiceTestSuite struct {
 func Test_MembershipService(t *testing.T) {
 	suite.Run(t, new(MemershipServiceTestSuite))
 }
-
-var ownerId uuid.UUID
 
 func (suite *MemershipServiceTestSuite) SetupTest() {
 	shouldBe := require.New(suite.T())
@@ -109,7 +107,7 @@ func (suite *MemershipServiceTestSuite) TestAddRoleToUser() {
 			continue
 		}
 
-		shouldBe.Equal(11, len(user.Roles))
+		shouldBe.Equal(21, len(user.Roles))
 		for _, role := range user.Roles {
 			shouldBe.NotEmpty(role.Resource.Meta.InternalName)
 		}

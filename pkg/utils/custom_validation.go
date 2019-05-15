@@ -22,7 +22,7 @@ var currencyList = []Currency{
 	PoundSterling,
 }
 
-var acceptableRoles = []string {
+var acceptableRoles = []string{
 	model.Accountant,
 	model.Support,
 	model.Developer,

@@ -85,7 +85,7 @@ func (suite *DiscountRouterTestSuite) TearDownTest() {
 	}
 }
 
-func (suite *DiscountRouterTestSuite) TEstGetDiscountsShouldReturnObjects() {
+func (suite *DiscountRouterTestSuite) TestGetDiscountsShouldReturnObjects() {
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(emptyDiscounts))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -97,7 +97,7 @@ func (suite *DiscountRouterTestSuite) TEstGetDiscountsShouldReturnObjects() {
 	// Assertions
 	if assert.NoError(suite.T(), suite.router.get(c)) {
 		assert.Equal(suite.T(), http.StatusOK, rec.Code)
-		assert.Equal(suite.T(), emptyDiscounts, rec.Body.String())
+		assert.JSONEq(suite.T(), emptyDiscounts, rec.Body.String())
 	}
 }
 
@@ -158,7 +158,7 @@ func (suite *DiscountRouterTestSuite) TestPostDiscountWithIncorrectIdShouldRetur
 	c.SetParamValues("BAD-TestID")
 
 	// Assertions
-	he := suite.router.post(c).(*echo.HTTPError)
+	he := suite.router.post(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
@@ -200,7 +200,7 @@ func (suite *DiscountRouterTestSuite) TestPutDiscountWithIncorrectIdShouldReturn
 	c.SetParamValues("BAD-TestID", uuid.NewV4().String())
 
 	// Assertions
-	he := suite.router.put(c).(*echo.HTTPError)
+	he := suite.router.put(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
@@ -310,7 +310,7 @@ func (suite *DiscountRouterTestSuite) TestGetDiscountsWithInvalidIdShouldReturnE
 	c.SetParamValues("BAD-TestID")
 
 	// Assertions
-	he := suite.router.get(c).(*echo.HTTPError)
+	he := suite.router.get(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
@@ -338,7 +338,7 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithIncorrectIdShouldRet
 	c.SetParamValues("BAD-TestID", uuid.NewV4().String())
 
 	// Assertions
-	he := suite.router.delete(c).(*echo.HTTPError)
+	he := suite.router.delete(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
@@ -366,7 +366,7 @@ func (suite *DiscountRouterTestSuite) TestDeleteDiscountWithIncorrectDiscountIDS
 	c.SetParamValues(TestID, "BAD-TestID")
 
 	// Assertions
-	he := suite.router.delete(c).(*echo.HTTPError)
+	he := suite.router.delete(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 

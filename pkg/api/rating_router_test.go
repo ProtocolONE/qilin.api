@@ -192,7 +192,7 @@ func (suite *RatingRouterTestSuite) TestPutBadObjectShouldReturnError() {
 	c.SetParamValues(TestID)
 
 	// Assertions
-	he := suite.router.put(c).(*echo.HTTPError)
+	he := suite.router.put(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
@@ -234,7 +234,7 @@ func (suite *RatingRouterTestSuite) TestGetRatingsShouldWithBadIdShouldReturnErr
 	c.SetParamValues("XXX")
 
 	// Assertions
-	he := suite.router.get(c).(*echo.HTTPError)
+	he := suite.router.get(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 
@@ -248,7 +248,7 @@ func (suite *RatingRouterTestSuite) TestPutRatingsShouldWithBadIdShouldReturnErr
 	c.SetParamValues("XXX")
 
 	// Assertions
-	he := suite.router.put(c).(*echo.HTTPError)
+	he := suite.router.put(c).(*orm.ServiceError)
 	assert.Equal(suite.T(), http.StatusBadRequest, he.Code)
 }
 

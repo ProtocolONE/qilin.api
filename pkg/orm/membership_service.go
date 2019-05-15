@@ -40,17 +40,32 @@ func (service *membershipService) Init() error {
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.VendorType, Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.MessagesType, Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.GameType, Effect: "deny"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.GameListType, Effect: "deny"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.PackageType, Effect: "deny"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.PackageListType, Effect: "deny"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RoleBundle, Effect: "deny"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RoleBundleList, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.VendorGameType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.RolesType, Effect: "deny"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "read", ResourceType: model.RoleUserType, Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.NotApproved, Domain: "vendor", ResourceId: "skip", Action: "any", ResourceType: model.AdminDocumentsType, Effect: "deny"})
 
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "read", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "read", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.PackageType, ResourceId: "*", Action: "read", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.PackageListType, ResourceId: "skip", Action: "read", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.RoleBundle, ResourceId: "*", Action: "read", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.RoleBundleList, ResourceId: "skip", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.VendorGameType, ResourceId: "skip", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.VendorType, ResourceId: "skip", Action: "read", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceId: "skip", Action: "read", ResourceType: model.RoleUserType, Effect: "allow"})
 
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.GameListType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.PackageType, ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.PackageListType, ResourceId: "skip", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.RoleBundle, ResourceId: "*", Action: "any", Effect: "allow"})
+	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.RoleBundleList, ResourceId: "skip", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.VendorGameType, ResourceId: "skip", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.MessagesType, ResourceId: "skip", Action: "any", Effect: "allow"})
 	service.enforcer.AddPolicy(rbac.Policy{Role: model.Admin, Domain: "vendor", ResourceType: model.DocumentsType, ResourceId: "skip", Action: "any", Effect: "allow"})
@@ -165,10 +180,10 @@ func (service *membershipService) getUser(userId string, ownerId string) (*model
 	}
 
 	return &model.UserRole{
-		ID:    user.ID,
-		Email: user.Email,
-		Name:  user.FullName,
-		Roles: roles,
+		ID:       user.ID,
+		Email:    user.Email,
+		Name:     user.FullName,
+		Roles:    roles,
 		LastSeen: getLastSeen(&user),
 	}, nil
 }
@@ -387,4 +402,58 @@ func appendIfMissing(slice []string, users []string, skipNames []string) []strin
 	}
 
 	return slice
+}
+
+func (service *membershipService) RemoveRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.User{}, userId); !(exist && err == nil) {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get user by id `%s`", userId))
+		}
+		return NewServiceErrorf(http.StatusNotFound, "User `%s` not found", userId)
+	}
+
+	isGlobal := len(resourceId) == 0
+	restrict := []string{"*"}
+
+	if !isGlobal {
+		restrict = resourceId
+	}
+
+	owner, err := service.ownerProvider.GetOwnerForVendor(vendorId)
+	if err != nil {
+		return err
+	}
+
+	if service.enforcer.RemoveRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: restrict}) == false {
+		return NewServiceErrorf(http.StatusInternalServerError, "Could not remove role `%s` to user `%s`", role, userId)
+	}
+
+	return nil
+}
+
+func (service *membershipService) AddRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error {
+	if exist, err := utils.CheckExists(service.db.DB(), &model.User{}, userId); !(exist && err == nil) {
+		if err != nil {
+			return NewServiceError(http.StatusInternalServerError, errors.Wrapf(err, "Get user by id `%s`", userId))
+		}
+		return NewServiceErrorf(http.StatusNotFound, "User `%s` not found", userId)
+	}
+
+	isGlobal := len(resourceId) == 0
+	restrict := []string{"*"}
+
+	if !isGlobal {
+		restrict = resourceId
+	}
+
+	owner, err := service.ownerProvider.GetOwnerForVendor(vendorId)
+	if err != nil {
+		return err
+	}
+
+	if service.enforcer.AddRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: restrict}) == false {
+		return NewServiceErrorf(http.StatusInternalServerError, "Could not add role `%s` to user `%s`", role, userId)
+	}
+
+	return nil
 }

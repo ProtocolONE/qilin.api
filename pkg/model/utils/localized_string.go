@@ -4,6 +4,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"github.com/pkg/errors"
+	"gopkg.in/go-playground/validator.v9"
+	"reflect"
 )
 
 // LocalizedString is helper object to hold localized string properties.
@@ -34,6 +36,20 @@ func (p *LocalizedString) Scan(src interface{}) error {
 	}
 	if err := json.Unmarshal(source, &p); err != nil {
 		return err
+	}
+	return nil
+}
+
+func ValidateUrls(loc *LocalizedString) error {
+	validate := validator.New()
+	val := reflect.ValueOf(loc)
+	elem := val.Elem()
+	for i := 0; i < elem.NumField(); i++ {
+		url := elem.Field(i).String()
+		err := validate.Var(url, "omitempty,url")
+		if err != nil {
+			return errors.Wrap(err, "Validate localized URLs")
+		}
 	}
 	return nil
 }

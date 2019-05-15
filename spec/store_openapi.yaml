@@ -1,0 +1,752 @@
+openapi: 3.0.0
+info:
+  description: Qilin store api
+  version: 1.0.0
+  title: Qilin store dashboard API
+  contact:
+    email: maksim.blinenkov@protocol.one
+tags:
+  - description: "Composition of products"
+    name: "package"
+
+
+servers:
+  - description: Master test server
+    url: https://qilinapi.tst.protocol.one
+
+
+paths:
+  /api/v1/vendors/:vendorId/packages:
+    post:
+      tags:
+        - "package"
+      summary: "Create package"
+      operationId: "createPackage"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Mega package"
+                products:
+                  type: array
+                  items:
+                    format: uuid
+                    description: "Package composition"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - "package"
+      summary: "Get list of packages"
+      operationId: "getPackages"
+      parameters:
+        - name: vendorId
+          in: "path"
+          description: "Vendor Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Return array with short information about packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PackageItem'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/packages/:packageId:
+    get:
+      tags:
+        - "package"
+      summary: "Get one packages"
+      operationId: "getPackage"
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "Package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Return package information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags:
+        - "package"
+      summary: "Update package"
+      operationId: "updatePackage"
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "Package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Package'
+      responses:
+        200:
+          description: Return package information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - "package"
+      summary: "Delete packages"
+      operationId: "deletePackage"
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "Package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Retrun Ok
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Ok"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/packages/:packageId/products:
+    post:
+      tags:
+        - "package"
+        - "product"
+      summary: "Append products into package"
+      operationId: "appendProducts"
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "Package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: "Array of products"
+              items:
+                type: string
+                format: uuid
+      responses:
+        200:
+          description: Retrun package information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - "package"
+        - "product"
+      summary: "Delete products from packages"
+      operationId: "removeProducts"
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "Package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: "Array of products"
+              items:
+                type: string
+                format: uuid
+      responses:
+        200:
+          description: Retrun package information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/vendors/:vendorId/bundles/store:
+    post:
+      tags:
+        - "package"
+        - "bundle"
+      summary: "Create bundle for store"
+      operationId: "createStoreBundle"
+      parameters:
+        - name: vendorId
+          in: "path"
+          description: "Vendor Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Mega collection"
+                  description: "Bundle name"
+                packages:
+                  type: array
+                  items:
+                    format: uuid
+                    description: "Bundle composition"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreBundle'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - "bundle"
+      summary: "Get list of bundles"
+      operationId: "getBundles"
+      parameters:
+        - name: vendorId
+          in: "path"
+          description: "Vendor Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Retrun array of short bundle information
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoreBundleItem'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/bundles/:bundleId/store:
+    get:
+      tags:
+        - "bundle"
+        - "package"
+      summary: "Get store bundle"
+      operationId: "getStoreBundle"
+      parameters:
+        - name: bundleId
+          in: "path"
+          description: "Bundle Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Return store bundle struct
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreBundle"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/bundles/:bundleId:
+    delete:
+      tags:
+        - "bundle"
+      summary: "Delete bundle"
+      operationId: "deleteBundle"
+      parameters:
+        - name: bundleId
+          in: "path"
+          description: "Bundle Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Return Ok
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Ok"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/bundles/:bundleId/packages:
+    post:
+      tags:
+        - "bundle"
+        - "package"
+      summary: "Append package into bundle"
+      operationId: "appendPackage"
+      parameters:
+        - name: bundleId
+          in: "path"
+          description: "Bundle Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: "Array of packages"
+              items:
+                type: string
+                format: uuid
+      responses:
+        200:
+          description: Retrun OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "OK"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - "bundle"
+        - "package"
+      summary: "Remove packages from bundle"
+      operationId: "removePackage"
+      parameters:
+        - name: bundleId
+          in: "path"
+          description: "Bundle Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: "Array of packages"
+              items:
+                type: string
+                format: uuid
+      responses:
+        200:
+          description: Retrun OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "OK"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal Server Error
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 409
+            message: "Resource with same unique id already exists"
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 422
+            message: "Fields required: 'title, description'"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    PackageItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        createdAt:
+          type: string
+          format: "date-time"
+          readOnly: true
+        sku:
+          type: string
+          description: "Store number"
+        name:
+          $ref: '#/components/schemas/LocalizedString'
+        isEnabled:
+          type: boolean
+        media:
+          type: object
+          properties:
+            image:
+              $ref: '#/components/schemas/LocalizedString'
+            cover:
+              $ref: '#/components/schemas/LocalizedString'
+            thumb:
+              $ref: '#/components/schemas/LocalizedString'
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - games
+            - dlcs
+        image:
+          $ref: '#/components/schemas/LocalizedString'
+
+    Package:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        createdAt:
+          type: string
+          format: "date-time"
+          readOnly: true
+        sku:
+          type: string
+          description: "Store number"
+        name:
+          $ref: '#/components/schemas/LocalizedString'
+        isUpgradeAllowed:
+          type: boolean
+          description: "Allowed to upgrade already bought package"
+        isEnabled:
+          type: boolean
+        products:
+          type: array
+          description: "Composition of package"
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/Product'
+        media:
+          type: object
+          properties:
+            image:
+              $ref: '#/components/schemas/LocalizedString'
+            cover:
+              $ref: '#/components/schemas/LocalizedString'
+            thumb:
+              $ref: '#/components/schemas/LocalizedString'
+        discountPolicy:
+          type: object
+          properties:
+            discount:
+              type: integer
+              description: "Discount percent for whole package"
+            buyOption:
+              type: string
+              enum:
+                - whole
+                - part
+              description: "Allow to buy part of package"
+        regionalRestrinctions:
+          type: object
+          properties:
+            allowedCountries:
+              type: array
+              description: "Allow to selling countries in iso 3166-1. Allow worldwide if list is empty"
+              items:
+                type: string
+                example: ru
+
+    StoreBundleItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        createdAt:
+          type: string
+          format: "date-time"
+          readOnly: true
+        sku:
+          type: string
+          description: "Store number"
+        name:
+          $ref: '#/components/schemas/LocalizedString'
+        isUpgradeAllowed:
+          type: boolean
+          description: "Allowed to upgrade already bought package in bundle"
+        isEnabled:
+          type: boolean
+
+    StoreBundle:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/StoreBundleItem'
+      properties:
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Package'
+        discountPolicy:
+          type: object
+          properties:
+            discount:
+              type: integer
+              description: "Discount percent for whole bundle"
+            buyOption:
+              type: string
+              enum:
+                - whole
+                - part
+              description: "Allow to buy part of bundle"
+        regionalRestrinctions:
+          type: object
+          properties:
+            allowedCountries:
+              type: array
+              description: "Allow to selling countries in iso 3166-1. Allow worldwide if list is empty"
+              items:
+                type: string
+                example: ru
+
+    LocalizedString:
+      type: object
+      properties:
+        en:
+          type: string
+        ru:
+          type: string
+        fr:
+          type: string
+        es:
+          type: string
+        de:
+          type: string
+        it:
+          type: string
+        pt:
+          type: string

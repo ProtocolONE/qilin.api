@@ -27,6 +27,8 @@ type Vendor struct {
 type OwnerProvider interface {
 	GetOwnerForVendor(vendorId uuid.UUID) (string, error)
 	GetOwnerForGame(gameId uuid.UUID) (string, error)
+	GetOwnerForPackage(packageId uuid.UUID) (string, error)
+	GetOwnerForBundle(bundleId uuid.UUID) (string, error)
 }
 
 type VendorService interface {

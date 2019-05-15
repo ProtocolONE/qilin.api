@@ -6,7 +6,6 @@ import (
 )
 
 type eventBus struct {
-
 }
 
 func (eventBus) PublishGameChanges(gameId uuid.UUID) error {

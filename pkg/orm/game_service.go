@@ -20,7 +20,9 @@ type gameService struct {
 
 // NewGameService initialize this service.
 func NewGameService(db *Database) (model.GameService, error) {
-	return &gameService{db.database}, nil
+	return &gameService{
+		db: db.database,
+	}, nil
 }
 
 func (p *gameService) verifyVendor(vendorId uuid.UUID) error {
@@ -142,10 +144,16 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 		return nil, NewServiceError(400, "Name already in use")
 	}
 
+	transation := p.db.Begin()
+	defer func() {
+		if err := recover(); err != nil {
+			transation.Rollback()
+		}
+	}()
+
 	item.ID = uuid.NewV4()
 	item.InternalName = internalName
 	item.FeaturesCtrl = ""
-	item.FeaturesCommon = []string{}
 	item.Platforms = bto.Platforms{}
 	item.Requirements = bto.GameRequirements{}
 	item.Languages = bto.GameLangs{}
@@ -155,19 +163,33 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 	item.Tags = []int64{}
 	item.VendorID = vendorId
 	item.CreatorID = userId
-
-	err = p.db.Create(item).Error
+	item.Product.EntryID = item.ID
+	item.DefaultPackageID = uuid.NewV4()
+	err = transation.Create(item).Error
 	if err != nil {
+		transation.Rollback()
 		return nil, errors.Wrap(err, "While create new game")
 	}
 
-	err = p.db.Create(&model.GameDescr{
+	err = transation.Create(&model.GameDescr{
 		Game:    item,
 		Reviews: []bto.GameReview{},
 	}).Error
 
 	if err != nil {
+		transation.Rollback()
 		return nil, errors.Wrap(err, "Create descriptions for game")
+	}
+
+	err = createPackage(transation, item.DefaultPackageID, vendorId, true, userId, item.InternalName, []uuid.UUID{item.ID})
+	if err != nil {
+		transation.Rollback()
+		return nil, err
+	}
+
+	err = transation.Commit().Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Commit for making game")
 	}
 
 	return
@@ -218,11 +240,6 @@ func (p *gameService) GetList(userId string, vendorId uuid.UUID,
 		vals = append(vals, rdate)
 	}
 
-	if price > 0 {
-		conds = append(conds, `abs(prices.price - ?) < 0.01`)
-		vals = append(vals, price)
-	}
-
 	var orderBy interface{}
 	orderBy = "created_at ASC"
 	if sort != "" {
@@ -235,10 +252,6 @@ func (p *gameService) GetList(userId string, vendorId uuid.UUID,
 			orderBy = "release_date DESC"
 		case "+releaseDate":
 			orderBy = "release_date ASC"
-		case "-price":
-			orderBy = "prices ASC, prices.price DESC, created_at DESC"
-		case "+price":
-			orderBy = "prices DESC, prices.price ASC, created_at ASC"
 		case "-internalName":
 			orderBy = "internal_name DESC"
 		case "+internalName":
@@ -248,8 +261,7 @@ func (p *gameService) GetList(userId string, vendorId uuid.UUID,
 
 	err = p.db.
 		Model(model.Game{}).
-		Select("games.*, prices.currency, prices.price").
-		Joins("LEFT JOIN prices on prices.base_price_id = games.id and prices.currency = games.common ->> 'Currency'").
+		Select("games.*").
 		Joins("LEFT JOIN game_genres on game_genres.id = games.genre_main").
 		Where(`vendor_id = ?`, vendorId).
 		Where(strings.Join(conds, " or "), vals...).
@@ -277,6 +289,21 @@ func (p *gameService) GetInfo(gameId uuid.UUID) (game *model.Game, err error) {
 	return game, nil
 }
 
+func (p *gameService) GetProduct(gameId uuid.UUID) (model.Product, error) {
+
+	game := model.ProductGameImpl{}
+	err := p.db.
+		Where("id = ?", gameId).
+		First(&game).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, NewServiceError(404, "Game not found")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "Fetch game info")
+	}
+
+	return &game, nil
+}
+
 func (p *gameService) Delete(userId string, gameId uuid.UUID) (err error) {
 	game, err := p.GetInfo(gameId)
 	if err != nil {
@@ -301,6 +328,7 @@ func (p *gameService) UpdateInfo(game *model.Game) (err error) {
 	game.CreatedAt = gameSrc.CreatedAt
 	game.UpdatedAt = time.Now()
 	game.InternalName = gameSrc.InternalName
+	game.DefaultPackageID = gameSrc.DefaultPackageID
 
 	if game.GenreAddition == nil {
 		game.GenreAddition = []int64{}

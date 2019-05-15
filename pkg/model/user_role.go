@@ -38,6 +38,7 @@ type RoleRestriction struct {
 
 const GameType string = "games"
 const PublishGame string = "games.publish"
+const GameListType string = "vendors.games"
 const VendorGameType string = "vendor.games"
 const DocumentsType string = "vendors.documents.*"
 const MessagesType string = "vendors.messages.*"
@@ -47,6 +48,10 @@ const RoleUserType string = "vendors.memberships"
 const RolesType string = "vendors.memberships.permissions"
 const InvitesType string = "vendors.memberships.invites"
 const GlobalType string = "global"
+const PackageType string = "packages"
+const RoleBundle string = "bundles"
+const PackageListType string = "vendors.packages.*"
+const RoleBundleList string = "vendors.bundles.*"
 
 type ResourceMeta struct {
 	Preview      string `json:"preview"`
@@ -70,4 +75,6 @@ type MembershipService interface {
 	RemoveRoleToUserInGame(vendorId uuid.UUID, userId string, gameId string, role string) error
 	SendInvite(vendorId uuid.UUID, invite Invite) (*InviteCreated, error)
 	AcceptInvite(vendorId uuid.UUID, inviteId uuid.UUID, userId string) error
+	AddRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error
+	RemoveRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error
 }

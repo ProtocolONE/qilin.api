@@ -11,7 +11,7 @@ import (
 
 type (
 	GameTag struct {
-		ID    int64                   `gorm:"primary_key"`
+		ID    int64                 `gorm:"primary_key"`
 		Title utils.LocalizedString `gorm:"type:jsonb; not null"`
 	}
 
@@ -51,6 +51,10 @@ type (
 		CreatedAt time.Time  `gorm:"default:now()"`
 		UpdatedAt time.Time  `gorm:"default:now()"`
 		DeletedAt *time.Time `sql:"index"`
+
+		DefaultPackageID uuid.UUID
+
+		Product ProductEntry `gorm:"polymorphic:Entry;"`
 	}
 
 	GameDescr struct {
@@ -71,6 +75,11 @@ type (
 		Price
 	}
 
+	ProductGameImpl struct {
+		Game
+		Media
+	}
+
 	// GameService is a helper service class to interact with Game object.
 	GameService interface {
 		CreateTags([]GameTag) error
@@ -89,9 +98,35 @@ type (
 		UpdateInfo(game *Game) error
 		GetDescr(gameId uuid.UUID) (*GameDescr, error)
 		UpdateDescr(descr *GameDescr) error
+		GetProduct(gameId uuid.UUID) (Product, error)
 	}
 )
 
 func (ShortGameInfo) TableName() string {
 	return "games"
+}
+
+func (ProductGameImpl) TableName() string {
+	return "games"
+}
+
+func (p *ProductGameImpl) GetID() uuid.UUID {
+	return p.Game.ID
+}
+
+func (p *ProductGameImpl) GetName() string {
+	return p.Game.InternalName
+}
+
+func (p *ProductGameImpl) GetType() ProductType {
+	return ProductGame
+}
+
+func (p *ProductGameImpl) GetImage() (res *utils.LocalizedString) {
+	res = &utils.LocalizedString{}
+	if p.Media.CoverImage == nil {
+		return
+	}
+	_ = p.Media.CoverImage.Scan(res)
+	return
 }

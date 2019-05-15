@@ -72,7 +72,7 @@ services:
       - GO111MODULE=on
       - QILINAPI_ENFORCER_HOST=qilin-redis
       - QILINAPI_SERVER_PORT=3001
-      - QILINAPI_SERVER_ALLOW_ORIGINS=http://localhost:8080
+      - QILINAPI_SERVER_ALLOW_ORIGINS=http://127.0.0.1
       - QILINAPI_SERVER_DEBUG=true
       - QILINAPI_SERVER_ALLOW_CREDENTIALS=true
       - QILINAPI_DATABASE_DSN=postgres://postgres:postgres@qilinapi-postgres:5432/qilin?sslmode=disable
@@ -80,9 +80,9 @@ services:
       - QILINAPI_LOG_LEVEL=debug
       - QILINAPI_NOTIFIER_API_KEY=secret
       - QILINAPI_NOTIFIER_SECRET=secret
-      - QILINAPI_AUTH1_ISSUER=auth1_issuer
-      - QILINAPI_AUTH1_CLIENTID=auth1_client_id
-      - QILINAPI_AUTH1_CLIENTSECRET=auth1_client_secret
+      - QILINAPI_AUTH1_ISSUER=${QILINAPI_AUTH1_ISSUER}
+      - QILINAPI_AUTH1_CLIENTID=${QILINAPI_AUTH1_CLIENTID}
+      - QILINAPI_AUTH1_CLIENTSECRET=${QILINAPI_AUTH1_CLIENTSECRET}
 
 networks:
   p1devnet:
