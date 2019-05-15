@@ -15,6 +15,7 @@ const (
 type (
 	// Main Bundle interface
 	Bundle interface {
+		GetID() uuid.UUID
 		GetName() *utils.LocalizedString
 		IsContains(productId uuid.UUID) (bool, error)
 		GetPrice() (string, float32, float32, error)

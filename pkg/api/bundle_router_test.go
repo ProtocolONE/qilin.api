@@ -149,6 +149,20 @@ var (
     }
   ]
 }`
+
+	listingStoreBundle = `[
+  {
+    "id": "44444444-888a-481a-a831-cde7ff4e50b8",
+    "createdAt": "1970-01-01T00:00:00Z",
+    "sku": "",
+    "name": {
+      "en": "Mega bundle"
+    },
+    "isUpgradeAllowed": false,
+    "isEnabled": false
+  }
+]
+`
 )
 
 type BundleRouterTestSuite struct {
@@ -362,7 +376,7 @@ func (suite *BundleRouterTestSuite) TestShouldReturnStoreList() {
 	suite.echo.ServeHTTP(rec, req)
 
 	assert.Equal(suite.T(), http.StatusOK, rec.Code)
-	assert.JSONEq(suite.T(), `[{"id":"44444444-888a-481a-a831-cde7ff4e50b8","createdAt":"1970-01-01T00:00:00Z","sku":"","name":{"en":"Mega bundle"},"isUpgradeAllowed":false,"isEnabled":false}]`, rec.Body.String())
+	assert.JSONEq(suite.T(), listingStoreBundle, rec.Body.String())
 }
 
 func (suite *BundleRouterTestSuite) TestShouldAppendPackages() {

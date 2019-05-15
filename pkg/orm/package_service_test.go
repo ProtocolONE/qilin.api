@@ -112,16 +112,33 @@ func (suite *packageServiceTestSuite) TestPackages() {
 	should.NotNil(err)
 	should.Nil(pkgEmpty)
 
-	total, list, err := suite.service.GetList(suite.vendorId, "", "-date", 0, 20)
+	total, list, err := suite.service.GetList(suite.vendorId, "", "-date", 0, 20, nil)
 	should.Nil(err)
 	should.Equal(3, total)
 	should.Equal(3, len(list)) // includes 2 default game packages
 	should.Equal("Mega package", list[0].Name.EN)
 
-	total, list2, err := suite.service.GetList(suite.vendorId, "", "+name", 1, 1)
+	total, list2, err := suite.service.GetList(suite.vendorId, "", "+name", 1, 1, nil)
 	should.Nil(err)
 	should.Equal(1, len(list2))
 	should.Equal("GameB", list2[0].Name.EN)
+
+	total, list3, err := suite.service.GetList(suite.vendorId, "", "-date", 0, 20, func(packageId uuid.UUID) (bool, error) {
+		return packageId != pkg.ID, nil
+	})
+	should.Nil(err)
+	should.Equal(2, total)
+	should.Equal(2, len(list3))
+	should.Equal("GameB", list3[0].Name.EN)
+	should.Equal("GameA", list3[1].Name.EN)
+
+	total, list5, err := suite.service.GetList(suite.vendorId, "", "-date", 1, 20, func(packageId uuid.UUID) (bool, error) {
+		return packageId != pkg.ID, nil
+	})
+	should.Nil(err)
+	should.Equal(2, total)
+	should.Equal(1, len(list5))
+	should.Equal("GameA", list5[0].Name.EN)
 
 	gameC, err := suite.gameService.Create(suite.userId, suite.vendorId, "GameC")
 	should.Nil(err)

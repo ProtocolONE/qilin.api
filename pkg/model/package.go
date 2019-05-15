@@ -44,10 +44,12 @@ type (
 		Position  int
 	}
 
+	PackageListingFilter func(uuid.UUID) (bool, error)
+
 	PackageService interface {
 		Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (*Package, error)
 		Get(packageId uuid.UUID) (result *Package, err error)
-		GetList(vendorId uuid.UUID, query, orderBy string, offset, limit int) (total int, result []Package, err error)
+		GetList(vendorId uuid.UUID, query, orderBy string, offset, limit int, filterFunc PackageListingFilter) (total int, result []Package, err error)
 		AddProducts(packageId uuid.UUID, prods []uuid.UUID) (*Package, error)
 		RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) (*Package, error)
 		Update(pkg *Package) (result *Package, err error)
