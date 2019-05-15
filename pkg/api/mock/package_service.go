@@ -5,15 +5,10 @@ import (
 	"qilin-api/pkg/model"
 )
 
-type packageFactory struct{}
 type packageService struct{}
 
 func NewPackageService() (model.PackageService, error) {
 	return &packageService{}, nil
-}
-
-func (*packageFactory) Create(pkgId, vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (err error) {
-	return
 }
 
 func (*packageService) Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (result *model.Package, err error) {
@@ -32,7 +27,7 @@ func (*packageService) Get(packageId uuid.UUID) (result *model.Package, err erro
 	return &model.Package{}, nil
 }
 
-func (*packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.Package, err error) {
+func (*packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int, filter model.PackageListingFilter) (total int, result []model.Package, err error) {
 	return 0, []model.Package{}, nil
 }
 

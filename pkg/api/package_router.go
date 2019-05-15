@@ -337,9 +337,24 @@ func (router *packageRouter) GetList(ctx echo.Context) (err error) {
 	if err != nil {
 		limit = 20
 	}
+	userId, err := context.GetAuthUserId(ctx)
+	if err != nil {
+		return err
+	}
+	qilinCtx := ctx.(rbac_echo.AppContext)
+	filterFunc := func(packageId uuid.UUID) (grant bool, err error) {
+		owner, err := qilinCtx.GetOwnerForPackage(packageId)
+		if err != nil {
+			return
+		}
+		if qilinCtx.CheckPermissions(userId, model.VendorDomain, model.PackageType, packageId.String(), owner, "read") != nil {
+			return false, nil
+		}
+		return true, nil
+	}
 	query := ctx.QueryParam("query")
 	sort := ctx.QueryParam("sort")
-	total, packages, err := router.service.GetList(vendorId, query, sort, offset, limit)
+	total, packages, err := router.service.GetList(vendorId, query, sort, offset, limit, filterFunc)
 	if err != nil {
 		return err
 	}

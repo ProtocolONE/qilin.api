@@ -29,6 +29,10 @@ type (
 	}
 )
 
+func (b *StoreBundle) GetID() uuid.UUID {
+	return b.ID
+}
+
 func (b *StoreBundle) GetName() *utils.LocalizedString {
 	return &b.Name
 }

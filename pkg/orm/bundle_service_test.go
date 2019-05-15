@@ -237,6 +237,20 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.Equal(1, len(list3))
 	should.Equal("Mega bundle", list3[0].GetName().EN)
 
+	total, list4, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 10, func(bundleId uuid.UUID) (bool, error) {
+		return bundleId != list[0].GetID(), nil
+	})
+	should.Nil(err)
+	should.Equal(1, len(list4))
+	should.Equal("Mega bundle", list4[0].GetName().EN)
+
+	total, list5, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 1, 10, func(bundleId uuid.UUID) (bool, error) {
+		return bundleId != list[0].GetID(), nil
+	})
+	should.Nil(err)
+	should.Equal(0, len(list5))
+	should.Equal(1, total)
+
 	bundle3, err := suite.service.Get(bundle.ID)
 	should.Nil(err)
 	b3_pkgs, err := bundle3.GetPackages()

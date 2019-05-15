@@ -261,7 +261,7 @@ func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err er
 	return
 }
 
-func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int) (total int, result []model.Package, err error) {
+func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc model.PackageListingFilter) (total int, result []model.Package, err error) {
 
 	orderBy := ""
 	orderBy = "created_at ASC"
@@ -291,25 +291,68 @@ func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset,
 		// TODO: Add another kinds for searching
 	}
 
-	err = p.db.
-		Model(model.Package{}).
-		Where(`vendor_id = ?`, vendorId).
-		Where(strings.Join(conds, " or "), vals...).
-		Order(orderBy).
-		Limit(limit).
-		Offset(offset).
-		Find(&result).Error
-	if err != nil {
-		return 0, nil, errors.Wrap(err, "Fetch package list")
-	}
-
-	err = p.db.
-		Model(model.Package{}).
-		Where(`vendor_id = ?`, vendorId).
-		Where(strings.Join(conds, " or "), vals...).
-		Count(&total).Error
-	if err != nil {
-		return 0, nil, errors.Wrap(err, "Fetch package total")
+	if filterFunc != nil {
+		vendorPackages := []model.Package{}
+		err = p.db.
+			Select("id").
+			Where(`vendor_id = ?`, vendorId).
+			Where(strings.Join(conds, " or "), vals...).
+			Find(&vendorPackages).Error
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "Fetch package ids")
+		}
+		ids := []uuid.UUID{}
+		for _, pkg := range vendorPackages {
+			if grant, err := filterFunc(pkg.ID); grant {
+				ids = append(ids, pkg.ID)
+			} else if err != nil {
+				return 0, nil, err
+			}
+		}
+		total = len(ids)
+		if offset < 0 {
+			offset = 0
+		}
+		if offset > len(ids) {
+			offset = len(ids)
+		}
+		if limit < 0 {
+			limit = 0
+		}
+		if offset+limit > len(ids) {
+			limit = len(ids) - offset
+		}
+		ids = ids[offset : offset+limit]
+		if len(ids) > 0 {
+			err = p.db.
+				Model(model.Package{}).
+				Where(`id in (?)`, ids).
+				Order(orderBy).
+				Find(&result).Error
+			if err != nil {
+				return 0, nil, errors.Wrap(err, "Fetch package list from ids")
+			}
+		}
+	} else {
+		err = p.db.
+			Model(model.Package{}).
+			Where(`vendor_id = ?`, vendorId).
+			Where(strings.Join(conds, " or "), vals...).
+			Order(orderBy).
+			Limit(limit).
+			Offset(offset).
+			Find(&result).Error
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "Fetch package list")
+		}
+		err = p.db.
+			Model(model.Package{}).
+			Where(`vendor_id = ?`, vendorId).
+			Where(strings.Join(conds, " or "), vals...).
+			Count(&total).Error
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "Fetch package total")
+		}
 	}
 
 	return
