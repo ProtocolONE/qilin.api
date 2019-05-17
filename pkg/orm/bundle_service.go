@@ -315,12 +315,12 @@ func (p *bundleService) AddPackages(bundleId uuid.UUID, packageIds []uuid.UUID) 
 	}
 
 	// 3. Filter already bound packages
-	existsIds := []model.BundlePackage{}
-	err = p.db.Where("bundle_id = ?", bundleId).Find(&existsIds).Error
+	exists := []model.BundlePackage{}
+	err = p.db.Where("bundle_id = ?", bundleId).Find(&exists).Error
 	if err != nil {
 		return errors.Wrap(err, "Retrieve bundle packages")
 	}
-	for _, exist := range existsIds {
+	for _, exist := range exists {
 		for i, pkg := range packages {
 			if exist.PackageID == pkg.ID {
 				packages = append(packages[:i], packages[i+1:]...)
@@ -343,7 +343,7 @@ func (p *bundleService) AddPackages(bundleId uuid.UUID, packageIds []uuid.UUID) 
 			err = db.Create(&model.BundlePackage{
 				PackageID: pkg.ID,
 				BundleID:  bundleId,
-				Position:  len(existsIds) + index + 1,
+				Position:  len(exists) + index + 1,
 			}).Error
 			if err != nil {
 				db.Rollback()
@@ -367,11 +367,31 @@ func (p *bundleService) RemovePackages(bundleId uuid.UUID, packages []uuid.UUID)
 		return err
 	}
 
+	exists := []model.BundlePackage{}
+	err = p.db.Where("bundle_id = ?", bundleId).Find(&exists).Error
+	if err != nil {
+		return errors.Wrap(err, "Retrieve bundle packages")
+	}
+	for i, packageID := range packages {
+		found := false
+		for _, exist := range exists {
+			if exist.PackageID == packageID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			packages = append(packages[:i], packages[i+1:]...)
+		}
+	}
+
 	if len(packages) > 0 {
 		err = p.db.Delete(model.BundlePackage{}, "bundle_id = ? and package_id in (?)", bundleId, packages).Error
 		if err != nil {
 			return errors.Wrap(err, "While delete packages from bundle")
 		}
+	} else {
+		return NewServiceError(http.StatusUnprocessableEntity, "No any packages for remove")
 	}
 
 	return

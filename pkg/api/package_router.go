@@ -113,7 +113,7 @@ func mapPackageItemDto(pkg *model.Package) *packageItemDTO {
 		Sku:       pkg.Sku,
 		Name:      pkg.Name,
 		IsEnabled: pkg.IsEnabled,
-		IsDefault: pkg.IsDefault,
+		IsDefault: pkg.DefaultProductID != uuid.Nil,
 		Media: packageMediaDTO{
 			Image: pkg.Image,
 			Cover: pkg.ImageCover,
@@ -134,7 +134,7 @@ func mapPackageDto(pkg *model.Package) (dto *packageDTO, err error) {
 		Name:             pkg.Name,
 		IsUpgradeAllowed: pkg.IsUpgradeAllowed,
 		IsEnabled:        pkg.IsEnabled,
-		IsDefault:        pkg.IsDefault,
+		IsDefault:        pkg.DefaultProductID != uuid.Nil,
 		Media: packageMediaDTO{
 			Image: pkg.Image,
 			Cover: pkg.ImageCover,
