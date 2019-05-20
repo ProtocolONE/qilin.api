@@ -5,7 +5,7 @@ require (
 	github.com/ProtocolONE/authone-jwt-verifier-golang v0.0.0-20190415120635-9cfb6c93ff5e
 	github.com/ProtocolONE/qilin-common v0.0.0-20190426102144-91ad4f805cfd
 	github.com/ProtocolONE/rabbitmq v0.0.0-20190129162844-9f24367e139c
-	github.com/ProtocolONE/rbac v0.0.0-20190417103614-3f97c81631c6
+	github.com/ProtocolONE/rbac v0.0.0-20190520124240-22f5d2b74988
 	github.com/casbin/redis-adapter v0.0.0-20190105032110-b36d844dade5
 	github.com/centrifugal/gocent v2.0.2+incompatible
 	github.com/davecgh/go-spew v1.1.1 // indirect
