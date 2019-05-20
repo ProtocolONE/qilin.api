@@ -101,6 +101,7 @@ func (suite *MembershipRouterTestSuite) SetupTest() {
 	suite.echo = e
 }
 
+
 func (suite *MembershipRouterTestSuite) TestGetMemberships() {
 	shouldBe := require.New(suite.T())
 
