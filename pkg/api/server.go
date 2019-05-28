@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	jwt_middleware "github.com/ProtocolONE/authone-jwt-verifier-golang/middleware/echo"
 	"github.com/ProtocolONE/rbac"
@@ -25,6 +26,7 @@ type ServerOptions struct {
 	Notifier         sys.Notifier
 	CentrifugoSecret string
 	Enforcer         *rbac.Enforcer
+	EventBus         *conf.EventBus
 }
 
 type Server struct {
@@ -34,6 +36,7 @@ type Server struct {
 	notifier         sys.Notifier
 	centrifugoSecret string
 	enforcer         *rbac.Enforcer
+	eventBusConfig   *conf.EventBus
 
 	Router      *echo.Group
 	AdminRouter *echo.Group
@@ -56,6 +59,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		notifier:         opts.Notifier,
 		centrifugoSecret: opts.CentrifugoSecret,
 		enforcer:         opts.Enforcer,
+		eventBusConfig:   opts.EventBus,
 	}
 
 	server.echo.HideBanner = true
@@ -116,7 +120,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer, verifier *jwtverifier.JwtVerifier) error {
-	eventBus, err := orm.NewEventBus(s.db.DB(), "amqp://127.0.0.1:5672")
+	eventBus, err := orm.NewEventBus(s.db.DB(), fmt.Sprintf("%s:%d", s.eventBusConfig.Host, s.eventBusConfig.Port))
 
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {

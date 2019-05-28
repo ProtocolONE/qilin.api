@@ -8,6 +8,12 @@ type Config struct {
 	Mailer   Mailer
 	Notifier Notifier
 	Enforcer Enforcer
+	EventBus EventBus
+}
+
+type EventBus struct {
+	Host string `envconfig:"HOST" required:"true" default:"amqp://127.0.0.1"`
+	Port int    `envconfig:"PORT" required:"true" default:"5672"`
 }
 
 type Enforcer struct {
