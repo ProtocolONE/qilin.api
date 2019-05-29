@@ -104,6 +104,9 @@ func MapMedia(media *model.Media) *proto.Media {
 }
 
 func MapJsonbToLocalizedStringArray(jsonb model.JSONB) *proto.LocalizedStringArray {
+	if jsonb == nil {
+		return nil
+	}
 	return &proto.LocalizedStringArray{
 		EN: jsonb.GetStringArray("en"),
 		RU: jsonb.GetStringArray("ru"),
@@ -116,6 +119,9 @@ func MapJsonbToLocalizedStringArray(jsonb model.JSONB) *proto.LocalizedStringArr
 }
 
 func MapJsonbToLocalizedString(jsonb model.JSONB) *proto.LocalizedString {
+	if jsonb == nil {
+		return nil
+	}
 	return &proto.LocalizedString{
 		EN: jsonb.GetString("en"),
 		RU: jsonb.GetString("ru"),
