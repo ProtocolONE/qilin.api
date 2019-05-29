@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	jwt_middleware "github.com/ProtocolONE/authone-jwt-verifier-golang/middleware/echo"
 	"github.com/ProtocolONE/rbac"
@@ -120,7 +119,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer, verifier *jwtverifier.JwtVerifier) error {
-	eventBus, err := orm.NewEventBus(s.db.DB(), fmt.Sprintf("%s:%d", s.eventBusConfig.Host, s.eventBusConfig.Port))
+	eventBus, err := orm.NewEventBus(s.db.DB(), s.eventBusConfig.Connection)
 
 	if err != nil {
 		return err
