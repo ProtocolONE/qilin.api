@@ -122,6 +122,10 @@ func (s *Server) Start() error {
 func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer, verifier *jwtverifier.JwtVerifier) error {
 	eventBus, err := orm.NewEventBus(s.db.DB(), fmt.Sprintf("%s:%d", s.eventBusConfig.Host, s.eventBusConfig.Port))
 
+	if err != nil {
+		return err
+	}
+
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {
 		return err
