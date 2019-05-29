@@ -46,8 +46,7 @@ backend:
     - QILINAPI_AUTH1_ISSUER
     - QILINAPI_AUTH1_CLIENTID
     - QILINAPI_AUTH1_CLIENTSECRET
-    - QILINAPI_EVENTBUS_HOST
-    - QILINAPI_EVENTBUS_PORT
+    - QILINAPI_EVENTBUS_CONNECTION
         
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
