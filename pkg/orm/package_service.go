@@ -396,6 +396,7 @@ func (p *packageService) Update(pkg *model.Package) (*model.Package, error) {
 	pkg.UpdatedAt = time.Now()
 	pkg.VendorID = exist.VendorID
 	pkg.PackagePrices = exist.PackagePrices
+	pkg.DefaultProductID = exist.DefaultProductID
 	// Products also ignored
 
 	err = p.db.Save(pkg).Error

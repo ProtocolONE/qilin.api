@@ -37,3 +37,20 @@ func (p *ProductService) SpecializationIds(productIds []uuid.UUID) (games []uuid
 	}
 	return
 }
+
+func (p *ProductService) GetPackages(productId uuid.UUID) (packages []model.Package, err error) {
+
+	packages = []model.Package{}
+
+	prodPackages := []model.PackageProduct{}
+	err = p.db.
+		Where("product_id = ?", productId).
+		Find(&prodPackages).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "Get packages by product")
+	}
+
+	// TODO: Return related packages...
+
+	return
+}

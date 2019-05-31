@@ -2,22 +2,26 @@ package api
 
 import (
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"net/http"
 	"qilin-api/pkg/api/context"
+	"qilin-api/pkg/conf"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
 	"regexp"
 )
 
 type UserRouter struct {
-	service  model.UserService
-	verifier *jwtverifier.JwtVerifier
+	service   model.UserService
+	verifier  *jwtverifier.JwtVerifier
+	Imaginary *conf.Imaginary
 }
 
-func InitUserRoutes(api *Server, service model.UserService, verifier *jwtverifier.JwtVerifier) error {
-	userRouter := UserRouter{service: service, verifier: verifier}
+func InitUserRoutes(api *Server, service model.UserService, verifier *jwtverifier.JwtVerifier, imaginary *conf.Imaginary) error {
+	userRouter := UserRouter{service: service, verifier: verifier, Imaginary: imaginary}
 
 	api.Router.GET("/me", userRouter.getAppState)
 
@@ -51,9 +55,19 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 		return err
 	}
 
-	result := model.AppState{User: model.UserInfo{
-		Id: userObj.ID,
-	}}
+	claims := jwt.MapClaims{"user": userObj.ID}
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(api.Imaginary.Secret))
+	if err != nil {
+		zap.L().Error("Could not generate Imaginary token", zap.Error(err))
+		return err
+	}
+
+	result := model.AppState{
+		User: model.UserInfo{
+			Id: userObj.ID,
+		},
+		ImaginaryJwt: token,
+	}
 
 	return ctx.JSON(http.StatusOK, result)
 }

@@ -25,6 +25,7 @@ type ServerOptions struct {
 	Notifier         sys.Notifier
 	CentrifugoSecret string
 	Enforcer         *rbac.Enforcer
+	Imaginary        *conf.Imaginary
 }
 
 type Server struct {
@@ -102,7 +103,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 	server.Router.Use(jwt_middleware.AuthOneJwtWithConfig(jwtv))
 	server.AuthRouter = server.echo.Group("/auth-api")
 
-	if err := server.setupRoutes(ownerProvider, opts.Mailer, jwtv); err != nil {
+	if err := server.setupRoutes(ownerProvider, opts.Mailer, jwtv, opts.Imaginary); err != nil {
 		zap.L().Fatal("Fail to setup routes", zap.Error(err))
 	}
 
@@ -115,7 +116,12 @@ func (s *Server) Start() error {
 	return s.echo.Start(":" + strconv.Itoa(s.serverConfig.Port))
 }
 
-func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Mailer, verifier *jwtverifier.JwtVerifier) error {
+func (s *Server) setupRoutes(
+	ownerProvider model.OwnerProvider,
+	mailer sys.Mailer,
+	verifier *jwtverifier.JwtVerifier,
+	imaginary *conf.Imaginary) error {
+
 	eventBus, err := orm.NewEventBus(s.db.DB(), "amqp://127.0.0.1:5672")
 
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
@@ -127,7 +133,7 @@ func (s *Server) setupRoutes(ownerProvider model.OwnerProvider, mailer sys.Maile
 	if err != nil {
 		return err
 	}
-	if err := InitUserRoutes(s, userService, verifier); err != nil {
+	if err := InitUserRoutes(s, userService, verifier, imaginary); err != nil {
 		return err
 	}
 

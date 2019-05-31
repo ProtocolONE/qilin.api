@@ -38,8 +38,8 @@ type LoginResult struct {
 }
 
 type AppState struct {
-	User UserInfo `json:"user"`
-	//...
+	User         UserInfo `json:"user"`
+	ImaginaryJwt string   `json:"imaginaryJwt"`
 }
 
 // UserService is a helper service class to interact with User.

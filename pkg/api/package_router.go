@@ -59,6 +59,7 @@ type (
 		IsUpgradeAllowed      bool                            `json:"isUpgradeAllowed"`
 		IsEnabled             bool                            `json:"isEnabled"`
 		IsDefault             bool                            `json:"isDefault"`
+		DefaultProductID      uuid.UUID                       `json:"defaultProductId"`
 		Products              []productDTO                    `json:"products" validate:"dive"`
 		Media                 packageMediaDTO                 `json:"media" validate:"required,dive"`
 		DiscountPolicy        packageDiscountPolicyDTO        `json:"discountPolicy" validate:"required,dive"`
@@ -135,6 +136,7 @@ func mapPackageDto(pkg *model.Package) (dto *packageDTO, err error) {
 		IsUpgradeAllowed: pkg.IsUpgradeAllowed,
 		IsEnabled:        pkg.IsEnabled,
 		IsDefault:        pkg.DefaultProductID != uuid.Nil,
+		DefaultProductID: pkg.DefaultProductID,
 		Media: packageMediaDTO{
 			Image: pkg.Image,
 			Cover: pkg.ImageCover,
@@ -393,6 +395,7 @@ func (router *packageRouter) Update(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
+
 	return ctx.JSON(http.StatusOK, dto)
 }
 
