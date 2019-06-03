@@ -34,12 +34,12 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 	var genres []model.GameGenre
 	var tags []model.GameTag
 
-	err := bus.db.Model(model.Game{ID: gameId}).First(&game).Error
+	err := bus.db.Model(model.Game{}).Where("id = ?", gameId).First(&game).Error
 	if err != nil {
 		return err
 	}
 
-	err = bus.db.Model(model.Media{ID: gameId}).First(&media).Error
+	err = bus.db.Model(model.Media{}).Where("id = ?", gameId).First(&media).Error
 	if err != nil {
 		return err
 	}
