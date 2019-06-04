@@ -8,7 +8,12 @@ type Config struct {
 	Mailer    Mailer
 	Notifier  Notifier
 	Enforcer  Enforcer
+	EventBus  EventBus
 	Imaginary Imaginary
+}
+
+type EventBus struct {
+	Connection string `envconfig:"CONNECTION" required:"true" default:"amqp://127.0.0.1:5672"`
 }
 
 type Enforcer struct {

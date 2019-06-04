@@ -25,6 +25,7 @@ type ServerOptions struct {
 	Notifier         sys.Notifier
 	CentrifugoSecret string
 	Enforcer         *rbac.Enforcer
+	EventBus         *conf.EventBus
 	Imaginary        *conf.Imaginary
 }
 
@@ -35,6 +36,7 @@ type Server struct {
 	notifier         sys.Notifier
 	centrifugoSecret string
 	enforcer         *rbac.Enforcer
+	eventBusConfig   *conf.EventBus
 
 	Router      *echo.Group
 	AdminRouter *echo.Group
@@ -57,6 +59,7 @@ func NewServer(opts *ServerOptions) (*Server, error) {
 		notifier:         opts.Notifier,
 		centrifugoSecret: opts.CentrifugoSecret,
 		enforcer:         opts.Enforcer,
+		eventBusConfig:   opts.EventBus,
 	}
 
 	server.echo.HideBanner = true
@@ -122,7 +125,11 @@ func (s *Server) setupRoutes(
 	verifier *jwtverifier.JwtVerifier,
 	imaginary *conf.Imaginary) error {
 
-	eventBus, err := orm.NewEventBus(s.db.DB(), "amqp://127.0.0.1:5672")
+	eventBus, err := orm.NewEventBus(s.db.DB(), s.eventBusConfig.Connection)
+
+	if err != nil {
+		return err
+	}
 
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {

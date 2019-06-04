@@ -28,8 +28,8 @@ type (
 
 	pricesInternal struct {
 		Currency string  `json:"currency" validate:"required"`
-		Price    float32 `json:"price"`
-		Vat      int32   `json:"vat"`
+		Price    float32 `json:"price" validate:"min=0"`
+		Vat      int32   `json:"vat" validate:"min=0"`
 	}
 
 	preOrder struct {

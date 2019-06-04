@@ -276,6 +276,18 @@ func mapGameInfoBTO(game *UpdateGameDTO) *model.Game {
 }
 
 func InitGameRoutes(router *echo.Group, service model.GameService, userService model.UserService, bus model.EventBus) (*GameRouter, error) {
+	if service == nil {
+		return nil, errors.New("service must be provided")
+	}
+
+	if userService == nil {
+		return nil, errors.New("user service must be provided")
+	}
+
+	if bus == nil {
+		return nil, errors.New("event bus must be provided")
+	}
+
 	Router := GameRouter{
 		gameService: service,
 		userService: userService,

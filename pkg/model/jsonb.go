@@ -27,5 +27,8 @@ func (j JSONB) GetString(key string) string {
 }
 
 func (j JSONB) GetStringArray(key string) []string {
+	if j == nil {
+		return nil
+	}
 	return j[key].([]string)
 }

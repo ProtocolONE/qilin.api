@@ -67,6 +67,7 @@ func main() {
 		Notifier:         notifier,
 		CentrifugoSecret: config.Notifier.Secret,
 		Enforcer:         enf,
+		EventBus:         &config.EventBus,
 		Imaginary:        &config.Imaginary,
 	}
 

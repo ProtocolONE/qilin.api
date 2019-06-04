@@ -114,6 +114,163 @@ func (suite *MemershipServiceTestSuite) TestAddRoleToUser() {
 	}
 }
 
+func (suite *MemershipServiceTestSuite) TestOwnerInviteAnotherUserWithAlreadyInvited() {
+	shouldBe := require.New(suite.T())
+
+	firstOwnerId := uuid.NewV4().String()
+	shouldBe.Nil(suite.db.DB().Create(&model.User{
+		ID:       firstOwnerId,
+		FullName: "First Owner",
+		Email:    "first_owner@testemail.com",
+	}).Error)
+
+	anotherOwnerId := uuid.NewV4().String()
+	shouldBe.Nil(suite.db.DB().Create(&model.User{
+		ID:       anotherOwnerId,
+		FullName: "Another Owner",
+		Email:    "another_owner@testemail.com",
+	}).Error)
+
+	supportId := uuid.NewV4().String()
+	shouldBe.Nil(suite.db.DB().Create(&model.User{
+		ID:       supportId,
+		FullName: "Support Name",
+		Email:    "support@testemail.com",
+	}).Error)
+
+	enf := rbac.NewEnforcer()
+	enf.AddPolicy(rbac.Policy{Role: model.Support, Domain: "vendor", ResourceType: model.GameType, ResourceId: "*", Action: "read", Effect: "allow"})
+
+	shouldBe.True(enf.AddRole(rbac.Role{Domain: "vendor", Role: model.Support, User: supportId, Owner: firstOwnerId, RestrictedResourceId: []string{"*"}}))
+	shouldBe.True(enf.AddRole(rbac.Role{Domain: "vendor", Role: model.Support, User: supportId, Owner: anotherOwnerId, RestrictedResourceId: []string{"*"}}))
+
+	firstVendorId := uuid.NewV4()
+	suite.db.DB().Create(&model.Vendor{
+		ID:              firstVendorId,
+		ManagerID:       firstOwnerId,
+		Email:           "first_owner@testemail.com",
+		Domain3:         "www.firstdomain.test",
+		HowManyProducts: "0",
+		Name:            "First Vendor",
+	})
+
+	anotherVendorId := uuid.NewV4()
+	suite.db.DB().Create(&model.Vendor{
+		ID:              anotherVendorId,
+		ManagerID:       anotherOwnerId,
+		Email:           "anotherVendorId@testemail.com",
+		Domain3:         "www.anotherVendorId.test",
+		HowManyProducts: "0",
+		Name:            "another Vendor",
+	})
+
+	shouldBe.Nil(suite.service.AddRoleToUser(firstOwnerId, firstOwnerId, model.VendorOwner))
+	shouldBe.Nil(suite.service.AddRoleToUser(anotherOwnerId, anotherOwnerId, model.VendorOwner))
+
+	// First Owner invites
+	created, err := suite.service.SendInvite(firstVendorId, model.Invite{
+		Email: "support@testemail.com",
+		Roles: []model.Role{
+			{
+				Role: model.Support,
+				Resource: model.ResourceRole{
+					Id:     "*",
+					Domain: "vendor",
+				},
+			},
+		},
+	})
+
+	shouldBe.Nil(err)
+	shouldBe.NotNil(created)
+	inviteId, err := uuid.FromString(created.Id)
+	shouldBe.Nil(err)
+
+	shouldBe.Nil(suite.service.AcceptInvite(firstVendorId, inviteId, supportId))
+
+	// Second owner invites
+	created, err = suite.service.SendInvite(anotherVendorId, model.Invite{
+		Email: "support@testemail.com",
+		Roles: []model.Role{
+			{
+				Role: model.Support,
+				Resource: model.ResourceRole{
+					Id:     "*",
+					Domain: "vendor",
+				},
+			},
+		},
+	})
+
+	shouldBe.Nil(err)
+	shouldBe.NotNil(created)
+	anotherInviteId, err := uuid.FromString(created.Id)
+	shouldBe.Nil(err)
+
+	shouldBe.Nil(suite.service.AcceptInvite(anotherVendorId, anotherInviteId, supportId))
+}
+
+func (suite *MemershipServiceTestSuite) TestOwnerInviteAnotherOwner() {
+	shouldBe := require.New(suite.T())
+
+	firstOwnerId := uuid.NewV4().String()
+	shouldBe.Nil(suite.db.DB().Create(&model.User{
+		ID:       firstOwnerId,
+		FullName: "First Owner",
+		Email:    "first_owner@testemail.com",
+	}).Error)
+
+	anotherOwnerId := uuid.NewV4().String()
+	shouldBe.Nil(suite.db.DB().Create(&model.User{
+		ID:       anotherOwnerId,
+		FullName: "Another Owner",
+		Email:    "another_owner@testemail.com",
+	}).Error)
+
+	firstVendorId := uuid.NewV4()
+	suite.db.DB().Create(&model.Vendor{
+		ID:              firstVendorId,
+		ManagerID:       firstOwnerId,
+		Email:           "first_owner@testemail.com",
+		Domain3:         "www.firstdomain.test",
+		HowManyProducts: "0",
+		Name:            "First Vendor",
+	})
+
+	anotherVendorId := uuid.NewV4()
+	suite.db.DB().Create(&model.Vendor{
+		ID:              anotherVendorId,
+		ManagerID:       anotherOwnerId,
+		Email:           "anotherVendorId@testemail.com",
+		Domain3:         "www.anotherVendorId.test",
+		HowManyProducts: "0",
+		Name:            "another Vendor",
+	})
+
+	shouldBe.Nil(suite.service.AddRoleToUser(firstOwnerId, firstOwnerId, model.VendorOwner))
+	shouldBe.Nil(suite.service.AddRoleToUser(anotherOwnerId, anotherOwnerId, model.VendorOwner))
+
+	created, err := suite.service.SendInvite(firstVendorId, model.Invite{
+		Email: "another_owner@testemail.com",
+		Roles: []model.Role{
+			{
+				Role: model.Support,
+				Resource: model.ResourceRole{
+					Id:     "*",
+					Domain: "vendor",
+				},
+			},
+		},
+	})
+
+	shouldBe.Nil(err)
+	shouldBe.NotNil(created)
+	inviteId, err := uuid.FromString(created.Id)
+	shouldBe.Nil(err)
+
+	shouldBe.Nil(suite.service.AcceptInvite(firstVendorId, inviteId, anotherOwnerId))
+}
+
 func (suite *MemershipServiceTestSuite) TestGetUsers() {
 	shouldBe := require.New(suite.T())
 	vId := uuid.FromStringOrNil(vendorId)
