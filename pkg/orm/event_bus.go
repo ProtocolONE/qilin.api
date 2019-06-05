@@ -5,11 +5,14 @@ import (
 	"github.com/ProtocolONE/qilin-common/pkg/proto"
 	"github.com/ProtocolONE/rabbitmq/pkg"
 	"github.com/jinzhu/gorm"
+	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -45,7 +48,8 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 	}
 
 	if len(game.Tags) > 0 {
-		err = bus.db.Model(model.GameTag{}).Where("id in (?)", game.Tags).Find(&tags).Error
+		tt := toPgArray(game.Tags)
+		err = bus.db.Model(model.GameTag{}).Where("id in (?)", tt).Find(&tags).Error
 		if err != nil {
 			return err
 		}
@@ -54,7 +58,7 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 	if len(game.GenreAddition) > 0 || game.GenreMain != 0 {
 		filter := game.GenreAddition
 		filter = append(filter, game.GenreMain)
-		err = bus.db.Model(model.GameGenre{}).Where("id in (?)", filter).Find(&genres).Error
+		err = bus.db.Model(model.GameGenre{}).Where("id in (?)", toPgArray(filter)).Find(&genres).Error
 		if err != nil {
 			return err
 		}
@@ -62,6 +66,14 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 
 	gameObject := MapGameObject(&game, &media, tags, genres)
 	return bus.broker.Publish("game_changed", gameObject, nil)
+}
+
+func toPgArray(array pq.Int64Array) string {
+	var s []string
+	for _, a := range array {
+		s = append(s, strconv.FormatInt(a, 10))
+	}
+	return strings.Join(s, ",")
 }
 
 func (bus *eventBus) PublishGameDelete(gameId uuid.UUID) error {
