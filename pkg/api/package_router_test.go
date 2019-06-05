@@ -273,7 +273,9 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 	productService, err := orm.NewProductService(db)
 	require.Nil(suite.T(), err)
 
-	_, err = InitPackageRouter(echoObj.Group("/api/v1"), service, productService)
+	priceService := orm.NewPriceService(db)
+
+	_, err = InitPackageRouter(echoObj.Group("/api/v1"), service, productService, priceService)
 	require.Nil(suite.T(), err)
 
 	suite.db = db

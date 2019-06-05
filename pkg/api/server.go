@@ -213,7 +213,7 @@ func (s *Server) setupRoutes(
 	if err != nil {
 		return err
 	}
-	if _, err := InitPackageRouter(s.Router, packageService, productService); err != nil {
+	if _, err := InitPackageRouter(s.Router, packageService, productService, priceService); err != nil {
 		return err
 	}
 	if _, err := InitBundleRouter(s.Router, bundleService); err != nil {
