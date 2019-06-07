@@ -28,22 +28,22 @@ func createPackage(
 	transaction *gorm.DB,
 	packageId,
 	vendorId uuid.UUID,
-	isDefault bool,
+	defaultProductID uuid.UUID,
 	userId,
 	name string,
-	prods []uuid.UUID) (err error) {
+	products []uuid.UUID) (err error) {
 
 	if len(strings.Trim(name, " \r\n\t")) == 0 {
 		return NewServiceError(http.StatusUnprocessableEntity, "Name is empty")
 	}
 
 	newPack := model.Package{
-		Model:     model.Model{ID: packageId},
-		Sku:       uuid.NewV4().String(),
-		Name:      utils.LocalizedString{EN: name},
-		VendorID:  vendorId,
-		CreatorID: userId,
-		IsDefault: isDefault,
+		Model:            model.Model{ID: packageId},
+		Sku:              uuid.NewV4().String(),
+		Name:             utils.LocalizedString{EN: name},
+		VendorID:         vendorId,
+		CreatorID:        userId,
+		DefaultProductID: defaultProductID,
 		PackagePrices: model.PackagePrices{
 			Common: model.JSONB{
 				"currency":        "USD",
@@ -60,7 +60,7 @@ func createPackage(
 	if err != nil {
 		return errors.Wrap(err, "While create new package")
 	}
-	for index, productId := range prods {
+	for index, productId := range products {
 		err = transaction.Create(model.PackageProduct{
 			PackageID: packageId,
 			ProductID: productId,
@@ -75,17 +75,26 @@ func createPackage(
 }
 
 func (p *packageService) filterProducts(prods []uuid.UUID) (result []uuid.UUID, err error) {
-	result = []uuid.UUID{}
+	entries, err := p.getProductEntries(prods)
+	if err != nil {
+		return nil, err
+	}
+	return entries.GetUUIDs(), err
+}
+
+func (p *packageService) getProductEntries(prods []uuid.UUID) (result model.ProductEntryArray, err error) {
+	result = model.ProductEntryArray{}
 	if len(prods) > 0 {
 		entries := []model.ProductEntry{}
 		err = p.db.Where("entry_id in (?)", prods).Find(&entries).Error
 		if err != nil {
 			return nil, errors.Wrap(err, "Retrieve product entries")
 		}
+		// Save order
 		for _, prodId := range prods {
 			for _, entry := range entries {
 				if prodId == entry.EntryID {
-					result = append(result, prodId)
+					result = append(result, entry)
 					break
 				}
 			}
@@ -124,7 +133,7 @@ func (p *packageService) Create(vendorId uuid.UUID, userId, name string, prods [
 			transaction.Rollback()
 		}
 	}()
-	err = createPackage(transaction, pkgId, vendorId, false, userId, name, prods)
+	err = createPackage(transaction, pkgId, vendorId, uuid.Nil, userId, name, prods)
 	if err != nil {
 		transaction.Rollback()
 		return nil, err
@@ -192,21 +201,39 @@ func (p *packageService) AddProducts(packageId uuid.UUID, prods []uuid.UUID) (re
 
 func (p *packageService) RemoveProducts(packageId uuid.UUID, prods []uuid.UUID) (result *model.Package, err error) {
 
-	_, err = p.findPackageOrError(packageId)
+	// 1. Find the package
+	pkg, err := p.findPackageOrError(packageId)
 	if err != nil {
 		return nil, err
 	}
 
-	prods, err = p.filterProducts(prods)
+	// 2. Filter for reject unexist's and default products
+	exists := []model.PackageProduct{}
+	err = p.db.Where("package_id = ?", packageId).Find(&exists).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Fetch package contents")
+	}
+	for i, prodID := range prods {
+		found := false
+		for _, exist := range exists {
+			if prodID == exist.ProductID {
+				found = true
+				break
+			}
+		}
+		if !found || prodID == pkg.DefaultProductID {
+			prods = append(prods[:i], prods[i+1:]...)
+		}
 	}
 
+	// 3. Actual remove products from package (if any)
 	if len(prods) > 0 {
 		err = p.db.Delete(model.PackageProduct{}, "package_id = ? and product_id in (?)", packageId, prods).Error
 		if err != nil {
 			return nil, errors.Wrap(err, "Delete package products")
 		}
+	} else {
+		return nil, NewServiceError(http.StatusUnprocessableEntity, "No any products for remove")
 	}
 
 	return p.Get(packageId)
@@ -369,6 +396,7 @@ func (p *packageService) Update(pkg *model.Package) (*model.Package, error) {
 	pkg.UpdatedAt = time.Now()
 	pkg.VendorID = exist.VendorID
 	pkg.PackagePrices = exist.PackagePrices
+	pkg.DefaultProductID = exist.DefaultProductID
 	// Products also ignored
 
 	err = p.db.Save(pkg).Error
@@ -385,13 +413,8 @@ func (p *packageService) Remove(packageId uuid.UUID) (err error) {
 		return err
 	}
 
-	found := 0
-	err = p.db.Model(model.Game{}).Where("default_package_id = ?", packageId).Count(&found).Error
-	if err != nil {
-		return errors.Wrap(err, "Search for default package")
-	}
-	if found > 0 {
-		return NewServiceError(http.StatusForbidden, "Package is default for Game")
+	if exist.DefaultProductID != uuid.Nil {
+		return NewServiceError(http.StatusForbidden, "Package is default")
 	}
 
 	err = p.db.Delete(exist).Error

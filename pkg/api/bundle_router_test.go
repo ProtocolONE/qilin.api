@@ -58,6 +58,7 @@ var (
       "isUpgradeAllowed": false,
       "isEnabled": false,
       "isDefault": false,
+      "defaultProductId": "00000000-0000-0000-0000-000000000000",
       "products": [
         {
           "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
@@ -115,6 +116,7 @@ var (
       "isUpgradeAllowed": false,
       "isEnabled": false,
       "isDefault": false,
+      "defaultProductId":"00000000-0000-0000-0000-000000000000",
       "products": [
         {
           "id": "029ce039-888a-481a-a831-cde7ff4e50b8",

@@ -174,7 +174,7 @@ func (suite *MemershipServiceTestSuite) TestOwnerInviteAnotherUserWithAlreadyInv
 			{
 				Role: model.Support,
 				Resource: model.ResourceRole{
-					Id: "*",
+					Id:     "*",
 					Domain: "vendor",
 				},
 			},
@@ -195,7 +195,7 @@ func (suite *MemershipServiceTestSuite) TestOwnerInviteAnotherUserWithAlreadyInv
 			{
 				Role: model.Support,
 				Resource: model.ResourceRole{
-					Id: "*",
+					Id:     "*",
 					Domain: "vendor",
 				},
 			},
@@ -256,7 +256,7 @@ func (suite *MemershipServiceTestSuite) TestOwnerInviteAnotherOwner() {
 			{
 				Role: model.Support,
 				Resource: model.ResourceRole{
-					Id: "*",
+					Id:     "*",
 					Domain: "vendor",
 				},
 			},

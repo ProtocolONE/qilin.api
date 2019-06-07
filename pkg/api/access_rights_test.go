@@ -184,7 +184,7 @@ func (s *AccessRightsTestSuite) InitRoutes() error {
 		return err
 	}
 
-	if _, err := InitPackageRouter(s.Router, packageService, productService); err != nil {
+	if _, err := InitPackageRouter(s.Router, packageService, productService, priceService); err != nil {
 		return err
 	}
 

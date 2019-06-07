@@ -22,6 +22,8 @@ github.com/ProtocolONE/rabbitmq v0.0.0-20190129162844-9f24367e139c h1:jiH5dizqc7
 github.com/ProtocolONE/rabbitmq v0.0.0-20190129162844-9f24367e139c/go.mod h1:ZnV4uG7YnB4iU8c8co8XU4w7xL0sGaGEw5d9g1THmwk=
 github.com/ProtocolONE/rbac v0.0.0-20190417103614-3f97c81631c6 h1:N0daXzViVWndP/DnA3snKsLOXboZPM9iT5y2+usSanM=
 github.com/ProtocolONE/rbac v0.0.0-20190417103614-3f97c81631c6/go.mod h1:mZUivEYBdQhUhScMwSdCphoANrh2GU6+RnSm6WTVYwo=
+github.com/ProtocolONE/rbac v0.0.0-20190520124240-22f5d2b74988 h1:y4bEBCUdSAUqKL9AtLjREjKyZyb7AYhVUI2L5R58VAQ=
+github.com/ProtocolONE/rbac v0.0.0-20190520124240-22f5d2b74988/go.mod h1:mZUivEYBdQhUhScMwSdCphoANrh2GU6+RnSm6WTVYwo=
 github.com/billcobbler/casbin-redis-watcher v0.0.0-20180829182704-69cab1cdcf44 h1:6IUAqiLy9jbnkun5V2TE+RzFu4fy+qqn/bS80I+L0B4=
 github.com/billcobbler/casbin-redis-watcher v0.0.0-20180829182704-69cab1cdcf44/go.mod h1:7gAaWqZ3MW7v5114HJaUNsNxaVCV6LHknrrwQtnjGX4=
 github.com/casbin/casbin v1.8.1 h1:BVvL6H0nc+1y68nwIe8ZxwMIOEVUgg9y00yeD3GTDCc=

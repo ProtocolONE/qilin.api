@@ -68,6 +68,7 @@ func main() {
 		CentrifugoSecret: config.Notifier.Secret,
 		Enforcer:         enf,
 		EventBus:         &config.EventBus,
+		Imaginary:        &config.Imaginary,
 	}
 
 	server, err := api.NewServer(&serverOptions)

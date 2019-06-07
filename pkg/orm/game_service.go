@@ -181,7 +181,7 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 		return nil, errors.Wrap(err, "Create descriptions for game")
 	}
 
-	err = createPackage(transation, item.DefaultPackageID, vendorId, true, userId, item.InternalName, []uuid.UUID{item.ID})
+	err = createPackage(transation, item.DefaultPackageID, vendorId, item.ID, userId, item.InternalName, []uuid.UUID{item.ID})
 	if err != nil {
 		transation.Rollback()
 		return nil, err

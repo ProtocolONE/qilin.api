@@ -22,6 +22,7 @@ type (
 	packageRouter struct {
 		service         model.PackageService
 		productsService model.ProductService
+		priceService    model.PriceService
 	}
 
 	createPackageDTO struct {
@@ -59,6 +60,7 @@ type (
 		IsUpgradeAllowed      bool                            `json:"isUpgradeAllowed"`
 		IsEnabled             bool                            `json:"isEnabled"`
 		IsDefault             bool                            `json:"isDefault"`
+		DefaultProductID      uuid.UUID                       `json:"defaultProductId"`
 		Products              []productDTO                    `json:"products" validate:"dive"`
 		Media                 packageMediaDTO                 `json:"media" validate:"required,dive"`
 		DiscountPolicy        packageDiscountPolicyDTO        `json:"discountPolicy" validate:"required,dive"`
@@ -78,10 +80,15 @@ type (
 	}
 )
 
-func InitPackageRouter(group *echo.Group, service model.PackageService, productService model.ProductService) (router *packageRouter, err error) {
+func InitPackageRouter(
+	group *echo.Group,
+	service model.PackageService,
+	productService model.ProductService,
+	priceService model.PriceService) (router *packageRouter, err error) {
 	router = &packageRouter{
 		service:         service,
 		productsService: productService,
+		priceService:    priceService,
 	}
 
 	vendorRouter := rbac_echo.Group(group, "/vendors/:vendorId", router, []string{"*", model.PackageListType, model.VendorDomain})
@@ -113,7 +120,7 @@ func mapPackageItemDto(pkg *model.Package) *packageItemDTO {
 		Sku:       pkg.Sku,
 		Name:      pkg.Name,
 		IsEnabled: pkg.IsEnabled,
-		IsDefault: pkg.IsDefault,
+		IsDefault: pkg.DefaultProductID != uuid.Nil,
 		Media: packageMediaDTO{
 			Image: pkg.Image,
 			Cover: pkg.ImageCover,
@@ -134,7 +141,8 @@ func mapPackageDto(pkg *model.Package) (dto *packageDTO, err error) {
 		Name:             pkg.Name,
 		IsUpgradeAllowed: pkg.IsUpgradeAllowed,
 		IsEnabled:        pkg.IsEnabled,
-		IsDefault:        pkg.IsDefault,
+		IsDefault:        pkg.DefaultProductID != uuid.Nil,
+		DefaultProductID: pkg.DefaultProductID,
 		Media: packageMediaDTO{
 			Image: pkg.Image,
 			Cover: pkg.ImageCover,
@@ -371,6 +379,12 @@ func (router *packageRouter) Update(ctx echo.Context) (err error) {
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, "Invalid package Id")
 	}
+
+	existPkg, err := router.service.Get(packageId)
+	if err != nil {
+		return orm.NewServiceError(http.StatusNotFound, "Package not found")
+	}
+
 	pkgDto := &packageDTO{}
 	err = ctx.Bind(pkgDto)
 	if err != nil {
@@ -380,6 +394,36 @@ func (router *packageRouter) Update(ctx echo.Context) (err error) {
 		return orm.NewServiceError(http.StatusUnprocessableEntity, errs)
 	}
 
+	// Update package prices
+	basePrice := model.BasePrice{}
+	err = mapper.Map(pkgDto.Commercial, &basePrice.PackagePrices)
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, err)
+	}
+	if err := router.priceService.UpdateBase(packageId, &basePrice); err != nil {
+		return err
+	}
+	for _, price := range basePrice.Prices {
+		if err := router.priceService.Update(packageId, &price); err != nil {
+			return orm.NewServiceError(http.StatusBadRequest, err)
+		}
+	}
+	for _, existPrice := range existPkg.Prices {
+		found := false
+		for _, price := range basePrice.Prices {
+			if price.Currency == existPrice.Currency {
+				found = true
+				break
+			}
+		}
+		if !found {
+			if err := router.priceService.Delete(packageId, &existPrice); err != nil {
+				return orm.NewServiceError(http.StatusBadRequest, err)
+			}
+		}
+	}
+
+	// Update package
 	pkg, err := mapPackageModel(pkgDto)
 	if err != nil {
 		return err
@@ -393,6 +437,7 @@ func (router *packageRouter) Update(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
+
 	return ctx.JSON(http.StatusOK, dto)
 }
 

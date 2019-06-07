@@ -40,6 +40,7 @@ var (
   "isUpgradeAllowed": false,
   "isEnabled": false,
   "isDefault": false,
+  "defaultProductId":"00000000-0000-0000-0000-000000000000",
   "products": [
     {
       "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
@@ -80,6 +81,7 @@ var (
   "isUpgradeAllowed": true,
   "isEnabled": true,
   "isDefault": false,
+  "defaultProductId":"00000000-0000-0000-0000-000000000000",
   "products": [
     {
       "id": "029ce039-888a-481a-a831-cde7ff4e50b8",
@@ -271,7 +273,9 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 	productService, err := orm.NewProductService(db)
 	require.Nil(suite.T(), err)
 
-	_, err = InitPackageRouter(echoObj.Group("/api/v1"), service, productService)
+	priceService := orm.NewPriceService(db)
+
+	_, err = InitPackageRouter(echoObj.Group("/api/v1"), service, productService, priceService)
 	require.Nil(suite.T(), err)
 
 	suite.db = db

@@ -16,3 +16,8 @@ func (p *productService) SpecializationIds(productIds []uuid.UUID) (games []uuid
 	dlcs = []uuid.UUID{}
 	return
 }
+
+func (p *productService) GetPackages(uuid.UUID) (packages []model.Package, err error) {
+	packages = []model.Package{}
+	return
+}
