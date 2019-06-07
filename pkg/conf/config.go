@@ -2,13 +2,14 @@ package conf
 
 // Config the application's configuration
 type Config struct {
-	Server   ServerConfig
-	Database Database
-	Auth1    Auth1
-	Mailer   Mailer
-	Notifier Notifier
-	Enforcer Enforcer
-	EventBus EventBus
+	Server    ServerConfig
+	Database  Database
+	Auth1     Auth1
+	Mailer    Mailer
+	Notifier  Notifier
+	Enforcer  Enforcer
+	EventBus  EventBus
+	Imaginary Imaginary
 }
 
 type EventBus struct {
@@ -45,6 +46,10 @@ type Notifier struct {
 	Host   string `envconfig:"HOST" required:"false" default:"http://localhost:8000"`
 	ApiKey string `envconfig:"API_KEY" required:"true"`
 	Secret string `envconfig:"SECRET" required:"true"`
+}
+
+type Imaginary struct {
+	Secret string `envconfig:"SECRET" required:"false" default:"123456789"`
 }
 
 // Mailer specifies all the parameters needed for dump mail sender

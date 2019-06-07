@@ -25,6 +25,8 @@ type (
 		EntryID   uuid.UUID `gorm:"type:uuid; primary_key"`
 		EntryType ProductType
 	}
+
+	ProductEntryArray []ProductEntry
 )
 
 func (p *ProductEntry) TableName() string {
@@ -33,4 +35,13 @@ func (p *ProductEntry) TableName() string {
 
 type ProductService interface {
 	SpecializationIds([]uuid.UUID) (games []uuid.UUID, dlcs []uuid.UUID, err error)
+	GetPackages(uuid.UUID) (packages []Package, err error)
+}
+
+func (p ProductEntryArray) GetUUIDs() (result []uuid.UUID) {
+	result = []uuid.UUID{}
+	for _, prod := range p {
+		result = append(result, prod.EntryID)
+	}
+	return
 }

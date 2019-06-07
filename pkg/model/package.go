@@ -23,7 +23,7 @@ type (
 		ImageThumb       utils.LocalizedString `gorm:"type:jsonb; not null; default:'{}'"`
 		IsUpgradeAllowed bool
 		IsEnabled        bool
-		IsDefault        bool
+		DefaultProductID uuid.UUID
 		VendorID         uuid.UUID
 		Vendor           Vendor
 		CreatorID        string

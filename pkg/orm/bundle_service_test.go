@@ -303,6 +303,9 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	err = suite.service.RemovePackages(bundle.ID, []uuid.UUID{suite.packages[1]})
 	should.Nil(err, "Remove package")
 
+	err = suite.service.RemovePackages(bundle.ID, []uuid.UUID{suite.packages[1]})
+	should.NotNil(err, "Try to remove already removed package")
+
 	bundleErrIface, err = suite.service.Get(bundle.ID)
 	should.Nil(err)
 	should.NotNil(bundleErrIface)
