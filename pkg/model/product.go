@@ -34,7 +34,7 @@ func (p *ProductEntry) TableName() string {
 }
 
 type ProductService interface {
-	SpecializationIds([]uuid.UUID) (games []uuid.UUID, dlcs []uuid.UUID, err error)
+	Specialization([]uuid.UUID) (games []uuid.UUID, dlcs []uuid.UUID, err error)
 	GetPackages(uuid.UUID) (packages []Package, err error)
 }
 

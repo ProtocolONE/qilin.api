@@ -22,9 +22,10 @@ import (
 )
 
 type GameRouter struct {
-	gameService model.GameService
-	userService model.UserService
-	eventBus    model.EventBus
+	gameService    model.GameService
+	userService    model.UserService
+	eventBus       model.EventBus
+	productService model.ProductService
 }
 
 type (
@@ -305,6 +306,7 @@ func InitGameRoutes(router *echo.Group, service model.GameService, userService m
 	gameGroup.GET("/:gameId/descriptions", Router.GetDescr, nil)
 	gameGroup.PUT("/:gameId/descriptions", Router.UpdateDescr, nil)
 	gameGroup.POST("/:gameId/publications", Router.PublishGame, []string{"gameId", model.PublishGame, model.VendorDomain})
+	gameGroup.GET("/:gameId/packages", Router.GetPackages, nil)
 
 	router.GET("/genre", Router.GetGenres) // TODO: Remove after some time
 	router.GET("/genres", Router.GetGenres)
@@ -661,4 +663,20 @@ func (api *GameRouter) GetRatingDescriptors(ctx echo.Context) error {
 func (api *GameRouter) getUserId(ctx echo.Context) (string, error) {
 	extUserId, err := context.GetAuthUserId(ctx)
 	return extUserId, err
+}
+
+func (api *GameRouter) GetPackages(ctx echo.Context) error {
+	gameId, err := uuid.FromString(ctx.Param("gameId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, "Invalid Id")
+	}
+	packages, err := api.productService.GetPackages(gameId)
+	if err != nil {
+		return err
+	}
+	dto := []*packageItemDTO{}
+	for _, pkg := range packages {
+		dto = append(dto, mapPackageItemDto(&pkg))
+	}
+	return ctx.JSON(http.StatusOK, dto)
 }

@@ -11,7 +11,7 @@ func NewProductService() (model.ProductService, error) {
 	return &productService{}, nil
 }
 
-func (p *productService) SpecializationIds(productIds []uuid.UUID) (games []uuid.UUID, dlcs []uuid.UUID, err error) {
+func (p *productService) Specialization(productIds []uuid.UUID) (games []uuid.UUID, dlcs []uuid.UUID, err error) {
 	games = productIds
 	dlcs = []uuid.UUID{}
 	return

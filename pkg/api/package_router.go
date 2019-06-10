@@ -208,7 +208,7 @@ func mapPackageModel(dto *packageDTO) (pkg *model.Package, err error) {
 
 func (router *packageRouter) checkRBAC(userId string, qilinCtx *rbac_echo.AppContext, productIds []uuid.UUID) error {
 	// Check permissions for Games
-	games, _, err := router.productsService.SpecializationIds(productIds)
+	games, _, err := router.productsService.Specialization(productIds)
 	if err != nil {
 		return err
 	}

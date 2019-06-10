@@ -16,6 +16,41 @@ servers:
 
 
 paths:
+  /api/v1/games/:gameId/packages:
+    get:
+      tags:
+        - game
+        - package
+      summary: "Get game packages"
+      operationId: "getGamePackages"
+      parameters:
+        - name: gameId
+          in: "path"
+          description: "Game Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Return array with short information about packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PackageItem'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalError'
+
   /api/v1/vendors/:vendorId/packages:
     post:
       tags:

@@ -15,7 +15,7 @@ func NewProductService(db *Database) (model.ProductService, error) {
 	return &ProductService{db.database}, nil
 }
 
-func (p *ProductService) SpecializationIds(productIds []uuid.UUID) (games []uuid.UUID, dlcs []uuid.UUID, err error) {
+func (p *ProductService) Specialization(productIds []uuid.UUID) (games []uuid.UUID, dlcs []uuid.UUID, err error) {
 	games = []uuid.UUID{}
 	dlcs = []uuid.UUID{}
 	entries := []model.ProductEntry{}
@@ -50,7 +50,19 @@ func (p *ProductService) GetPackages(productId uuid.UUID) (packages []model.Pack
 		return nil, errors.Wrap(err, "Get packages by product")
 	}
 
-	// TODO: Return related packages...
+	if len(prodPackages) > 0 {
+		packageIds := []uuid.UUID{}
+		for _, p := range prodPackages {
+			packageIds = append(packageIds, p.PackageID)
+		}
+		err = p.db.
+			Where("id in (?)", packageIds).
+			Find(&packages).
+			Error
+		if err != nil {
+			return nil, errors.Wrap(err, "Retrive packages")
+		}
+	}
 
 	return
 }
