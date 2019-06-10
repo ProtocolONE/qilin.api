@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"github.com/ProtocolONE/authone-jwt-verifier-golang"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
@@ -15,13 +16,18 @@ import (
 )
 
 type UserRouter struct {
-	service   model.UserService
-	verifier  *jwtverifier.JwtVerifier
-	Imaginary *conf.Imaginary
+	service         model.UserService
+	verifier        *jwtverifier.JwtVerifier
+	ImaginarySecret []byte
 }
 
 func InitUserRoutes(api *Server, service model.UserService, verifier *jwtverifier.JwtVerifier, imaginary *conf.Imaginary) error {
-	userRouter := UserRouter{service: service, verifier: verifier, Imaginary: imaginary}
+
+	key, err := base64.StdEncoding.DecodeString(imaginary.Secret)
+	if err != nil {
+		return errors.New("Failed to decode Base64 Imaginary secret")
+	}
+	userRouter := UserRouter{service: service, verifier: verifier, ImaginarySecret: key}
 
 	api.Router.GET("/me", userRouter.getAppState)
 
@@ -56,7 +62,7 @@ func (api *UserRouter) getAppState(ctx echo.Context) (err error) {
 	}
 
 	claims := jwt.MapClaims{"user": userObj.ID}
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(api.Imaginary.Secret))
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(api.ImaginarySecret)
 	if err != nil {
 		zap.L().Error("Could not generate Imaginary token", zap.Error(err))
 		return err
