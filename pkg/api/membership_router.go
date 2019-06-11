@@ -65,6 +65,7 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 
 	//TODO: Hack. Remove after needed functionality implemented
 	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
+	group.POST("/to_delete/:userId/dropAdmin", res.dropAdminRole)
 
 	return res, nil
 }
@@ -73,6 +74,15 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 func (api *MembershipRouter) addAdminRole(ctx echo.Context) error {
 	userId := ctx.Param("userId")
 	if err := api.service.AddRoleToUser(userId, "*", model.SuperAdmin); err != nil {
+		return err
+	}
+
+	return ctx.NoContent(http.StatusOK)
+}
+
+func (api *MembershipRouter) dropAdminRole(ctx echo.Context) error {
+	userId := ctx.Param("userId")
+	if err := api.service.RemoveUserRole(userId, "*", model.SuperAdmin); err != nil {
 		return err
 	}
 

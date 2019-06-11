@@ -457,3 +457,11 @@ func (service *membershipService) AddRoleToUserInResource(vendorId uuid.UUID, us
 
 	return nil
 }
+
+func (service *membershipService) RemoveUserRole(userId string, owner string, role string) error {
+	if service.enforcer.RemoveRole(rbac.Role{Role: role, User: userId, Owner: owner, Domain: model.VendorDomain, RestrictedResourceId: []string{"*"}}) == false {
+		return NewServiceErrorf(http.StatusInternalServerError, "Could not remove role `%s` for user `%s`", role, userId)
+	}
+
+	return nil
+}
