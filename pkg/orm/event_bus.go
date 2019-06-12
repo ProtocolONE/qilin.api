@@ -12,8 +12,6 @@ import (
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -79,12 +77,12 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 	return bus.broker.Publish("game_changed", gameObject, nil)
 }
 
-func toPgArray(array pq.Int64Array) string {
-	var s []string
+func toPgArray(array pq.Int64Array) []int64 {
+	var s []int64
 	for _, a := range array {
-		s = append(s, strconv.FormatInt(a, 10))
+		s = append(s, a)
 	}
-	return strings.Join(s, ",")
+	return s
 }
 
 func (bus *eventBus) PublishGameDelete(gameId uuid.UUID) error {
