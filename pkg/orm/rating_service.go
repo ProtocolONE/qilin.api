@@ -46,7 +46,7 @@ func (s *RatingService) SaveRatingsForGame(id uuid.UUID, newRating *model.GameRa
 
 	rating := model.GameRating{}
 
-	err := s.db.Model(&model.Game{}).Where("id = ?", id).Related(&rating).Error
+	err := s.db.Model(&model.Game{ID: id}).Related(&rating).Error
 
 	if err == gorm.ErrRecordNotFound {
 		rating.CreatedAt = time.Now()
