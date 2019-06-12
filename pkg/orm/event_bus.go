@@ -8,6 +8,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"go.uber.org/zap"
+	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
@@ -64,7 +65,17 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 		}
 	}
 
-	gameObject := MapGameObject(&game, &media, tags, genres)
+	var ratings model.GameRating
+	if err := bus.db.Model(model.GameRating{}).Where("game_id = ?", gameId).First(&ratings).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return err
+	}
+
+	description := model.GameDescr{}
+	if err := bus.db.Model(model.GameDescr{}).Where("game_id = ?", gameId).First(&description).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return err
+	}
+
+	gameObject := MapGameObject(&game, &media, tags, genres, ratings, description)
 	return bus.broker.Publish("game_changed", gameObject, nil)
 }
 
@@ -81,10 +92,10 @@ func (bus *eventBus) PublishGameDelete(gameId uuid.UUID) error {
 	return bus.broker.Publish("game_deleted", gameObject, nil)
 }
 
-func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, genre []model.GameGenre) *proto.GameObject {
+func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, genre []model.GameGenre, ratings model.GameRating, descr model.GameDescr) *proto.GameObject {
 	return &proto.GameObject{
 		ID:                   game.ID.String(),
-		Description:          "",
+		Description:          MapLocalizedString(descr.Description),
 		Name:                 game.Title,
 		Title:                game.Title,
 		Developer:            &proto.LinkObject{ID: "", Title: game.Developers},
@@ -99,7 +110,37 @@ func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, g
 		FeaturesControl:      game.FeaturesCtrl,
 		Features:             game.FeaturesCommon,
 		Media:                MapMedia(media),
+		Ratings:              MapRatings(ratings),
+		GameSite:             descr.GameSite,
+		Reviews:              MapReviews(descr.Reviews),
+		Tagline:              MapLocalizedString(descr.Tagline),
+		Publisher:			  &proto.LinkObject{ID: "", Title: game.Publishers},
 	}
+}
+
+func MapReviews(reviews game.GameReviews) []*proto.Review {
+	if reviews == nil {
+		return nil
+	}
+
+	var result []*proto.Review
+	for _, review := range reviews {
+		result = append(result, &proto.Review{
+			Link:      review.Link,
+			PressName: review.PressName,
+			Quote:     review.Quote,
+			Score:     review.Score,
+		})
+	}
+
+	return result
+}
+
+func MapRatings(rating model.GameRating) *proto.Ratings {
+	result := &proto.Ratings{}
+	err := mapper.Map(rating, result)
+	zap.L().Error("Can't map ratings", zap.Error(err))
+	return result
 }
 
 func MapMedia(media *model.Media) *proto.Media {
