@@ -49,7 +49,7 @@ func (gameService) Delete(userId string, gameId uuid.UUID) error {
 	return nil
 }
 
-func (gameService) GetList(userId string, vendorId uuid.UUID, offset, limit int, internalName, genre, releaseDate, sort string, price float64) ([]*model.ShortGameInfo, error) {
+func (gameService) GetList(userId string, vendorId uuid.UUID, offset, limit int, internalName, genre, releaseDate, sort string) ([]*model.ShortGameInfo, error) {
 	return []*model.ShortGameInfo{}, nil
 }
 

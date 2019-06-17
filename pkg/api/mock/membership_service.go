@@ -56,3 +56,7 @@ func (memebershipService) AcceptInvite(vendorId uuid.UUID, inviteId uuid.UUID, u
 func NewMembershipService() model.MembershipService {
 	return &memebershipService{}
 }
+
+func (memebershipService) RemoveUserRole(userId string, owner string, role string) error {
+	return nil
+}

@@ -65,7 +65,8 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 
 	//TODO: Hack. Remove after needed functionality implemented
 	group.POST("/to_delete/:userId/grantAdmin", res.addAdminRole)
-	group.POST("/to_delete/:userId/dropAdmin", res.dropAdminRole)
+	group.POST("/to_delete/:userId/grant/:role/:vendorId", res.grantRole)
+	group.DELETE("/to_delete/:userId/grant", res.dropRole)
 
 	return res, nil
 }
@@ -74,15 +75,6 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 func (api *MembershipRouter) addAdminRole(ctx echo.Context) error {
 	userId := ctx.Param("userId")
 	if err := api.service.AddRoleToUser(userId, "*", model.SuperAdmin); err != nil {
-		return err
-	}
-
-	return ctx.NoContent(http.StatusOK)
-}
-
-func (api *MembershipRouter) dropAdminRole(ctx echo.Context) error {
-	userId := ctx.Param("userId")
-	if err := api.service.RemoveUserRole(userId, "*", model.SuperAdmin); err != nil {
 		return err
 	}
 
@@ -125,6 +117,7 @@ func (api *MembershipRouter) acceptInvite(ctx echo.Context) error {
 
 func (api *MembershipRouter) sendInvite(ctx echo.Context) error {
 	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
+
 	if err != nil {
 		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
 	}
@@ -255,4 +248,38 @@ func (api *MembershipRouter) getUserPermissions(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, permissions)
+}
+
+func (api *MembershipRouter) grantRole(ctx echo.Context) error {
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
+	}
+
+	userId := ctx.Param("userId")
+	role := ctx.Param("role")
+
+	err = api.service.AddRoleToUserInResource(vendorId, userId, []string{"*"}, role)
+	if err != nil {
+		return err
+	}
+
+	return ctx.NoContent(http.StatusOK)
+}
+
+func (api *MembershipRouter) dropRole(ctx echo.Context) error {
+	userId := ctx.Param("userId")
+
+	roles := []string{model.SuperAdmin, model.Manager, model.Admin, model.Support}
+	found := false
+	for _, role := range roles {
+		if err := api.service.RemoveUserRole(userId, "*", role); err == nil {
+			found = true
+		}
+	}
+	if !found {
+		return orm.NewServiceError(http.StatusNotFound, "No any role for drop")
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }

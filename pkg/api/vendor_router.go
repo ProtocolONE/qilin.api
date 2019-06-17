@@ -62,7 +62,7 @@ func (api *VendorRouter) getAll(ctx echo.Context) error {
 	userId, err := api.getUserId(ctx)
 	shouldBreak := false
 	localOffset := offset
-	var dto []VendorDTO
+	dto := []VendorDTO{}
 
 	for len(dto) <= limit && shouldBreak == false {
 		localLimit := limit - len(dto)

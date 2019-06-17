@@ -27,7 +27,7 @@ func (*packageService) Get(packageId uuid.UUID) (result *model.Package, err erro
 	return &model.Package{}, nil
 }
 
-func (*packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int, filter model.PackageListingFilter) (total int, result []model.Package, err error) {
+func (*packageService) GetList(userId string, vendorId uuid.UUID, query, sort string, offset, limit int, filter model.PackageListingFilter) (total int, result []model.Package, err error) {
 	return 0, []model.Package{}, nil
 }
 
