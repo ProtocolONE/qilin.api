@@ -196,7 +196,7 @@ func (p *gameService) Create(userId string, vendorId uuid.UUID, internalName str
 }
 
 func (p *gameService) GetList(userId string, vendorId uuid.UUID,
-	offset, limit int, internalName, genre, releaseDate, sort string, price float64) (list []*model.ShortGameInfo, err error) {
+	offset, limit int, internalName, genre, releaseDate, sort string) (list []*model.ShortGameInfo, err error) {
 
 	if err := p.verifyUserAndVendor(userId, vendorId); err != nil {
 		return nil, err

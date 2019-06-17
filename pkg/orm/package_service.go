@@ -288,7 +288,7 @@ func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err er
 	return
 }
 
-func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc model.PackageListingFilter) (total int, result []model.Package, err error) {
+func (p *packageService) GetList(userId string, vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc model.PackageListingFilter) (total int, result []model.Package, err error) {
 
 	orderBy := ""
 	orderBy = "created_at ASC"
@@ -313,8 +313,13 @@ func (p *packageService) GetList(vendorId uuid.UUID, query, sort string, offset,
 	vals := []interface{}{}
 
 	if query != "" {
-		conds = append(conds, `name ilike ?`)
-		vals = append(vals, "%"+query+"%")
+		user := model.User{}
+		err = p.db.Select("lang").Where("id = ?", userId).First(&user).Error
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "while fetch user")
+		}
+		conds = append(conds, "(name ->> ? ilike ? or name ->> 'en' ilike ?)")
+		vals = append(vals, "%"+query+"%", user.Lang, "%"+query+"%")
 		// TODO: Add another kinds for searching
 	}
 

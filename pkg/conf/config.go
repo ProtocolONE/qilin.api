@@ -49,7 +49,7 @@ type Notifier struct {
 }
 
 type Imaginary struct {
-	Secret string `envconfig:"SECRET" required:"false" default:"123456789"`
+	Secret string `envconfig:"SECRET" required:"false" default:"MTIzNDU2Nzg5"`
 }
 
 // Mailer specifies all the parameters needed for dump mail sender

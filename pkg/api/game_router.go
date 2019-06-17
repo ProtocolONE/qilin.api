@@ -134,7 +134,6 @@ type (
 		Icon         string       `json:"icon"`
 		Genres       GameGenreDTO `json:"genres"`
 		ReleaseDate  time.Time    `json:"releaseDate"`
-		Prices       GamePriceDTO `json:"prices"`
 	}
 
 	DescrReview struct {
@@ -356,7 +355,6 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 	}
 	internalName := ctx.QueryParam("internalName")
 	genre := ctx.QueryParam("genre")
-	price, _ := strconv.ParseFloat(ctx.QueryParam("price"), 64)
 	releaseDate := ctx.QueryParam("releaseDate")
 	sort := ctx.QueryParam("sort")
 	userId, err := api.getUserId(ctx)
@@ -373,7 +371,7 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 	for len(dto) <= limit && shouldBreak == false {
 		localLimit := limit - len(dto)
 
-		games, err := api.gameService.GetList(userId, vendorId, localOffset, localLimit, internalName, genre, releaseDate, sort, price)
+		games, err := api.gameService.GetList(userId, vendorId, localOffset, localLimit, internalName, genre, releaseDate, sort)
 		if err != nil {
 			return err
 		}
@@ -382,11 +380,6 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 		shouldBreak = len(games) <= localLimit
 
 		for _, game := range games {
-			prices := GamePriceDTO{
-				Currency: game.Price.Currency,
-				Price:    float64(game.Price.Price),
-			}
-
 			owner, err := qilinCtx.GetOwnerForGame(game.ID)
 			if err != nil {
 				return err
@@ -406,7 +399,6 @@ func (api *GameRouter) GetList(ctx echo.Context) error {
 					Addition: game.GenreAddition,
 				},
 				ReleaseDate: game.ReleaseDate,
-				Prices:      prices,
 			})
 		}
 		localOffset = localOffset + len(games)

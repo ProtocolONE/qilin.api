@@ -362,7 +362,7 @@ func (router *packageRouter) GetList(ctx echo.Context) (err error) {
 	}
 	query := ctx.QueryParam("query")
 	sort := ctx.QueryParam("sort")
-	total, packages, err := router.service.GetList(vendorId, query, sort, offset, limit, filterFunc)
+	total, packages, err := router.service.GetList(userId, vendorId, query, sort, offset, limit, filterFunc)
 	if err != nil {
 		return err
 	}

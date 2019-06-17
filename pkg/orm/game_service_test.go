@@ -195,20 +195,20 @@ func (suite *GameServiceTestSuite) TestGames() {
 	should.Equal(game3.InternalName, game2Name, "Incorrect Game Name from DB")
 
 	suite.T().Log("Get games list")
-	games, err := gameService.GetList(user.ID, vendor2.ID, 0, 20, "", "", "", "name+", 0)
+	games, err := gameService.GetList(user.ID, vendor2.ID, 0, 20, "", "", "", "name+")
 	should.Nil(err, "Unable retrive list of games")
 	should.Equal(2, len(games), "Only 2 games just created")
 	should.Equal(games[0].InternalName, gameName, "First game")
 	should.Equal(games[1].InternalName, game2Name, "Second game")
 
 	suite.T().Log("Check filter with offset and sort")
-	games2, err := gameService.GetList(user.ID, vendor2.ID, 1, 20, "", "", "", "name-", 0)
+	games2, err := gameService.GetList(user.ID, vendor2.ID, 1, 20, "", "", "", "name-")
 	should.Nil(err, "Unable retrive list of games")
 	should.Equal(len(games2), 1, "Only 1 retrivied")
 	should.Equal(games2[0].InternalName, game2Name, "Second game name")
 
 	suite.T().Log("Check filter with name")
-	games3, err := gameService.GetList(user.ID, vendor2.ID, 0, 20, game2Name, "", "", "name-", 0)
+	games3, err := gameService.GetList(user.ID, vendor2.ID, 0, 20, game2Name, "", "", "name-")
 	should.Nil(err, "Unable retrive list of games")
 	should.Equal(len(games3), 1, "Only 1 retrivied")
 	should.Equal(games3[0].InternalName, game2Name, "Second game name")
@@ -223,7 +223,7 @@ func (suite *GameServiceTestSuite) TestGames() {
 	should.Nil(game4, "Game must be null")
 
 	suite.T().Log("Get games list with one game")
-	games, err = gameService.GetList(user.ID, vendor2.ID, 0, 20, "", "", "", "name+", 0)
+	games, err = gameService.GetList(user.ID, vendor2.ID, 0, 20, "", "", "", "name+")
 	should.Nil(err, "Unable retrive list of games")
 	should.Equal(len(games), 1, "Only 1 games must be")
 	should.Equal(games[0].InternalName, game2Name, "Second game")
