@@ -404,6 +404,12 @@ func (router *packageRouter) Update(ctx echo.Context) (err error) {
 		return err
 	}
 	for _, price := range basePrice.Prices {
+		if price.Price < 0 {
+			price.Price = 0
+		}
+		if price.Vat < 0 {
+			price.Vat = 0
+		}
 		if err := router.priceService.Update(packageId, &price); err != nil {
 			return orm.NewServiceError(http.StatusBadRequest, err)
 		}
