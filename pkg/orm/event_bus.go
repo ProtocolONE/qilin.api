@@ -108,7 +108,7 @@ func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, g
 		FeaturesControl:      game.FeaturesCtrl,
 		Features:             game.FeaturesCommon,
 		Media:                MapMedia(media),
-		//Ratings:              MapRatings(ratings),
+		Ratings:              MapRatings(ratings),
 		GameSite:             descr.GameSite,
 		Reviews:              MapReviews(descr.Reviews),
 		Tagline:              MapLocalizedString(descr.Tagline),
@@ -143,44 +143,27 @@ func MapRatings(rating model.GameRating) *proto.Ratings {
 
 func MapMedia(media *model.Media) *proto.Media {
 	if media == nil {
+		zap.L().Error("Media is empty")
 		return nil
 	}
 
 	return &proto.Media{
-		CoverImage:  MapJsonbToLocalizedString(media.CoverImage),
-		CoverVideo:  MapJsonbToLocalizedString(media.CoverVideo),
-		Trailers:    MapJsonbToLocalizedStringArray(media.Trailers),
-		Screenshots: MapJsonbToLocalizedStringArray(media.Screenshots),
+		CoverImage: MapLocalizedString(media.CoverImage),
+		CoverVideo:  MapLocalizedString(media.CoverVideo),
+		Trailers:    MapLocalizedStringArray(media.Trailers),
+		Screenshots: MapLocalizedStringArray(media.Screenshots),
 	}
 }
 
-func MapJsonbToLocalizedStringArray(jsonb model.JSONB) *proto.LocalizedStringArray {
-	if jsonb == nil {
-		return nil
-	}
+func MapLocalizedStringArray(array utils.LocalizedStringArray) *proto.LocalizedStringArray {
 	return &proto.LocalizedStringArray{
-		EN: jsonb.GetStringArray("en"),
-		RU: jsonb.GetStringArray("ru"),
-		FR: jsonb.GetStringArray("fr"),
-		DE: jsonb.GetStringArray("de"),
-		ES: jsonb.GetStringArray("es"),
-		IT: jsonb.GetStringArray("it"),
-		PT: jsonb.GetStringArray("pt"),
-	}
-}
-
-func MapJsonbToLocalizedString(jsonb model.JSONB) *proto.LocalizedString {
-	if jsonb == nil {
-		return nil
-	}
-	return &proto.LocalizedString{
-		EN: jsonb.GetString("en"),
-		RU: jsonb.GetString("ru"),
-		FR: jsonb.GetString("fr"),
-		DE: jsonb.GetString("de"),
-		ES: jsonb.GetString("es"),
-		IT: jsonb.GetString("it"),
-		PT: jsonb.GetString("pt"),
+		EN: array.EN,
+		PT: array.PT,
+		IT: array.IT,
+		RU: array.RU,
+		FR: array.FR,
+		ES: array.ES,
+		DE: array.DE,
 	}
 }
 
