@@ -108,7 +108,7 @@ func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, g
 		FeaturesControl:      game.FeaturesCtrl,
 		Features:             game.FeaturesCommon,
 		Media:                MapMedia(media),
-		Ratings:              MapRatings(ratings),
+		//Ratings:              MapRatings(ratings),
 		GameSite:             descr.GameSite,
 		Reviews:              MapReviews(descr.Reviews),
 		Tagline:              MapLocalizedString(descr.Tagline),
