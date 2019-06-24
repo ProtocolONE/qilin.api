@@ -322,7 +322,18 @@ func (router *BundleRouter) AddPackages(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	return ctx.NoContent(http.StatusOK)
+
+	bundle, err := router.service.Get(bundleId)
+	bundleStore, ok := bundle.(*model.StoreBundle)
+	if !ok {
+		return orm.NewServiceError(http.StatusBadRequest, "Bundle not for store")
+	}
+	dto, err := mapStoreBundleDto(bundleStore)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, dto)
 }
 
 func (router *BundleRouter) RemovePackages(ctx echo.Context) (err error) {
@@ -339,5 +350,16 @@ func (router *BundleRouter) RemovePackages(ctx echo.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	return ctx.NoContent(http.StatusOK)
+
+	bundle, err := router.service.Get(bundleId)
+	bundleStore, ok := bundle.(*model.StoreBundle)
+	if !ok {
+		return orm.NewServiceError(http.StatusBadRequest, "Bundle not for store")
+	}
+	dto, err := mapStoreBundleDto(bundleStore)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, dto)
 }

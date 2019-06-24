@@ -485,12 +485,11 @@ paths:
                 format: uuid
       responses:
         200:
-          description: Retrun OK
+          description: Return updated store bundle struct
           content:
             application/json:
               schema:
-                type: string
-                example: "OK"
+                $ref: "#/components/schemas/StoreBundle"
         400:
           $ref: '#/components/responses/BadRequest'
         401:
@@ -529,12 +528,11 @@ paths:
                 format: uuid
       responses:
         200:
-          description: Retrun OK
+          description: Return updated store bundle struct
           content:
             application/json:
               schema:
-                type: string
-                example: "OK"
+                $ref: "#/components/schemas/StoreBundle"
         400:
           $ref: '#/components/responses/BadRequest'
         401:
