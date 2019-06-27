@@ -37,7 +37,7 @@ type (
 	}
 
 	packageDiscountPolicyDTO struct {
-		Discount  uint   `json:"discount"`
+		Discount  uint   `json:"discount" validate:"min=0,max=100"`
 		BuyOption string `json:"buyOption"`
 	}
 
