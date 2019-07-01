@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package proto;
+
+service PackageService {
+    rpc Publish(PublishRequest) returns (PublishResponse) {}
+    rpc Get(GetPackageRequest) returns (GetPackageResponse) {}
+    rpc GetPrice(GetPackagePriceRequest) returns (GetPackagePriceResponse) {}
+}
+
+message GetPackagePriceRequest {
+    string Id = 1;
+    string Country = 2;
+}
+
+message GetPackagePriceResponse {
+    Price Price = 1;
+}
+
+message Price {
+    string Currency = 1;
+    float Value = 2;
+}
+
+message GetPackageRequest {
+    string Id = 1;
+}
+
+message GetPackageResponse {
+    Package Package = 1;
+}
+
+message PublishRequest {
+    Package Package = 1;
+}
+
+message PublishResponse {
+
+}
+
+message Package {
+    string Id = 1;
+    string Sku = 2;
+    LocalizedString Name = 3;
+    LocalizedString Image = 4;
+    LocalizedString ImageCover = 5;
+    LocalizedString ImageThumb = 6;
+    bool IsUpgradeAllowed = 7;
+    bool IsEnabled = 8;
+    string DefaultProductId = 9;
+    string VendorId = 10;
+    string CreatorId = 11;
+    uint32 Discount = 12;
+    DiscountOption DiscountOption = 13;
+    repeated string AllowedCountries = 14;
+    repeated Product Products = 15;
+}
+
+message Product {
+    string Id = 1;
+    string Type = 2;
+}
+
+enum DiscountOption  {
+    WHOLE = 0;
+    PART = 1;
+}
+
+message LocalizedStringArray {
+    repeated string EN = 1;
+    repeated string RU = 2;
+    repeated string FR = 3;
+    repeated string ES = 4;
+    repeated string DE = 5;
+    repeated string IT = 6;
+    repeated string PT = 7;
+}
+
+message LocalizedString {
+    string EN = 1;
+    string RU = 2;
+    string FR = 3;
+    string ES = 4;
+    string DE = 5;
+    string IT = 6;
+    string PT = 7;
+}

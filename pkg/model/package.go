@@ -28,7 +28,7 @@ type (
 		Vendor           Vendor
 		CreatorID        string
 		// DiscountPolicy
-		Discount       uint
+		Discount       uint32
 		DiscountBuyOpt BuyOption
 		// RegionalRestrinctions
 		AllowedCountries pq.StringArray `gorm:"type:text[]"`

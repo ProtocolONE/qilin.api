@@ -1,25 +1,29 @@
 package orm
 
 import (
+	"context"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/utils"
+	"qilin-api/services/packages/proto"
 	"strings"
 	"time"
 )
 
 type packageService struct {
-	db          *gorm.DB
-	gameService model.GameService
+	db           *gorm.DB
+	gameService  model.GameService
+	microService proto.PackageService
 }
 
-func NewPackageService(db *Database, gameService model.GameService) (*packageService, error) {
+func NewPackageService(db *Database, gameService model.GameService, packageMicroService proto.PackageService) (*packageService, error) {
 	return &packageService{
-		db:          db.database,
-		gameService: gameService,
+		db:           db.database,
+		gameService:  gameService,
+		microService: packageMicroService,
 	}, nil
 }
 
@@ -115,6 +119,64 @@ func (p *packageService) findPackageOrError(packageId uuid.UUID) (result *model.
 		return nil, errors.Wrap(err, "Retrieve package")
 	}
 	return
+}
+
+func (p *packageService) Publish(packageId uuid.UUID) error {
+	gamePackage := model.Package{}
+	err := p.db.Model(model.Package{}).Where("id = ?", packageId).First(&gamePackage).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return NewServiceError(http.StatusNotFound, err)
+	}
+
+	if err != nil {
+		return NewServiceError(http.StatusInternalServerError, err)
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	_, err = p.microService.Publish(ctx, &proto.PublishRequest{
+		Package: mapGamePackage(gamePackage),
+	})
+
+	if err != nil {
+		return NewServiceError(http.StatusInternalServerError, err)
+	}
+
+	return nil
+}
+
+func mapGamePackage(gamePackage model.Package) *proto.Package {
+	return &proto.Package{
+		Id:               gamePackage.ID.String(),
+		Name:             mapLocalizedString(gamePackage.Name),
+		VendorId:         gamePackage.VendorID.String(),
+		AllowedCountries: gamePackage.AllowedCountries,
+		CreatorId:        gamePackage.CreatorID,
+		DefaultProductId: gamePackage.DefaultProductID.String(),
+		Image:            mapLocalizedString(gamePackage.Image),
+		ImageCover:       mapLocalizedString(gamePackage.ImageCover),
+		ImageThumb:       mapLocalizedString(gamePackage.ImageThumb),
+		IsEnabled:        gamePackage.IsEnabled,
+		IsUpgradeAllowed: gamePackage.IsUpgradeAllowed,
+		Sku:              gamePackage.Sku,
+		Discount:         gamePackage.Discount,
+		DiscountOption:   mapDiscountOption(gamePackage.DiscountBuyOpt),
+	}
+}
+
+func mapDiscountOption(option model.BuyOption) proto.DiscountOption {
+	return proto.DiscountOption(option)
+}
+
+func mapLocalizedString(localizedString utils.LocalizedString) *proto.LocalizedString {
+	return &proto.LocalizedString{
+		EN: localizedString.EN,
+		RU: localizedString.RU,
+		DE: localizedString.DE,
+		ES: localizedString.ES,
+		FR: localizedString.FR,
+		IT: localizedString.IT,
+		PT: localizedString.PT,
+	}
 }
 
 func (p *packageService) Create(vendorId uuid.UUID, userId, name string, prods []uuid.UUID) (result *model.Package, err error) {

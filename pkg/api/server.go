@@ -6,6 +6,7 @@ import (
 	"github.com/ProtocolONE/rbac"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/micro/go-micro"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 	qilin_middleware "qilin-api/pkg/api/rbac_echo"
@@ -14,6 +15,7 @@ import (
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/sys"
 	"qilin-api/pkg/utils"
+	"qilin-api/services/packages/proto"
 	"strconv"
 )
 
@@ -213,7 +215,14 @@ func (s *Server) setupRoutes(
 	if _, err := InitPriceRouter(s.Router, priceService, gameService); err != nil {
 		return err
 	}
-	packageService, err := orm.NewPackageService(s.db, gameService)
+
+	// Create a new service. Optionally include some options here.
+	service := micro.NewService(micro.Name("packages.service.client"))
+	service.Init()
+
+	packageMicroService := proto.NewPackageService(proto.ServiceName, service.Client())
+
+	packageService, err := orm.NewPackageService(s.db, gameService, packageMicroService)
 	if err != nil {
 		return err
 	}
