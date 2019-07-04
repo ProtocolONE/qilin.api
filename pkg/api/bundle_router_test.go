@@ -161,7 +161,9 @@ var (
       "en": "Mega bundle"
     },
     "isUpgradeAllowed": false,
-    "isEnabled": false
+    "isEnabled": false,
+    "discount":0, 
+    "price": {"currency":"USD", "price":0} 
   }
 ]
 `
@@ -271,6 +273,16 @@ func (suite *BundleRouterTestSuite) SetupTest() {
 
 	vendorId, err := uuid.FromString(bundleVendorId)
 	require.Nil(suite.T(), err, "Decode vendor uuid")
+
+	err = db.DB().Save(&model.User{
+		ID:       userId,
+		Nickname: "admin",
+		Login:    "admin@protocol.one",
+		Password: "123456",
+		Lang:     "en",
+		Currency: "usd",
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make user")
 
 	err = db.DB().Save(&model.Vendor{
 		ID:        vendorId,

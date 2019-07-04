@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strings"
 	"time"
 )
 
@@ -47,4 +48,9 @@ type UserService interface {
 	FindByID(id string) (User, error)
 	Create(id string, email string, lang string) (User, error)
 	UpdateLastSeen(user User) error
+}
+
+func (u *User) GetLocale() string {
+	parts := strings.Split(u.Lang, "-")
+	return parts[0]
 }

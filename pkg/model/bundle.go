@@ -18,7 +18,7 @@ type (
 		GetID() uuid.UUID
 		GetName() *utils.LocalizedString
 		IsContains(productId uuid.UUID) (bool, error)
-		GetPrice() (string, float32, float32, error)
+		GetPrice() (currency string, price float32, discount float32, err error)
 		GetPackages() ([]Package, error)
 		GetGames() ([]*ProductGameImpl, error)
 		GetDlc() ([]Dlc, error)
@@ -41,7 +41,7 @@ type (
 
 	BundleService interface {
 		CreateStore(vendorId uuid.UUID, userId, name string, packages []uuid.UUID) (bundle Bundle, err error)
-		GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc BundleListingFilter) (total int, bundles []Bundle, err error)
+		GetStoreList(userId string, vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc BundleListingFilter) (total int, bundles []Bundle, err error)
 		UpdateStore(bundle Bundle) (result Bundle, err error)
 
 		Get(bundleId uuid.UUID) (bundle Bundle, err error)

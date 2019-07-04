@@ -220,31 +220,31 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	should.NotNil(err, "Vendor not found")
 	should.Nil(bundleErr)
 
-	total, list, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 20, nil)
+	total, list, err := suite.service.GetStoreList(suite.userId, suite.vendorId, "", "-date", 0, 20, nil)
 	should.Nil(err)
 	should.Equal(2, total)
 	should.Equal(2, len(list))
 	should.Equal("Bundle Humble", list[0].GetName().EN)
 	should.Equal("Mega bundle", list[1].GetName().EN)
 
-	total, list2, err := suite.service.GetStoreList(suite.vendorId, "", "+date", 1, 20, nil)
+	total, list2, err := suite.service.GetStoreList(suite.userId, suite.vendorId, "", "+date", 1, 20, nil)
 	should.Nil(err)
 	should.Equal(1, len(list2))
 	should.Equal("Bundle Humble", list2[0].GetName().EN)
 
-	total, list3, err := suite.service.GetStoreList(suite.vendorId, "", "-name", 0, 1, nil)
+	total, list3, err := suite.service.GetStoreList(suite.userId, suite.vendorId, "", "-name", 0, 1, nil)
 	should.Nil(err)
 	should.Equal(1, len(list3))
 	should.Equal("Mega bundle", list3[0].GetName().EN)
 
-	total, list4, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 0, 10, func(bundleId uuid.UUID) (bool, error) {
+	total, list4, err := suite.service.GetStoreList(suite.userId, suite.vendorId, "", "-date", 0, 10, func(bundleId uuid.UUID) (bool, error) {
 		return bundleId != list[0].GetID(), nil
 	})
 	should.Nil(err)
 	should.Equal(1, len(list4))
 	should.Equal("Mega bundle", list4[0].GetName().EN)
 
-	total, list5, err := suite.service.GetStoreList(suite.vendorId, "", "-date", 1, 10, func(bundleId uuid.UUID) (bool, error) {
+	total, list5, err := suite.service.GetStoreList(suite.userId, suite.vendorId, "", "-date", 1, 10, func(bundleId uuid.UUID) (bool, error) {
 		return bundleId != list[0].GetID(), nil
 	})
 	should.Nil(err)
@@ -321,7 +321,7 @@ func (suite *bundleServiceTestSuite) TestBundles() {
 	err = suite.service.Delete(bundle.ID)
 	should.Nil(err, "Remove bundle")
 
-	total, list, err = suite.service.GetStoreList(suite.vendorId, "", "+date", 0, 20, nil)
+	total, list, err = suite.service.GetStoreList(suite.userId, suite.vendorId, "", "+date", 0, 20, nil)
 	should.Nil(err)
 	should.Equal(1, total)
 	should.Equal(1, len(list))

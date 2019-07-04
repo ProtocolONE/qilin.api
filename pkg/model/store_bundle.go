@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
@@ -25,7 +24,7 @@ type (
 		// RegionalRestrinctions
 		AllowedCountries pq.StringArray `gorm:"type:text[]"`
 		// Bundle payload
-		Packages []Package `gorm:"many2many:bundle_packages"`
+		Packages []Package `gorm:"many2many:bundle_packages;jointable_foreignkey:bundle_id;"`
 	}
 )
 
@@ -48,31 +47,21 @@ func (b *StoreBundle) IsContains(productId uuid.UUID) (contains bool, err error)
 	return
 }
 
-func (b *StoreBundle) findPrice(p *Package, currency string) (*Price, error) {
-	for _, pr := range p.Prices {
-		if pr.Currency == currency {
-			return &pr, nil
-		}
-	}
-	return nil, errors.New(fmt.Sprintf("Price for currency `%s` is not set in package `%s`", currency, p.Name))
-}
-
 func (b *StoreBundle) GetPrice() (currency string, price float32, discount float32, err error) {
 	if len(b.Packages) == 0 {
 		return
 	}
-	currency = b.Packages[0].Common["currency"].(string)
-	if currency == "" {
-		return "", 0, 0, errors.New("Default currency for package is not set")
-	}
+	currency = b.Packages[0].GetCurrency()
 	var fprice float32
 	for _, p := range b.Packages {
-		pkgPrice, err := b.findPrice(&p, currency)
-		if err != nil {
-			return "", 0, 0, err
+		// Search for default price
+		for _, pr := range p.Prices {
+			if pr.Currency == currency {
+				price += pr.Price
+				fprice += pr.Price - (pr.Price * float32(p.Discount) * 0.01)
+				break
+			}
 		}
-		price += pkgPrice.Price
-		fprice += pkgPrice.Price - (pkgPrice.Price * float32(p.Discount) * 0.01)
 	}
 	if price != 0 {
 		discount = 100 * (price - fprice) / price

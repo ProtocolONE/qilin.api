@@ -638,6 +638,10 @@ components:
               $ref: '#/components/schemas/LocalizedString'
             thumb:
               $ref: '#/components/schemas/LocalizedString'
+        price:
+          $ref: '#/components/schemas/Price'
+        discount:
+          type: number
 
     Product:
       type: object
@@ -734,6 +738,10 @@ components:
           description: "Allowed to upgrade already bought package in bundle"
         isEnabled:
           type: boolean
+        price:
+          $ref: '#/components/schemas/Price'
+        discount:
+          type: number
 
     StoreBundle:
       type: object
@@ -783,3 +791,13 @@ components:
           type: string
         pt:
           type: string
+
+    Price:
+      type: object
+      properties:
+        price:
+          type: number
+          description: "Actual value"
+        currency:
+          type: string
+          description: "ISO-code for price currency"

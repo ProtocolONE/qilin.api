@@ -16,7 +16,7 @@ func (*bundleService) CreateStore(vendorId uuid.UUID, userId, name string, packa
 	return &model.StoreBundle{}, nil
 }
 
-func (*bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc model.BundleListingFilter) (total int, result []model.Bundle, err error) {
+func (*bundleService) GetStoreList(userId string, vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc model.BundleListingFilter) (total int, result []model.Bundle, err error) {
 	return 0, []model.Bundle{}, nil
 }
 

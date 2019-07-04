@@ -89,7 +89,14 @@ func (p *bundleService) CreateStore(vendorId uuid.UUID, userId, name string, pac
 	return bundleIfce.(*model.StoreBundle), nil
 }
 
-func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc model.BundleListingFilter) (total int, result []model.Bundle, err error) {
+func (p *bundleService) GetStoreList(
+	userId string,
+	vendorId uuid.UUID,
+	query, sort string,
+	offset, limit int,
+	filterFunc model.BundleListingFilter,
+) (total int, result []model.Bundle, err error) {
+
 	orderBy := ""
 	orderBy = "created_at ASC"
 	if sort != "" {
@@ -109,82 +116,83 @@ func (p *bundleService) GetStoreList(vendorId uuid.UUID, query, sort string, off
 	vals := []interface{}{}
 
 	if query != "" {
-		conds = append(conds, `name ilike ?`)
-		vals = append(vals, "%"+query+"%")
+		user := model.User{}
+		err = p.db.Select("lang").Where("id = ?", userId).First(&user).Error
+		if err != nil {
+			return 0, nil, errors.Wrap(err, "while fetch user")
+		}
+		conds = append(conds, "(name ->> ? ilike ? or name ->> 'en' ilike ?)")
+		vals = append(vals, "%"+query+"%", user.GetLocale(), "%"+query+"%")
 		// TODO: Add another kinds for searching
 	}
 
 	storeBundles := []model.StoreBundle{}
-	if filterFunc != nil {
-		vendorBundles := []model.StoreBundle{}
-		err = p.db.
-			Select("id").
-			Where(`vendor_id = ?`, vendorId).
-			Where(strings.Join(conds, " or "), vals...).
-			Find(&vendorBundles).Error
-		if err != nil {
-			return 0, nil, errors.Wrap(err, "Fetch store bundle ids")
-		}
-		ids := []uuid.UUID{}
-		for _, bundle := range vendorBundles {
-			if grant, err := filterFunc(bundle.ID); grant {
-				ids = append(ids, bundle.ID)
-			} else if err != nil {
-				return 0, nil, err
-			}
-		}
-		total = len(ids)
-		if offset < 0 {
-			offset = 0
-		}
-		if offset > len(ids) {
-			offset = len(ids)
-		}
-		if limit < 0 {
-			limit = 0
-		}
-		if offset+limit > len(ids) {
-			limit = len(ids) - offset
-		}
-		ids = ids[offset : offset+limit]
-		if len(ids) > 0 {
-			err = p.db.
-				Model(model.StoreBundle{}).
-				Where(`id in (?)`, ids).
-				Order(orderBy).
-				Find(&storeBundles).Error
-			if err != nil {
-				return 0, nil, errors.Wrap(err, "Fetch store bundles from ids")
-			}
-		}
-	} else {
-		// Get store bundles
-		err = p.db.
-			Model(model.StoreBundle{}).
-			Where(`vendor_id = ?`, vendorId).
-			Where(strings.Join(conds, " or "), vals...).
-			Order(orderBy).
-			Limit(limit).
-			Offset(offset).
-			Find(&storeBundles).Error
-		if err != nil {
-			return 0, nil, errors.Wrap(err, "Fetch store bundle list")
-		}
-		// Calc total bundles for vendor
-		err = p.db.
-			Model(model.StoreBundle{}).
-			Where(`vendor_id = ?`, vendorId).
-			Where(strings.Join(conds, " or "), vals...).
-			Count(&total).Error
-		if err != nil {
-			return 0, nil, errors.Wrap(err, "Fetch store bundle total")
+	vendorBundles := []model.StoreBundle{}
+	err = p.db.
+		Select("id").
+		Where(`vendor_id = ?`, vendorId).
+		Where(strings.Join(conds, " or "), vals...).
+		Find(&vendorBundles).Error
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "Fetch store bundle ids")
+	}
+	ids := []uuid.UUID{}
+	for _, bundle := range vendorBundles {
+		if filterFunc == nil {
+			ids = append(ids, bundle.ID)
+		} else if isGrant, err := filterFunc(bundle.ID); isGrant {
+			ids = append(ids, bundle.ID)
+		} else if err != nil {
+			return 0, nil, err
 		}
 	}
+	total = len(ids)
+	if offset < 0 {
+		offset = 0
+	}
+	if offset > len(ids) {
+		offset = len(ids)
+	}
+	if limit < 0 {
+		limit = 0
+	}
+	if offset+limit > len(ids) {
+		limit = len(ids) - offset
+	}
+	ids = ids[offset : offset+limit]
 
 	result = []model.Bundle{}
-	for _, bundle := range storeBundles {
-		copyBundle := bundle
-		result = append(result, &copyBundle)
+	if len(ids) == 0 {
+		return
+	}
+
+	joins := []model.BundlePackage{}
+	err = p.db.
+		Where("bundle_id in (?)", ids).
+		Find(&joins).Error
+
+	err = p.db.
+		Model(model.StoreBundle{}).
+		Where(`id in (?)`, ids).
+		Order(orderBy).
+		Find(&storeBundles).Error
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "Fetch store bundles from ids")
+	}
+
+	for _, b := range storeBundles {
+		bundle := b
+
+		for _, bp := range joins {
+			if bp.BundleID == bundle.ID {
+				pkg, err := p.packageService.Get(bp.PackageID)
+				if err != nil {
+					return 0, nil, errors.Wrap(err, "Retrieve bundle packages")
+				}
+				bundle.Packages = append(bundle.Packages, *pkg)
+			}
+		}
+		result = append(result, &bundle)
 	}
 
 	return

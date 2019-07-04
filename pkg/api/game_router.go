@@ -123,11 +123,6 @@ type (
 		Tags   []int64      `json:"tags" validate:"required"`
 	}
 
-	GamePriceDTO struct {
-		Price    float64 `json:"price" validate:"required"`
-		Currency string  `json:"currency" validate:"required"`
-	}
-
 	ShortGameInfoDTO struct {
 		ID           uuid.UUID    `json:"id"`
 		InternalName string       `json:"internalName"`
