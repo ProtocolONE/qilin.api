@@ -5,6 +5,7 @@ import (
 	"github.com/satori/go.uuid"
 	"math/rand"
 	"qilin-api/pkg/model"
+	"qilin-api/pkg/model/utils"
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/test"
 	"testing"
@@ -74,25 +75,21 @@ func (suite *MediaServiceTestSuite) TestCreateMediaShouldChangeGameInDB() {
 	id, _ := uuid.FromString(Id)
 	game := model.Media{
 		ID: uuid.NewV4(),
-		CoverImage: model.JSONB{
-			"ru": RandStringRunes(10),
-			"en": RandStringRunes(10),
+		CoverImage: utils.LocalizedString{
+			RU: RandStringRunes(10),
+			EN: RandStringRunes(10),
 		},
-		Trailers: model.JSONB{
-			"ru": []string{RandStringRunes(10), RandStringRunes(10)},
-			"en": []string{RandStringRunes(10), RandStringRunes(10)},
+		Trailers: utils.LocalizedStringArray{
+			RU: []string{RandStringRunes(10), RandStringRunes(10)},
+			EN: []string{RandStringRunes(10), RandStringRunes(10)},
 		},
-		Screenshots: model.JSONB{
-			"ru": []string{RandStringRunes(10), RandStringRunes(10)},
-			"en": []string{RandStringRunes(10), RandStringRunes(10)},
+		Screenshots: utils.LocalizedStringArray{
+			RU: []string{RandStringRunes(10), RandStringRunes(10)},
+			EN: []string{RandStringRunes(10), RandStringRunes(10)},
 		},
-		Store: model.JSONB{
-			"ru": RandStringRunes(10),
-			"en": RandStringRunes(10),
-		},
-		CoverVideo: model.JSONB{
-			"ru": RandStringRunes(10),
-			"en": RandStringRunes(10),
+		CoverVideo: utils.LocalizedString{
+			RU: RandStringRunes(10),
+			EN: RandStringRunes(10),
 		},
 		Capsule: model.JSONB{
 			"generic": map[string]interface{}{

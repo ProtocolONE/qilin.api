@@ -123,10 +123,5 @@ func (p *ProductGameImpl) GetType() ProductType {
 }
 
 func (p *ProductGameImpl) GetImage() (res *utils.LocalizedString) {
-	res = &utils.LocalizedString{}
-	if p.Media.CoverImage == nil {
-		return
-	}
-	_ = p.Media.CoverImage.Scan(res)
-	return
+	return &p.Media.CoverImage
 }

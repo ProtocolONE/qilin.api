@@ -1,6 +1,7 @@
 package model
 
 import (
+	"qilin-api/pkg/model/utils"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -14,12 +15,12 @@ type Media struct {
 	UpdatedAt time.Time
 
 	// localized cover image of game
-	CoverImage JSONB `gorm:"type:jsonb"`
-	CoverVideo JSONB `gorm:"type:jsonb"`
+	CoverImage utils.LocalizedString `gorm:"type:jsonb"`
+	CoverVideo utils.LocalizedString `gorm:"type:jsonb"`
 	// localized trailers video of game
-	Trailers JSONB `gorm:"type:jsonb"`
+	Trailers utils.LocalizedStringArray `gorm:"type:jsonb"`
 	// localized screenshots video of game
-	Screenshots JSONB `gorm:"type:jsonb"`
+	Screenshots utils.LocalizedStringArray `gorm:"type:jsonb"`
 
 	// localized store of game
 	Store   JSONB `gorm:"type:jsonb"`

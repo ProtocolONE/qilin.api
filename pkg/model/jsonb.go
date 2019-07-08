@@ -23,12 +23,24 @@ func (j *JSONB) Scan(value interface{}) error {
 }
 
 func (j JSONB) GetString(key string) string {
-	return j[key].(string)
+	if j == nil {
+		return ""
+	}
+
+	if s, ok := j[key].(string); ok {
+		return s
+	}
+	return ""
 }
 
 func (j JSONB) GetStringArray(key string) []string {
 	if j == nil {
 		return nil
 	}
-	return j[key].([]string)
+
+	if result, ok := j[key].([]string); ok {
+		return result
+	}
+
+	return nil
 }

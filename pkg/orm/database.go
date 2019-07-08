@@ -53,6 +53,9 @@ func (db *Database) Init() error {
 		&model.StoreBundle{},
 		&model.Dlc{},
 		&model.Achievement{},
+		&model.KeyPackage{},
+		&model.Key{},
+		&model.KeyStream{},
 	).Error
 }
 
@@ -82,6 +85,9 @@ func (db *Database) DropAllTables() error {
 			model.StoreBundle{},
 			model.Dlc{},
 			model.Achievement{},
+			model.KeyPackage{},
+			model.Key{},
+			model.KeyStream{},
 		).Error
 	}
 	return nil
