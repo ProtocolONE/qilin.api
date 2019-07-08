@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"github.com/labstack/echo/v4"
+	"github.com/satori/go.uuid"
 	"net/http"
 	"qilin-api/pkg/api/rbac_echo"
 	"qilin-api/pkg/mapper"
@@ -9,9 +11,6 @@ import (
 	"qilin-api/pkg/orm"
 	"qilin-api/pkg/utils"
 	"strings"
-
-	"github.com/labstack/echo/v4"
-	"github.com/satori/go.uuid"
 )
 
 type (

@@ -96,7 +96,7 @@ func (p *gameService) FindTags(userId string, title string, limit, offset int) (
 		if err != nil {
 			return nil, errors.Wrap(err, "while fetch user")
 		}
-		stmt = stmt.Where("title ->> ? ilike ?", user.Lang, title)
+		stmt = stmt.Where("title ->> ? ilike ?", user.GetLocale(), title)
 	}
 	if limit > 0 {
 		stmt = stmt.Limit(limit).Offset(offset)
@@ -115,7 +115,7 @@ func (p *gameService) FindGenres(userId string, title string, limit, offset int)
 		if err != nil {
 			return nil, errors.Wrap(err, "while fetch user")
 		}
-		stmt = stmt.Where("title ->> ? ilike ?", user.Lang, title)
+		stmt = stmt.Where("title ->> ? ilike ?", user.GetLocale(), title)
 	}
 	if limit > 0 {
 		stmt = stmt.Limit(limit).Offset(offset)
@@ -219,7 +219,7 @@ func (p *gameService) GetList(userId string, vendorId uuid.UUID,
 	if genre != "" {
 		genres := []model.GameGenre{}
 		/// title[user.Lang] === genre or title.en === genre
-		err = p.db.Where("(title ->> ? ilike ? or title ->> 'en' ilike ?)", user.Lang, genre, genre).
+		err = p.db.Where("(title ->> ? ilike ? or title ->> 'en' ilike ?)", user.GetLocale(), genre, genre).
 			Limit(1).Find(&genres).Error
 		if err != nil {
 			return nil, errors.Wrap(err, "while fetch genres")

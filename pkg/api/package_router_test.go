@@ -184,6 +184,16 @@ func (suite *PackageRouterTestSuite) SetupTest() {
 		assert.FailNow(suite.T(), "Unable to init tables", err)
 	}
 
+	err = db.DB().Save(&model.User{
+		ID:       userId,
+		Nickname: "admin",
+		Login:    "admin@protocol.one",
+		Password: "123456",
+		Lang:     "en",
+		Currency: "usd",
+	}).Error
+	require.Nil(suite.T(), err, "Unable to make user")
+
 	vendorId, err := uuid.FromString(packageVendorId)
 	require.Nil(suite.T(), err, "Decode vendor uuid")
 	err = db.DB().Save(&model.Vendor{

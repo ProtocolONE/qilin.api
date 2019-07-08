@@ -46,12 +46,12 @@ func createPackage(
 		DefaultProductID: defaultProductID,
 		PackagePrices: model.PackagePrices{
 			Common: model.JSONB{
-				"currency":        "USD",
-				"notifyRateJumps": false,
+				"Currency":        "USD",
+				"NotifyRateJumps": false,
 			},
 			PreOrder: model.JSONB{
-				"date":    time.Now().String(),
-				"enabled": false,
+				"Date":    time.Now().String(),
+				"Enabled": false,
 			},
 			Prices: []model.Price{},
 		},
@@ -288,9 +288,21 @@ func (p *packageService) Get(packageId uuid.UUID) (result *model.Package, err er
 	return
 }
 
-func (p *packageService) GetList(userId string, vendorId uuid.UUID, query, sort string, offset, limit int, filterFunc model.PackageListingFilter) (total int, result []model.Package, err error) {
+func (p *packageService) GetList(
+	userId string,
+	vendorId uuid.UUID,
+	query, sort string,
+	offset, limit int,
+	filterFunc model.PackageListingFilter,
+) (total int, result []model.Package, err error) {
 
-	orderBy := ""
+	user := model.User{}
+	err = p.db.Select("lang").Where("id = ?", userId).First(&user).Error
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "Fetch user error")
+	}
+
+	var orderBy interface{}
 	orderBy = "created_at ASC"
 	if sort != "" {
 		switch sort {
@@ -299,13 +311,17 @@ func (p *packageService) GetList(userId string, vendorId uuid.UUID, query, sort 
 		case "+date":
 			orderBy = "created_at ASC"
 		case "-name":
-			orderBy = "name DESC"
+			orderBy = gorm.Expr("name ->> ? DESC", user.GetLocale())
 		case "+name":
-			orderBy = "name ASC"
+			orderBy = gorm.Expr("name ->> ? ASC", user.GetLocale())
 		case "-discount":
-			orderBy = "discount DESC"
+			orderBy = "discount DESC, created_at DESC"
 		case "+discount":
-			orderBy = "discount ASC"
+			orderBy = "discount ASC, created_at ASC"
+		case "-price":
+			orderBy = "COALESCE((select price from prices where base_price_id = packages.id and currency = packages.common ->> 'Currency' limit 1), 0) DESC, created_at DESC"
+		case "+price":
+			orderBy = "COALESCE((select price from prices where base_price_id = packages.id and currency = packages.common ->> 'Currency' limit 1), 0) ASC, created_at ASC"
 		}
 	}
 
@@ -313,13 +329,8 @@ func (p *packageService) GetList(userId string, vendorId uuid.UUID, query, sort 
 	vals := []interface{}{}
 
 	if query != "" {
-		user := model.User{}
-		err = p.db.Select("lang").Where("id = ?", userId).First(&user).Error
-		if err != nil {
-			return 0, nil, errors.Wrap(err, "while fetch user")
-		}
 		conds = append(conds, "(name ->> ? ilike ? or name ->> 'en' ilike ?)")
-		vals = append(vals, "%"+query+"%", user.Lang, "%"+query+"%")
+		vals = append(vals, "%"+query+"%", user.GetLocale(), "%"+query+"%")
 		// TODO: Add another kinds for searching
 	}
 
@@ -386,6 +397,11 @@ func (p *packageService) GetList(userId string, vendorId uuid.UUID, query, sort 
 			return 0, nil, errors.Wrap(err, "Fetch package total")
 		}
 	}
+
+	return
+}
+
+func (p *packageService) GetBundlePackages(bundleId uuid.UUID) (result []model.Package, err error) {
 
 	return
 }

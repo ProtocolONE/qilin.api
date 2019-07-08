@@ -40,3 +40,23 @@ type PriceService interface {
 	Delete(id uuid.UUID, price *Price) error
 	Update(id uuid.UUID, price *Price) error
 }
+
+func (prices *PackagePrices) GetPrice() (string, float32) {
+	currency := prices.GetCurrency()
+	for _, p := range prices.Prices {
+		if p.Currency == currency {
+			return currency, p.Price
+		}
+	}
+	return currency, 0
+}
+
+func (prices *PackagePrices) GetCurrency() string {
+	if prices.Common != nil {
+		currencyIface := prices.Common["Currency"]
+		if currency, ok := currencyIface.(string); ok {
+			return currency
+		}
+	}
+	return "USD"
+}

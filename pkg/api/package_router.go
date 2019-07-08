@@ -68,15 +68,21 @@ type (
 		Commercial            pricesDTO                       `json:"commercial" validate:"-"`
 	}
 
+	priceDTO struct {
+		Currency string  `json:"currency"`
+		Price    float32 `json:"price"`
+	}
+
 	packageItemDTO struct {
-		ID             uuid.UUID                `json:"id"`
-		CreatedAt      time.Time                `json:"createdAt"`
-		Sku            string                   `json:"sku"`
-		Name           utils.LocalizedString    `json:"name"`
-		IsEnabled      bool                     `json:"isEnabled"`
-		IsDefault      bool                     `json:"isDefault"`
-		Media          packageMediaDTO          `json:"media" validate:"required,dive"`
-		DiscountPolicy packageDiscountPolicyDTO `json:"discountPolicy" validate:"required,dive"`
+		ID        uuid.UUID             `json:"id"`
+		CreatedAt time.Time             `json:"createdAt"`
+		Sku       string                `json:"sku"`
+		Name      utils.LocalizedString `json:"name"`
+		IsEnabled bool                  `json:"isEnabled"`
+		IsDefault bool                  `json:"isDefault"`
+		Media     packageMediaDTO       `json:"media" validate:"required,dive"`
+		Discount  uint                  `json:"discount"`
+		Price     priceDTO              `json:"price"`
 	}
 )
 
@@ -114,6 +120,9 @@ func (router *packageRouter) GetOwner(ctx rbac_echo.AppContext) (string, error) 
 }
 
 func mapPackageItemDto(pkg *model.Package) *packageItemDTO {
+
+	currency, price := pkg.PackagePrices.GetPrice()
+
 	return &packageItemDTO{
 		ID:        pkg.ID,
 		CreatedAt: pkg.CreatedAt,
@@ -126,9 +135,10 @@ func mapPackageItemDto(pkg *model.Package) *packageItemDTO {
 			Cover: pkg.ImageCover,
 			Thumb: pkg.ImageThumb,
 		},
-		DiscountPolicy: packageDiscountPolicyDTO{
-			Discount:  pkg.Discount,
-			BuyOption: pkg.DiscountBuyOpt.String(),
+		Discount: pkg.Discount,
+		Price: priceDTO{
+			Currency: currency,
+			Price:    price,
 		},
 	}
 }
@@ -368,6 +378,11 @@ func (router *packageRouter) GetList(ctx echo.Context) (err error) {
 	}
 	dto := []*packageItemDTO{}
 	for _, pkg := range packages {
+		basePrice, err := router.priceService.GetBase(pkg.ID)
+		if err != nil {
+			return err
+		}
+		pkg.PackagePrices = basePrice.PackagePrices
 		dto = append(dto, mapPackageItemDto(&pkg))
 	}
 	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", total))

@@ -55,6 +55,8 @@ type (
 		Name             utils.LocalizedString `json:"name" validate:"required"`
 		IsUpgradeAllowed bool                  `json:"isUpgradeAllowed"`
 		IsEnabled        bool                  `json:"isEnabled"`
+		Discount         uint                  `json:"discount"`
+		Price            priceDTO              `json:"price"`
 	}
 )
 
@@ -84,7 +86,11 @@ func mapStoreBundleDto(bundle *model.StoreBundle) (dto *storeBundleDTO, err erro
 	return dto, nil
 }
 
-func mapStoreBundleItemDto(bundle *model.StoreBundle) *storeBundleItemDTO {
+func mapStoreBundleItemDto(bundle *model.StoreBundle) (*storeBundleItemDTO, error) {
+	currency, price, _, err := bundle.GetPrice()
+	if err != nil {
+		return nil, err
+	}
 	return &storeBundleItemDTO{
 		ID:               bundle.ID,
 		CreatedAt:        bundle.CreatedAt,
@@ -92,7 +98,9 @@ func mapStoreBundleItemDto(bundle *model.StoreBundle) *storeBundleItemDTO {
 		Name:             bundle.Name,
 		IsUpgradeAllowed: bundle.IsUpgradeAllowed,
 		IsEnabled:        bundle.IsEnabled,
-	}
+		Discount:         bundle.Discount,
+		Price:            priceDTO{currency, price},
+	}, nil
 }
 
 func mapStoreBundleModel(dto *storeBundleDTO) (bundle *model.StoreBundle, err error) {
@@ -205,13 +213,17 @@ func (router *BundleRouter) GetStoreList(ctx echo.Context) (err error) {
 	}
 	query := ctx.QueryParam("query")
 	sort := ctx.QueryParam("sort")
-	total, bundles, err := router.service.GetStoreList(vendorId, query, sort, offset, limit, filterFunc)
+	total, bundles, err := router.service.GetStoreList(userId, vendorId, query, sort, offset, limit, filterFunc)
 	if err != nil {
 		return err
 	}
 	dto := []*storeBundleItemDTO{}
 	for _, bundle := range bundles {
-		dto = append(dto, mapStoreBundleItemDto(bundle.(*model.StoreBundle)))
+		itemDto, err := mapStoreBundleItemDto(bundle.(*model.StoreBundle))
+		if err != nil {
+			return err
+		}
+		dto = append(dto, itemDto)
 	}
 	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", total))
 	return ctx.JSON(http.StatusOK, dto)
