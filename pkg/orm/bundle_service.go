@@ -109,6 +109,10 @@ func (p *bundleService) GetStoreList(
 			orderBy = "name DESC"
 		case "+name":
 			orderBy = "name ASC"
+		case "-discount":
+			orderBy = "discount DESC"
+		case "+discount":
+			orderBy = "discount ASC"
 		}
 	}
 
