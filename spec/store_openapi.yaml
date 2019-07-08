@@ -546,6 +546,247 @@ paths:
         500:
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/packages/:packageId/keypackages:
+    post:
+      summary: Creates new key package for specified package
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum:
+                    - key_list
+                    - key_platform
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyPackage'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      tags:
+        - package
+        - keypackage
+      summary: Get list of key packages for specified package
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: List of key packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KeyPackage'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/packages/:packageId/keypackages/:keyPackageId:
+    put:
+      summary: Change key package
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: keyPackageId
+          in: "path"
+          description: "key package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyPackage'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        422:
+          $ref: '#/components/responses/UnprocessableEntity'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      summary: Get info about specified key package
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: keyPackageId
+          in: "path"
+          description: "key package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyPackage'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/packages/:packageId/keypackages/:keyPackageId/keys:
+    post:
+      summary: Adds new keys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keys:
+                  type: array
+                  items:
+                    type: string
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: keyPackageId
+          in: "path"
+          description: "key package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/packages/:packageId/keypackages/:keyPackageId/file:
+    post:
+      summary: Adds new keys from file
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                keys:
+                  type: string
+                  format: binary
+      parameters:
+        - name: packageId
+          in: "path"
+          description: "package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: keyPackageId
+          in: "path"
+          description: "key package Id"
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -801,3 +1042,24 @@ components:
         currency:
           type: string
           description: "ISO-code for price currency"
+
+    KeyPackage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - key_list
+            - key_platform
+        created:
+          type: string
+          format: 'date-time'
+        updated:
+          type: string
+          format: 'date-time'
+

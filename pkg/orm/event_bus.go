@@ -5,8 +5,10 @@ import (
 	"github.com/ProtocolONE/qilin-common/pkg/proto"
 	"github.com/ProtocolONE/rabbitmq/pkg"
 	"github.com/jinzhu/gorm"
+	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"go.uber.org/zap"
+	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/model/game"
 	"qilin-api/pkg/model/utils"
@@ -34,18 +36,19 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 	var genres []model.GameGenre
 	var tags []model.GameTag
 
-	err := bus.db.Model(model.Game{ID: gameId}).First(&game).Error
+	err := bus.db.Model(model.Game{}).Where("id = ?", gameId).First(&game).Error
 	if err != nil {
 		return err
 	}
 
-	err = bus.db.Model(model.Media{ID: gameId}).First(&media).Error
+	err = bus.db.Model(model.Media{}).Where("id = ?", gameId).First(&media).Error
 	if err != nil {
 		return err
 	}
 
 	if len(game.Tags) > 0 {
-		err = bus.db.Model(model.GameTag{}).Where("id in (?)", game.Tags).Find(&tags).Error
+		tt := toPgArray(game.Tags)
+		err = bus.db.Model(model.GameTag{}).Where("id in (?)", tt).Find(&tags).Error
 		if err != nil {
 			return err
 		}
@@ -54,14 +57,32 @@ func (bus *eventBus) PublishGameChanges(gameId uuid.UUID) error {
 	if len(game.GenreAddition) > 0 || game.GenreMain != 0 {
 		filter := game.GenreAddition
 		filter = append(filter, game.GenreMain)
-		err = bus.db.Model(model.GameGenre{}).Where("id in (?)", filter).Find(&genres).Error
+		err = bus.db.Model(model.GameGenre{}).Where("id in (?)", toPgArray(filter)).Find(&genres).Error
 		if err != nil {
 			return err
 		}
 	}
 
-	gameObject := MapGameObject(&game, &media, tags, genres)
+	var ratings model.GameRating
+	if err := bus.db.Model(model.GameRating{}).Where("game_id = ?", gameId).First(&ratings).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return err
+	}
+
+	description := model.GameDescr{}
+	if err := bus.db.Model(model.GameDescr{}).Where("game_id = ?", gameId).First(&description).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		return err
+	}
+
+	gameObject := MapGameObject(&game, &media, tags, genres, ratings, description)
 	return bus.broker.Publish("game_changed", gameObject, nil)
+}
+
+func toPgArray(array pq.Int64Array) []int64 {
+	var s []int64
+	for _, a := range array {
+		s = append(s, a)
+	}
+	return s
 }
 
 func (bus *eventBus) PublishGameDelete(gameId uuid.UUID) error {
@@ -69,10 +90,10 @@ func (bus *eventBus) PublishGameDelete(gameId uuid.UUID) error {
 	return bus.broker.Publish("game_deleted", gameObject, nil)
 }
 
-func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, genre []model.GameGenre) *proto.GameObject {
+func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, genre []model.GameGenre, ratings model.GameRating, descr model.GameDescr) *proto.GameObject {
 	return &proto.GameObject{
 		ID:                   game.ID.String(),
-		Description:          "",
+		Description:          MapLocalizedString(descr.Description),
 		Name:                 game.Title,
 		Title:                game.Title,
 		Developer:            &proto.LinkObject{ID: "", Title: game.Developers},
@@ -87,49 +108,62 @@ func MapGameObject(game *model.Game, media *model.Media, tags []model.GameTag, g
 		FeaturesControl:      game.FeaturesCtrl,
 		Features:             game.FeaturesCommon,
 		Media:                MapMedia(media),
+		Ratings:              MapRatings(ratings),
+		GameSite:             descr.GameSite,
+		Reviews:              MapReviews(descr.Reviews),
+		Tagline:              MapLocalizedString(descr.Tagline),
+		Publisher:			  &proto.LinkObject{ID: "", Title: game.Publishers},
 	}
+}
+
+func MapReviews(reviews game.GameReviews) []*proto.Review {
+	if reviews == nil {
+		return nil
+	}
+
+	var result []*proto.Review
+	for _, review := range reviews {
+		result = append(result, &proto.Review{
+			Link:      review.Link,
+			PressName: review.PressName,
+			Quote:     review.Quote,
+			Score:     review.Score,
+		})
+	}
+
+	return result
+}
+
+func MapRatings(rating model.GameRating) *proto.Ratings {
+	result := &proto.Ratings{}
+	err := mapper.Map(rating, result)
+	zap.L().Error("Can't map ratings", zap.Error(err))
+	return result
 }
 
 func MapMedia(media *model.Media) *proto.Media {
 	if media == nil {
+		zap.L().Error("Media is empty")
 		return nil
 	}
 
 	return &proto.Media{
-		CoverImage:  MapJsonbToLocalizedString(media.CoverImage),
-		CoverVideo:  MapJsonbToLocalizedString(media.CoverVideo),
-		Trailers:    MapJsonbToLocalizedStringArray(media.Trailers),
-		Screenshots: MapJsonbToLocalizedStringArray(media.Screenshots),
+		CoverImage: MapLocalizedString(media.CoverImage),
+		CoverVideo:  MapLocalizedString(media.CoverVideo),
+		Trailers:    MapLocalizedStringArray(media.Trailers),
+		Screenshots: MapLocalizedStringArray(media.Screenshots),
 	}
 }
 
-func MapJsonbToLocalizedStringArray(jsonb model.JSONB) *proto.LocalizedStringArray {
-	if jsonb == nil {
-		return nil
-	}
+func MapLocalizedStringArray(array utils.LocalizedStringArray) *proto.LocalizedStringArray {
 	return &proto.LocalizedStringArray{
-		EN: jsonb.GetStringArray("en"),
-		RU: jsonb.GetStringArray("ru"),
-		FR: jsonb.GetStringArray("fr"),
-		DE: jsonb.GetStringArray("de"),
-		ES: jsonb.GetStringArray("es"),
-		IT: jsonb.GetStringArray("it"),
-		PT: jsonb.GetStringArray("pt"),
-	}
-}
-
-func MapJsonbToLocalizedString(jsonb model.JSONB) *proto.LocalizedString {
-	if jsonb == nil {
-		return nil
-	}
-	return &proto.LocalizedString{
-		EN: jsonb.GetString("en"),
-		RU: jsonb.GetString("ru"),
-		FR: jsonb.GetString("fr"),
-		DE: jsonb.GetString("de"),
-		ES: jsonb.GetString("es"),
-		IT: jsonb.GetString("it"),
-		PT: jsonb.GetString("pt"),
+		EN: array.EN,
+		PT: array.PT,
+		IT: array.IT,
+		RU: array.RU,
+		FR: array.FR,
+		ES: array.ES,
+		DE: array.DE,
 	}
 }
 

@@ -31,6 +31,7 @@ backend:
     - QILINAPI_DATABASE_DEBUG
     - QILINAPI_ENFORCER_HOST
     - QILINAPI_ENFORCER_PORT
+    - QILINAPI_EVENTBUS_CONNECTION
     - QILINAPI_LOG_LEVEL
     - QILINAPI_LOG_REPORT_CALLER
     - QILINAPI_MAILER_HOST
@@ -47,7 +48,8 @@ backend:
     - QILINAPI_AUTH1_CLIENTID
     - QILINAPI_AUTH1_CLIENTSECRET
     - QILINAPI_EVENTBUS_CONNECTION
-        
+    - QILINAPI_IMAGINARY_SECRET        
+    
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little

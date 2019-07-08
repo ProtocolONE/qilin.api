@@ -131,6 +131,18 @@ func (s *Server) setupRoutes(
 		return err
 	}
 
+	keyStreamService := orm.NewKeyStreamService(s.db)
+	keyPackageService := orm.NewKeyPackageService(s.db, keyStreamService)
+
+	if _, err := InitKeyPackageRouter(s.Router, keyPackageService); err != nil {
+		return err
+	}
+
+	keyListService := orm.NewKeyListService(s.db)
+	if _, err := InitKeyListRouter(s.Router, keyListService); err != nil {
+		return err
+	}
+
 	notificationService, err := orm.NewNotificationService(s.db, s.notifier, s.centrifugoSecret)
 	if err != nil {
 		return err
