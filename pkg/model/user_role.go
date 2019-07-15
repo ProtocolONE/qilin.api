@@ -39,7 +39,7 @@ type RoleRestriction struct {
 const GameType string = "games"
 const PublishGame string = "games.publish"
 const GameListType string = "vendors.games"
-const VendorGameType string = "vendor.games"
+const VendorGameType string = "vendors.games"
 const DocumentsType string = "vendors.documents.*"
 const MessagesType string = "vendors.messages.*"
 const VendorType string = "vendors"

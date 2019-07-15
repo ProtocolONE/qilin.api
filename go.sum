@@ -18,6 +18,8 @@ github.com/ProtocolONE/qilin-common v0.0.0-20190426101525-e9077fea1a1d h1:iD14KO
 github.com/ProtocolONE/qilin-common v0.0.0-20190426101525-e9077fea1a1d/go.mod h1:u8zRc+LYiJlkSkbGO4fiH9c+Ij+n6BykAGPI8CngHss=
 github.com/ProtocolONE/qilin-common v0.0.0-20190426102144-91ad4f805cfd h1:tyVnQfjVu9BkPjvEkjegxup7m/Fpo7PPtGVFcU6Tr/8=
 github.com/ProtocolONE/qilin-common v0.0.0-20190426102144-91ad4f805cfd/go.mod h1:u8zRc+LYiJlkSkbGO4fiH9c+Ij+n6BykAGPI8CngHss=
+github.com/ProtocolONE/qilin-common v0.0.0-20190612131602-2a1edd55e5c2 h1:XRq1sjJ/7T/QhrUC7uUQUdFFjBuH9yyoshyujyvVbZM=
+github.com/ProtocolONE/qilin-common v0.0.0-20190612131602-2a1edd55e5c2/go.mod h1:u8zRc+LYiJlkSkbGO4fiH9c+Ij+n6BykAGPI8CngHss=
 github.com/ProtocolONE/rabbitmq v0.0.0-20190129162844-9f24367e139c h1:jiH5dizqc7/6rM8WJpKbgcVOMMXohKvenUWBhCN2gyI=
 github.com/ProtocolONE/rabbitmq v0.0.0-20190129162844-9f24367e139c/go.mod h1:ZnV4uG7YnB4iU8c8co8XU4w7xL0sGaGEw5d9g1THmwk=
 github.com/ProtocolONE/rbac v0.0.0-20190417103614-3f97c81631c6 h1:N0daXzViVWndP/DnA3snKsLOXboZPM9iT5y2+usSanM=

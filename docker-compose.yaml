@@ -7,6 +7,7 @@ services:
       - CENTRIFUGO_SECRET=secret
       - CENTRIFUGO_ADMIN_PASSWORD=admin
       - CENTRIFUGO_ADMIN_SECRET=secret
+      - CENTRIFUGO_API_KEY=secret
     tty: true
     command: centrifugo --admin
     ports:
