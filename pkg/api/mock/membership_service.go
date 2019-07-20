@@ -53,6 +53,10 @@ func (memebershipService) AcceptInvite(vendorId uuid.UUID, inviteId uuid.UUID, u
 	return nil
 }
 
+func (memebershipService) GetInvites(vendorId uuid.UUID, offset, limit int) (total int, invites []model.Invite, err error) {
+	return 0, []model.Invite{}, nil
+}
+
 func NewMembershipService() model.MembershipService {
 	return &memebershipService{}
 }
