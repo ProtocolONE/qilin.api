@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
@@ -10,6 +11,7 @@ import (
 	"qilin-api/pkg/mapper"
 	"qilin-api/pkg/model"
 	"qilin-api/pkg/orm"
+	"strconv"
 	"strings"
 )
 
@@ -60,6 +62,7 @@ func InitClientMembershipRouter(group *echo.Group, service model.MembershipServi
 	route.PUT("/memberships/:userId", res.changeUserRoles, nil)
 	route.GET("/memberships/:userId/permissions", res.getUserPermissions, []string{"*", model.RoleUserType, model.VendorDomain})
 
+	route.GET("/memberships/invites", res.getInvites, []string{"*", model.InvitesType, model.VendorDomain})
 	route.POST("/memberships/invites", res.sendInvite, []string{"*", model.InvitesType, model.VendorDomain})
 	route.PUT("/memberships/invites/:inviteId", res.acceptInvite, []string{"*", model.InvitesType, model.VendorDomain})
 
@@ -282,4 +285,32 @@ func (api *MembershipRouter) dropRole(ctx echo.Context) error {
 	}
 
 	return ctx.NoContent(http.StatusOK)
+}
+
+func (api *MembershipRouter) getInvites(ctx echo.Context) error {
+	vendorId, err := uuid.FromString(ctx.Param("vendorId"))
+	if err != nil {
+		return orm.NewServiceError(http.StatusBadRequest, errors.Wrap(err, "Bad vendor id"))
+	}
+
+	offset, err := strconv.Atoi(ctx.QueryParam("offset"))
+	if err != nil {
+		offset = 0
+	}
+	limit, err := strconv.Atoi(ctx.QueryParam("limit"))
+	if err != nil {
+		limit = 20
+	}
+
+	total, invites, err := api.service.GetInvites(vendorId, offset, limit)
+	if err != nil {
+		return err
+	}
+	dto := []InviteDTO{}
+	if err := mapper.Map(invites, &dto); err != nil {
+		return orm.NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Mapping invites from model failed"))
+	}
+	ctx.Response().Header().Add("X-Items-Count", fmt.Sprintf("%d", total))
+
+	return ctx.JSON(http.StatusOK, dto)
 }

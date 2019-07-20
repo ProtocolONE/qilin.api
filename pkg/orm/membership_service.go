@@ -482,3 +482,21 @@ func (service *membershipService) RemoveUserRole(userId string, owner string, ro
 
 	return nil
 }
+
+func (service *membershipService) GetInvites(vendorId uuid.UUID, offset, limit int) (total int, invites []model.Invite, err error) {
+	invites = []model.Invite{}
+	if err := service.db.DB().Model(&model.Invite{}).
+		Where("vendor_id = ? and not accepted", vendorId).
+		Order("-created_at").
+		Limit(limit).
+		Offset(offset).
+		Find(&invites).Error; err != nil {
+		return 0, nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Retrieve invites"))
+	}
+
+	if err := service.db.DB().Model(&model.Invite{}).Where("vendor_id = ?", vendorId).Count(&total).Error; err != nil {
+		return 0, nil, NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Retrieve invites count"))
+	}
+
+	return
+}

@@ -78,4 +78,5 @@ type MembershipService interface {
 	AcceptInvite(vendorId uuid.UUID, inviteId uuid.UUID, userId string) error
 	AddRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error
 	RemoveRoleToUserInResource(vendorId uuid.UUID, userId string, resourceId []string, role string) error
+	GetInvites(vendorId uuid.UUID, offset, limit int) (total int, invites []Invite, err error)
 }
