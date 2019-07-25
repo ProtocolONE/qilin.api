@@ -13,6 +13,7 @@ import (
 	"qilin-api/pkg/orm"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type MembershipRouter struct {
@@ -32,6 +33,12 @@ type UserRoleDTO struct {
 type InviteDTO struct {
 	Email string          `json:"email" validate:"required"`
 	Roles []RoleInviteDTO `json:"roles" validate:"required,dive"`
+}
+
+type InviteItemDTO struct {
+	Email     string          `json:"email"`
+	Roles     []RoleInviteDTO `json:"roles"`
+	CreatedAt time.Time       `json:"created_at"`
 }
 
 type RoleInviteDTO struct {
@@ -306,7 +313,7 @@ func (api *MembershipRouter) getInvites(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	dto := []InviteDTO{}
+	dto := []InviteItemDTO{}
 	if err := mapper.Map(invites, &dto); err != nil {
 		return orm.NewServiceError(http.StatusInternalServerError, errors.Wrap(err, "Mapping invites from model failed"))
 	}
